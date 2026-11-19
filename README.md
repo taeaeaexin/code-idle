@@ -1,6 +1,6 @@
-# 코드 키우기
+# 개발자 키우기
 
-코드를 키워 신입 개발자에서 CTO나 대표까지 성장하는 방치형 웹 게임입니다.
+신입 개발자에서 CTO나 대표까지 성장하는 방치형 웹 게임입니다.
 [Exponential Idle](https://namu.wiki/w/Exponential%20Idle)(수식 키우기)을 개발자 버전으로 바꿨습니다.
 
 플레이: https://taeaeaexin.github.io/code-idle/

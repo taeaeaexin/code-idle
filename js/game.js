@@ -1,5 +1,5 @@
 /* =========================================================
- * 코드 키우기 - 게임 로직
+ * 개발자 키우기 - 게임 로직
  * ========================================================= */
 'use strict';
 
@@ -1247,7 +1247,7 @@ $('modalBox').addEventListener('click', e => {
 function askName(first) {
   openModal({
     title: first ? '반갑습니다, 신입 개발자님!' : '이름 바꾸기',
-    desc: first ? '코드 키우기는 신입 개발자로 시작해 CTO나 대표까지 성장하는 게임입니다.<br>이름을 알려주세요. 코드 파일의 작성자로도 들어갑니다.' : '새 이름을 입력하세요.',
+    desc: first ? '개발자 키우기는 신입 개발자로 시작해 CTO나 대표까지 성장하는 게임입니다.<br>이름을 알려주세요. 코드 파일의 작성자로도 들어갑니다.' : '새 이름을 입력하세요.',
     input: '이름 (최대 12자)',
     choices: [{ label: first ? '다음' : '바꾸기', act: v => { setName(v, !first); if (first) askCompany('first'); } }],
   });
@@ -1794,7 +1794,7 @@ function toast(msg) {
 
 function shareText() {
   const st = S();
-  return '코드 키우기 | ' + companyName() + ' ' + devName() + ' ' + titleOf() + '\n' +
+  return '개발자 키우기 | ' + companyName() + ' ' + devName() + ' ' + titleOf() + '\n' +
     '작성한 코드 ' + fmtInt(st.linesTyped) + '줄, 완성 파일 ' + st.filesDone + '개, 납품 ' + st.questsDone + '건\n' +
     '최고 서비스 가치 ' + won(st.bestValue) + ', 업적 ' + achCount() + '/' + ACHS.length + '\n' + location.href;
 }

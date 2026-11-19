@@ -135,9 +135,16 @@ function achCount() { return Object.keys(state.career.ach).length; }
 function buffActive(b) { return state.time >= (b.from || 0) && state.time < b.until; }
 function buffMult(kind) { let m = 1; for (const b of state.buffs) if (b.kind === kind && buffActive(b)) m *= b.mult; return m; }
 function hasBuff(kind) { return state.buffs.some(b => b.kind === kind && buffActive(b)); }
+// 같은 효과는 겹치지 않고 남은 시간만 새로 채워짐
 function addBuff(kind, mult, sec, label, bad, delay) {
   const from = state.time + (delay || 0);
+  const same = state.buffs.find(b => b.label === label && b.until > state.time);
+  if (same) { same.from = Math.min(same.from, from); same.until = from + sec; return; }
   state.buffs.push({ kind, mult, from, until: from + sec, label, bad: !!bad });
+}
+function buffLeft(label) {
+  const b = state.buffs.find(x => x.label === label && x.until > state.time);
+  return b ? b.until - state.time : 0;
 }
 
 function salaryRate() {
@@ -983,9 +990,16 @@ function learnSkill(id) {
  * 상점
  * ========================================================= */
 function itemPrice(it) { return Math.max(it.min, baseRate() * it.sec); }
+const ITEM_LABEL = { coffee: '커피 타이핑 x2', energy: '에너지 드링크 x1.5', pizza: '복잡도 증가 없음', keycap: '키캡 콤보 유지 2배' };
+// 효과가 남아 있거나 에너지 드링크 피로가 남아 있으면 다시 못 씀
+function itemBusy(id) {
+  if (id === 'energy') return Math.max(buffLeft(ITEM_LABEL.energy), buffLeft('피곤함 x0.6'));
+  return ITEM_LABEL[id] ? buffLeft(ITEM_LABEL[id]) : 0;
+}
 function buyItem(id) {
   const it = ITEMS.find(x => x.id === id);
   const p = itemPrice(it);
+  if (itemBusy(id) > 0) { toast(it.name + ' 효과가 아직 남아 있습니다'); return; }
   if (state.value < p) return;
   if (id === 'glass' && !state.bugs.length) { toast('지금은 고칠 버그가 없습니다'); return; }
   state.value -= p;
@@ -1365,10 +1379,12 @@ function sideTeam() {
 }
 
 function sideShop() {
-  let h = '<div class="sec-title">상점 <span class="sub">한 번 쓰고 사라지는 아이템</span></div><div class="note">가격은 지금 수입에 맞춰 바뀝니다.</div>';
+  let h = '<div class="sec-title">상점 <span class="sub">한 번 쓰고 사라지는 아이템</span></div><div class="note">가격은 지금 수입에 맞춰 바뀝니다. 같은 아이템은 효과가 끝나야 다시 쓸 수 있어요.</div>';
   for (const it of ITEMS) {
     const p = itemPrice(it);
-    h += '<div class="row"><div><div class="row-name">' + it.name + '</div><div class="row-desc">' + it.desc + '</div></div><button class="btn' + (state.value >= p ? '' : ' off') + '" data-act="item:' + it.id + '">' + won(p) + '</button></div>';
+    const busy = itemBusy(it.id);
+    const btn = busy > 0 ? '<button class="btn off" data-act="item:' + it.id + '">사용 중 ' + fmtSec(busy) + '</button>' : '<button class="btn' + (state.value >= p ? '' : ' off') + '" data-act="item:' + it.id + '">' + won(p) + '</button>';
+    h += '<div class="row"><div><div class="row-name">' + it.name + '</div><div class="row-desc">' + it.desc + '</div></div>' + btn + '</div>';
   }
   return h;
 }
@@ -1495,7 +1511,7 @@ function renderExplorer() {
   for (let i = Math.max(0, state.file - 6); i <= state.file + 1; i++) {
     const f = fileInfo(i);
     const L = LANGS[f.lang];
-    const badge = '<span class="ex-badge" style="background:' + L.color + '">' + L.badge + '</span>';
+    const badge = '';
     if (i < state.file) {
       const has = state.archive.some(a => a.idx === i);
       h += '<div class="ftab done" ' + (has ? 'data-view="' + i + '" title="완성한 코드 보기"' : 'title="오래된 파일이라 내용은 보관되지 않음"') + '>' + badge + f.name + '<span class="ex-check">완료</span></div>';
@@ -1581,7 +1597,6 @@ function renderTop() {
   const f = curFile();
   const L = LANGS[f.lang];
   $('langBadge').textContent = L.name;
-  $('langBadge').style.background = L.color;
   $('filename').textContent = f.name;
   $('lines').textContent = totalLines().toLocaleString() + ' lines';
   $('stageName').textContent = STAGES[state.stage].name;

@@ -1291,6 +1291,7 @@ function renderTabs() {
   if ($('tabs').innerHTML !== html) $('tabs').innerHTML = html;
 }
 
+function lockTag(text) { return '<span class="lock-tag">' + text + '</span>'; }
 function q(id) { return id ? '<span class="q" data-gloss="' + id + '" title="백과사전에서 보기">?</span>' : ''; }
 
 function sideUpg() {
@@ -1302,7 +1303,7 @@ function sideUpg() {
     const c = cost(u);
     const cls = locked ? 'locked' : (state.value < c || freeze ? 'disabled' : '');
     h += '<div class="upg ' + cls + '" data-act="buy:' + u.id + '"><div><div class="upg-name">' + u.name + (locked ? '' : '<span class="upg-lv">Lv.' + state.lv[u.id] + '</span>') + q(u.gloss) + '</div>' +
-      '<div class="upg-desc">' + (locked ? '서비스 가치 ' + won(u.unlock) + ' 달성 시 해금' : upgDesc(u)) + '</div></div><div class="upg-cost">' + (locked ? '잠김' : won(c)) + '</div></div>';
+      '<div class="upg-desc">' + (locked ? '잠겨 있는 업그레이드' : upgDesc(u)) + '</div></div><div class="upg-cost">' + (locked ? '' : won(c)) + '</div>' + (locked ? lockTag('서비스 가치 ' + won(u.unlock) + ' 필요') : '') + '</div>';
   }
   h += '<div class="divider"></div><div class="sec-title">릴리즈' + q('release') + '<span class="sub">v' + state.version + '.0</span></div>';
   if (state.runBest < RELEASE_MIN) {
@@ -1366,14 +1367,14 @@ function sideTeam() {
     let btn;
     if (on) btn = '<button class="btn gray" data-act="unsub:' + s.id + '">해지</button>';
     else btn = '<button class="btn' + (!locked && state.value >= s.cost ? '' : ' off') + '" data-act="sub:' + s.id + '">' + won(s.cost) + '</button>';
-    h += '<div class="row' + (locked ? ' locked' : '') + (on ? ' owned' : '') + '"><div><div class="row-name">' + s.name + (on ? '<span class="cnt">구독 중</span>' : '') + '</div><div class="row-desc">' + s.desc + '<br>구독료: 수입의 ' + fee(s.fee) + (locked ? ', 평판 ' + s.rep + ' 필요' : '') + '</div></div>' + btn + '</div>';
+    h += '<div class="row' + (locked ? ' locked' : '') + (on ? ' owned' : '') + '"><div><div class="row-name">' + s.name + (on ? '<span class="cnt">구독 중</span>' : '') + '</div><div class="row-desc">' + s.desc + '<br>구독료: 수입의 ' + fee(s.fee) + '</div></div>' + btn + (locked ? lockTag('평판 ' + s.rep + ' 필요') : '') + '</div>';
   }
   h += '<div class="divider"></div><div class="sec-title">장급 섭외 <span class="sub">한 번 섭외하면 함께 일함</span></div><div class="note">릴리즈해도 남고, 이직하면 헤어집니다.</div>';
   for (const c of CREW) {
     const locked = state.rep < c.rep;
     const on = hasCrew(c.id);
     const btn = on ? '<span class="cnt" style="color:var(--good);font-size:12px">합류</span>' : '<button class="btn' + (!locked && state.value >= c.cost ? '' : ' off') + '" data-act="crew:' + c.id + '">' + won(c.cost) + '</button>';
-    h += '<div class="row' + (locked ? ' locked' : '') + (on ? ' owned' : '') + '"><div><div class="row-name">' + crewName(c) + ' ' + c.title + '<span class="role">' + c.role + '</span></div><div class="row-desc">' + c.desc + '<br>월급: 수입의 ' + fee(c.salary) + (locked ? ', 평판 ' + c.rep + ' 필요' : '') + '</div></div>' + btn + '</div>';
+    h += '<div class="row' + (locked ? ' locked' : '') + (on ? ' owned' : '') + '"><div><div class="row-name">' + crewName(c) + ' ' + c.title + '<span class="role">' + c.role + '</span></div><div class="row-desc">' + c.desc + '<br>월급: 수입의 ' + fee(c.salary) + '</div></div>' + btn + (locked ? lockTag('평판 ' + c.rep + ' 필요') : '') + '</div>';
   }
   return h;
 }

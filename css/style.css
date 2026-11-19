@@ -140,7 +140,8 @@ button, input { font-family: inherit; }
 .upg { display: flex; justify-content: space-between; align-items: center; padding: 9px 10px; margin-bottom: 7px; background: var(--panel2); border: 1px solid var(--border2); border-radius: 4px; cursor: pointer; user-select: none; }
 .upg:hover:not(.disabled):not(.locked) { border-color: var(--accent); }
 .upg.disabled { opacity: .5; cursor: default; }
-.upg.locked { opacity: .3; cursor: default; }
+.upg.locked { cursor: default; position: relative; }
+.upg.locked > :not(.lock-tag), .row.locked > :not(.lock-tag) { opacity: .25; }
 .upg-name { font-size: 14px; color: var(--strong); display: flex; align-items: center; }
 .upg-lv { color: var(--good); font-size: 12px; margin-left: 6px; }
 .upg-desc { font-size: 11px; color: var(--muted); margin-top: 3px; line-height: 1.5; }
@@ -159,7 +160,8 @@ button, input { font-family: inherit; }
 .card-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 12px; color: var(--gold); gap: 8px; }
 
 .row { display: flex; justify-content: space-between; align-items: center; padding: 9px 10px; margin-bottom: 7px; background: var(--panel2); border: 1px solid var(--border2); border-radius: 4px; gap: 10px; }
-.row.locked { opacity: .4; }
+.row.locked { position: relative; }
+.lock-tag { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: var(--strong); letter-spacing: .5px; pointer-events: none; }
 .row.owned { border-color: var(--good); }
 .row-name { font-size: 14px; color: var(--strong); }
 .row-name .cnt { color: var(--good); font-size: 12px; margin-left: 6px; }

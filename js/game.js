@@ -1510,7 +1510,6 @@ function renderExplorer() {
   let h = '';
   for (let i = Math.max(0, state.file - 6); i <= state.file + 1; i++) {
     const f = fileInfo(i);
-    const L = LANGS[f.lang];
     const badge = '';
     if (i < state.file) {
       const has = state.archive.some(a => a.idx === i);
@@ -1596,7 +1595,6 @@ function renderTop() {
 
   const f = curFile();
   const L = LANGS[f.lang];
-  $('langBadge').textContent = L.name;
   $('filename').textContent = f.name;
   $('lines').textContent = totalLines().toLocaleString() + ' lines';
   $('stageName').textContent = STAGES[state.stage].name;

@@ -157,6 +157,9 @@ function bugPenalty() { return Math.min(0.85, 0.6 + 0.05 * state.lv.log); }
 function bugLossPct() { return 1 - Math.pow(bugPenalty(), state.bugs.length); }
 function offlineEff() { return Math.min(1, 0.5 + 0.1 * state.lv.srv + (hasCrew('yoon') ? 0.2 : 0)); }
 function reviewFactor(l) { return 1 / (1 + 0.25 * l); }
+// 코드 한 줄당 복잡도 증가량: 처음엔 2%, 업그레이드 레벨 합이 오를수록 4%씩 줄어듦 (최소 0.1%)
+function totalUpgradeLv() { let t = 0; for (const k in state.lv) t += state.lv[k]; return t; }
+function lineDebt() { return Math.max(0.1, 2 * Math.pow(0.96, totalUpgradeLv())) * debtFactor(); }
 function debtFactor() {
   return reviewFactor(state.lv.review) * Math.pow(0.75, SK().clean) * (hasCrew('park') ? 0.8 : 1) * (hasSub('claude') ? 0.9 : 1) * buffMult('calm');
 }
@@ -205,7 +208,9 @@ function careerMult() {
 function repMult() { return 1 + state.rep * 0.03 * (1 + 0.5 * SK().network); }
 function fileMult() { return 1 + 0.15 * state.filesDone; }
 function gradeMult() { return state.grade >= 0 ? GRADE_MULT[state.grade] : 1; }
-function codeEff(l) { return Math.pow(1 + l, 3) * Math.pow(2, Math.floor(l / 25)); }
+// 한 번 살 때마다 수입 x2.2 (가격은 x3.2씩 올라서 모아서 사는 맛이 있음)
+function codeEff(l) { return Math.pow(2.2, l); }
+function keyEff(l) { return Math.pow(1.8, l); }
 
 // 일시 효과를 뺀 기본 수입
 function baseRate() {
@@ -238,7 +243,7 @@ function breakEvenMarket() { const g = rate() / state.market; return g > 0 ? bur
 function netRate() { return rate() - burnRate(); }
 function comboMult() { return 1 + Math.min(combo, 300) / 150; }
 function keyGainAt(keyLv) {
-  return (1 + baseRate() * KEY_GAIN_RATIO) * (1 + keyLv) * Math.pow(2, SK().typist);
+  return (1 + baseRate() * KEY_GAIN_RATIO) * keyEff(keyLv) * Math.pow(2, SK().typist);
 }
 function keyGain() {
   if (state.refactoring) return 0;
@@ -272,8 +277,7 @@ function upgDesc(u) {
   const nx = (a, b) => '<b>' + a + '</b>, 다음 ' + b;
   switch (u.id) {
     case 'code': {
-      const next25 = (Math.floor(l / 25) + 1) * 25;
-      return '수입 ' + nx('x' + fmt(codeEff(l)), 'x' + fmt(codeEff(l + 1))) + '<br>Lv.' + next25 + ' 달성 시 추가 x2';
+      return '수입 ' + nx('x' + fmt(codeEff(l)), 'x' + fmt(codeEff(l + 1)));
     }
     case 'key': return '타이핑 1회당 ' + nx(won(keyGainAt(l)), won(keyGainAt(l + 1)));
     case 'test': return '버그 발생 분당 ' + nx((bugChanceAt(l) * 60).toFixed(2) + '회', (bugChanceAt(l + 1) * 60).toFixed(2) + '회') + '<br>(복잡도가 높을수록 버그가 자주 생김)';
@@ -370,7 +374,6 @@ function buy(id) {
   if (hidden > 0) enqueue([L.cm('... ' + u.name + ' ' + hidden + '건 더 추가')]);
   if (bought > 0) {
     S().upgrades += bought;
-    addDebt(0.8 * Math.min(bought, 10) * debtFactor());
   }
 }
 
@@ -552,7 +555,7 @@ function commitLine() {
   state.cur = '';
   state.fileLines++;
   S().linesTyped++;
-  addDebt(0.4 * debtFactor());
+  addDebt(lineDebt());
   const tmp = document.createElement('div');
   tmp.innerHTML = lineHtml(totalLines(), '', true);
   curEl = tmp.firstChild;
@@ -1032,6 +1035,23 @@ function learnSkill(id) {
 /* =========================================================
  * 상점
  * ========================================================= */
+function pixelArt(id, size) {
+  const a = ITEM_ART[id];
+  if (!a) return '';
+  let r = '';
+  a.rows.forEach((row, y) => {
+    let x = 0;
+    while (x < row.length) {
+      const ch = row[x];
+      if (ch === '.') { x++; continue; }
+      let x2 = x;
+      while (x2 < row.length && row[x2] === ch) x2++;
+      r += '<rect x="' + x + '" y="' + y + '" width="' + (x2 - x) + '" height="1" fill="' + a.pal[ch] + '"/>';
+      x = x2;
+    }
+  });
+  return '<svg class="pixel" viewBox="0 0 16 16" width="' + size + '" height="' + size + '" shape-rendering="crispEdges">' + r + '</svg>';
+}
 function itemPrice(it) { return Math.max(it.min, baseRate() * it.sec); }
 const ITEM_LABEL = { coffee: '커피 타이핑 x2', energy: '에너지 드링크 x1.5', pizza: '복잡도 증가 없음', keycap: '키캡 콤보 유지 2배' };
 // 효과가 남아 있거나 에너지 드링크 피로가 남아 있으면 다시 못 씀
@@ -1439,7 +1459,7 @@ function sideShop() {
     const p = itemPrice(it);
     const busy = itemBusy(it.id);
     const btn = busy > 0 ? '<button class="btn off" data-act="item:' + it.id + '">사용 중 ' + fmtSec(busy) + '</button>' : '<button class="btn' + (state.value >= p ? '' : ' off') + '" data-act="item:' + it.id + '">' + won(p) + '</button>';
-    h += '<div class="row"><div><div class="row-name">' + it.name + '</div><div class="row-desc">' + it.desc + '</div></div>' + btn + '</div>';
+    h += '<div class="row"><div class="item-art">' + pixelArt(it.id, 40) + '</div><div style="flex:1"><div class="row-name">' + it.name + '</div><div class="row-desc">' + it.desc + '</div></div>' + btn + '</div>';
   }
   return h;
 }
@@ -1597,7 +1617,7 @@ function viewArchive(idx) {
 
 function renderStatus() {
   const d = state.debt;
-  let h = '<span class="debt">코드 복잡도' + '<span class="mini-bar"><span class="mini-fill" style="width:' + d + '%;background:' + (d > 60 ? 'var(--bad)' : d > 30 ? 'var(--gold)' : 'var(--cm)') + '"></span></span> ' + Math.floor(d) + '% (수입 -' + Math.floor(d / 2) + '%, 높을수록 버그 증가)</span>';
+  let h = '<span class="debt">코드 복잡도' + '<span class="mini-bar"><span class="mini-fill" style="width:' + d + '%;background:' + (d > 60 ? 'var(--bad)' : d > 30 ? 'var(--gold)' : 'var(--cm)') + '"></span></span> ' + Math.floor(d) + '% (수입 -' + Math.floor(d / 2) + '%, 줄당 +' + lineDebt().toFixed(2) + '%, 업그레이드할수록 줄어듦)</span>';
   const qs = qualityScore();
   h += '<span title="깔끔함 ' + qs.clean + '/40, 작업량 ' + qs.work + '/30, 정리 규모 ' + qs.reduce + '/30' + (qs.bugs ? ', 버그 ' + qs.bugs : '') + '">지금 리팩토링하면 품질 ' + GRADES[gradeOf(qs.total)] + ' (' + qs.total + '점)</span>';
   if (state.legacy) h += '<span class="alert">레거시화! 수입 x0.7</span>';

@@ -49,7 +49,7 @@ function freshCompany(career) {
 }
 function freshCareer() {
   return {
-    name: '', level: 0, points: 0, route: null, ipo: false, cto: false, ach: {},
+    name: '', level: 0, points: 0, route: null, ipo: false, cto: false, ach: {}, ng: 0,
     skills: { sql: 0, clean: 0, cicd: 0, nego: 0, lead: 0, typist: 0, network: 0 },
     stats: { keys: 0, linesTyped: 0, questsDone: 0, questsFailed: 0, bugsFixed: 0, refactors: 0, incidentsOk: 0, releases: 0, jobs: 0, playTime: 0, upgrades: 0, earned: 0, fridayOk: 0, nextGenDone: 0, bossDone: 0, challengeWords: 0, filesDone: 0, gradeS: 0, maxCombo: 0, founded: 0, bankrupts: 0, bestValue: 0 },
   };
@@ -178,6 +178,24 @@ function rollDeploy() {
   const p = clamp(Math.round((0.3 + Math.random() * 0.6 + deployBonus()) * 20) / 20, 0.3, 0.95);
   return { p, reward: baseRate() * 60 / p, rep: p < 0.5 ? 2 : 1 };
 }
+// 회차 보너스: 엔딩 후 다시 시작할 때마다 수입 +50%
+function ngMult() { return 1 + 0.5 * (state.career.ng || 0); }
+function endingDone() { return state.career.cto || state.career.ipo; }
+function newGamePlus() {
+  const c = state.career;
+  const ng = (c.ng || 0) + 1;
+  const settings = state.settings;
+  state = defaultState();
+  state.settings = settings;
+  Object.assign(state.career, { name: c.name, ach: c.ach, stats: c.stats, ng, points: 2 * ng });
+  startFile();
+  renderAllCode();
+  lastSideHtml = '';
+  save();
+  askCompany('first', () => toast((ng + 1) + '회차 시작! 회차 보너스 수입 x' + ngMult().toFixed(1) + ', 경력 포인트 ' + (2 * ng) + '개로 시작'));
+}
+function ngChoice() { return { label: (state.career.ng + 2) + '회차 시작 (수입 x' + (1 + 0.5 * (state.career.ng + 1)).toFixed(1) + ', 경력 포인트 ' + (2 * (state.career.ng + 1)) + '개, 업적 유지)', alt: true, act: newGamePlus }; }
+
 function careerMult() {
   const c = state.career;
   if (c.route === 'exec') return 3.5 * Math.pow(1.5, c.level - 5);
@@ -193,6 +211,7 @@ function codeEff(l) { return Math.pow(1 + l, 3) * Math.pow(2, Math.floor(l / 25)
 function baseRate() {
   const L = state.lv;
   let r = codeEff(L.code) * Math.pow(2, L.srv);
+  r *= ngMult();
   r *= state.releaseMult * repMult() * Math.pow(2, SK().sql) * careerMult() * (1 + 0.03 * achCount()) * fileMult() * gradeMult() * state.equity;
   return r * Math.max(0.1, 1 - salaryRate());
 }
@@ -952,7 +971,7 @@ function promote() {
   c.points += 2;
   if (e.title === 'CTO') {
     c.cto = true;
-    openModal({ title: 'CTO 취임! 기술 총괄이 되었습니다', desc: endingStats() + '<br>안정적인 길 끝에 회사의 기술을 책임지는 자리에 올랐습니다. 계속 플레이하며 더 큰 숫자에 도전하세요.', choices: [{ label: 'CTO로 계속 플레이' }] });
+    openModal({ title: 'CTO 취임! 기술 총괄이 되었습니다', desc: endingStats() + '<br>안정적인 길 끝에 회사의 기술을 책임지는 자리에 올랐습니다. 계속 플레이하며 더 큰 숫자에 도전하세요.', choices: [{ label: 'CTO로 계속 플레이' }, ngChoice()] });
   } else {
     toast(e.title + ' 승진! 경력 포인트 +2, 수입 x' + careerMult().toFixed(1));
   }
@@ -990,7 +1009,7 @@ function checkIpo() {
   const c = state.career;
   if (c.route !== 'ceo' || c.ipo || state.runBest < IPO_VALUE) return;
   c.ipo = true;
-  openModal({ title: '상장(IPO) 성공!', desc: endingStats() + '<br>회사가 상장했습니다! 이제 시장 리스크와 운영비 걱정 없이 수입 x10이 영구 적용됩니다.', choices: [{ label: '대표로 계속 플레이' }] });
+  openModal({ title: '상장(IPO) 성공!', desc: endingStats() + '<br>회사가 상장했습니다! 이제 시장 리스크와 운영비 걱정 없이 수입 x10이 영구 적용됩니다.', choices: [{ label: '대표로 계속 플레이' }, ngChoice()] });
 }
 
 function endingStats() {
@@ -1456,6 +1475,10 @@ function sideCareer() {
     h += '<div class="divider"></div><div class="sec-title">회사 현황</div><div class="info">' +
       (c.ipo ? '상장 완료! 리스크 없이 수입 x10' : '시장 상황 <b>x' + state.market.toFixed(2) + '</b> (x' + breakEvenMarket().toFixed(2) + ' 아래로 가면 적자)<br>매출 ' + won(rate()) + '/초, 운영비 ' + won(burnRate()) + '/초 (창업 ' + state.ceoMonths + '개월째, 고정비 x' + burnMult().toFixed(2) + ')<br>지분 ' + pct(state.equity) + '<br>상장 조건: 서비스 가치 ' + won(IPO_VALUE)) + '</div>';
   }
+  if (endingDone()) {
+    h += '<div class="divider"></div><div class="sec-title">다음 회차 <span class="sub">지금 ' + (c.ng + 1) + '회차</span></div><div class="note">처음부터 다시 시작합니다. 이름, 업적, 기록, 설정은 남고 회차마다 수입 +50%, 경력 포인트 2개를 더 받고 시작해요.</div>' +
+      '<button class="big-btn gold" data-act="ng">' + (c.ng + 2) + '회차 시작</button>';
+  }
   h += '<div class="divider"></div><div class="sec-title">스킬 <span class="sub">Lv.n을 배우려면 포인트 n 필요</span></div>';
   for (const s of SKILLS) {
     const r = c.skills[s.id];
@@ -1628,7 +1651,7 @@ function renderTop() {
   $('mult').textContent = 'x' + fmt(state.releaseMult);
   $('ver').textContent = 'v' + state.version + '.0';
   $('titleChip').textContent = devName() + ' ' + titleOf();
-  $('companyChip').textContent = companyName();
+  $('companyChip').textContent = (state.career.ng ? (state.career.ng + 1) + '회차 ' : '') + companyName();
   $('goal').textContent = goalText();
 
   const f = curFile();
@@ -1817,6 +1840,7 @@ function doAction(act) {
   else if (a === 'skill') learnSkill(arg);
   else if (a === 'job') jobChange();
   else if (a === 'inner') innerPromote();
+  else if (a === 'ng') { if (endingDone()) newGamePlus(); }
   else if (a === 'recompany') askCompany('rename');
   else if (a === 'promote') promote();
   else if (a === 'found') found();

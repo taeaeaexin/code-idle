@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>코드 키우기</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%231e1e1e%22/%3E%3Cpath%20d%3D%22M21%2019%209%2032l12%2013M43%2019l12%2013-12%2013%22%20fill%3D%22none%22%20stroke%3D%22%234ec9b0%22%20stroke-width%3D%226%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3Cpath%20d%3D%22M36%2013%2028%2051%22%20stroke%3D%22%23d7ba7d%22%20stroke-width%3D%226%22%20stroke-linecap%3D%22round%22/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/png;base64,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">
+<meta name="theme-color" content="#1e1e1e">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #1e1e1e; color: #d4d4d4; font-family: -apple-system, "Segoe UI", "Malgun Gothic", sans-serif; min-height: 100vh; }
+  button { font-family: inherit; }
+  .hidden { display: none !important; }
+
+  .top { display: flex; justify-content: space-between; align-items: center; padding: 14px 24px; background: #252526; border-bottom: 1px solid #333; flex-wrap: wrap; gap: 12px; }
+  .top h1 { font-size: 18px; color: #fff; display: flex; align-items: center; gap: 8px; }
+  .ver { color: #4ec9b0; font-family: Consolas, monospace; font-size: 14px; }
+  .title-chip { font-size: 12px; background: #3a3d41; color: #d7ba7d; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
+  .stats { display: flex; gap: 24px; flex-wrap: wrap; }
+  .stat-label { font-size: 11px; color: #888; }
+  .stat-val { font-size: 19px; font-weight: 600; color: #fff; font-family: Consolas, monospace; }
+  .stat-val.rate { color: #b5cea8; }
+  .stat-val.key { color: #d7ba7d; }
+  .stat-val.rep { color: #c586c0; }
+
+  .goalbar { display: flex; align-items: center; gap: 12px; padding: 8px 24px; background: #1b2b3a; border-bottom: 1px solid #333; font-size: 13px; flex-wrap: wrap; }
+  .goal-label { background: #007acc; color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 3px; font-weight: 600; }
+  #goal { color: #e0e0e0; }
+  #buffs { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
+  .chip { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #2d4a2d; color: #b5cea8; }
+  .chip.bad { background: #4a2d2d; color: #f48771; }
+
+  .main { display: grid; grid-template-columns: 1fr 400px; gap: 16px; padding: 16px 24px; }
+  .panel { background: #252526; border: 1px solid #333; border-radius: 6px; overflow: hidden; position: relative; }
+
+  .tab { background: #2d2d2d; padding: 6px 14px; font-size: 13px; color: #ccc; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+  .tab .lines { color: #888; margin-left: 10px; font-size: 12px; }
+  .tab .right { display: flex; align-items: center; gap: 10px; }
+  .tab .stage-name { color: #888; }
+  .btn { font-size: 12px; background: #0e639c; color: #fff; border: none; border-radius: 3px; padding: 4px 10px; cursor: pointer; }
+  .btn:disabled, .btn.off { background: #3c3c3c; color: #777; cursor: default; }
+  .btn.warn { background: #8a4b08; }
+  .btn.gray { background: #3c3c3c; color: #ccc; border: 1px solid #555; }
+
+  .status { display: flex; align-items: center; gap: 16px; padding: 6px 14px; font-size: 12px; color: #aaa; border-bottom: 1px solid #333; background: #232323; flex-wrap: wrap; min-height: 32px; }
+  .status .debt { display: flex; align-items: center; gap: 6px; }
+  .mini-bar { width: 90px; height: 6px; background: #333; border-radius: 3px; overflow: hidden; }
+  .mini-fill { height: 100%; background: #6a9955; }
+  .bug-count { color: #f48771; font-weight: 600; }
+  .incident { color: #f48771; font-weight: 600; animation: pulse 1s infinite; }
+  @keyframes pulse { 50% { opacity: .5; } }
+
+  .challenge { padding: 8px 14px; background: #3a2f12; border-bottom: 1px solid #5a4a1a; font-size: 13px; display: flex; align-items: center; gap: 14px; }
+  .challenge .word { font-family: Consolas, monospace; font-size: 18px; letter-spacing: 2px; }
+  .challenge .typed { color: #4ec9b0; }
+  .challenge .rest { color: #888; }
+  .challenge .meta { color: #d7ba7d; margin-left: auto; }
+
+  .code { font-family: Consolas, "D2Coding", monospace; font-size: 14px; line-height: 1.6; padding: 10px 0; height: 440px; overflow-y: auto; overflow-x: auto; cursor: text; }
+  .code::-webkit-scrollbar { width: 10px; height: 10px; }
+  .code::-webkit-scrollbar-thumb { background: #424242; }
+  .code.refactoring { opacity: .5; }
+  .ln { display: flex; white-space: pre; min-height: 22px; }
+  .ln .no { width: 60px; flex-shrink: 0; text-align: right; padding-right: 18px; color: #6e7681; user-select: none; }
+  .ln.bug { background: rgba(244, 71, 71, .22); cursor: pointer; }
+  .ln.bug .no { color: #f48771; }
+  .ln.bug .tx::after { content: "  클릭해서 수정"; color: #f48771; font-family: "Malgun Gothic", sans-serif; font-size: 11px; opacity: .8; }
+  .typo { color: #f48771; text-decoration: underline wavy #f48771; text-underline-offset: 3px; }
+  .cursor { display: inline-block; width: 8px; height: 16px; background: #aeafad; vertical-align: text-bottom; animation: blink 1s step-end infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .kw { color: #569cd6; } .str { color: #ce9178; } .cm { color: #6a9955; } .num { color: #b5cea8; } .fn { color: #dcdcaa; } .dec { color: #c586c0; } .type { color: #4ec9b0; }
+  .float { position: absolute; right: 24px; top: 80px; color: #d7ba7d; font-family: Consolas, monospace; font-size: 14px; pointer-events: none; animation: rise .7s ease-out forwards; z-index: 5; }
+  .float.good { color: #4ec9b0; }
+  @keyframes rise { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-24px); } }
+
+  .progress-wrap { padding: 10px 16px; border-top: 1px solid #333; }
+  .progress-label { font-size: 12px; color: #888; margin-bottom: 6px; display: flex; justify-content: space-between; }
+  .bar { height: 6px; background: #333; border-radius: 3px; overflow: hidden; }
+  .bar-fill { height: 100%; background: #007acc; width: 0; }
+  .bar-fill.time { background: #d7ba7d; }
+  .bar-fill.urgent { background: #f48771; }
+
+  .tabs { display: flex; background: #2d2d2d; border-bottom: 1px solid #333; }
+  .tabs button { flex: 1; background: none; border: none; color: #999; padding: 9px 0; font-size: 13px; cursor: pointer; border-bottom: 2px solid transparent; }
+  .tabs button.on { color: #fff; border-bottom-color: #007acc; }
+  .tabs .badge { background: #c586c0; color: #1e1e1e; border-radius: 8px; padding: 0 5px; font-size: 10px; margin-left: 3px; font-weight: 700; }
+  #side { padding: 12px 14px; height: 560px; overflow-y: auto; }
+  .sec-title { font-size: 13px; color: #fff; margin: 4px 0 8px; display: flex; justify-content: space-between; align-items: center; }
+  .sec-title .sub { font-size: 11px; color: #888; font-weight: 400; }
+  .note { font-size: 12px; color: #888; line-height: 1.6; margin-bottom: 10px; }
+  .divider { height: 1px; background: #333; margin: 14px 0; }
+
+  .upg { display: flex; justify-content: space-between; align-items: center; padding: 9px 10px; margin-bottom: 7px; background: #2d2d2d; border: 1px solid #3c3c3c; border-radius: 4px; cursor: pointer; user-select: none; }
+  .upg:hover:not(.disabled):not(.locked) { border-color: #007acc; }
+  .upg.disabled { opacity: .45; cursor: default; }
+  .upg.locked { opacity: .25; cursor: default; }
+  .upg-name { font-size: 14px; color: #fff; }
+  .upg-lv { color: #4ec9b0; font-size: 12px; margin-left: 6px; }
+  .upg-desc { font-size: 11px; color: #888; margin-top: 2px; }
+  .upg-cost { font-family: Consolas, monospace; font-size: 13px; color: #d7ba7d; text-align: right; white-space: nowrap; margin-left: 8px; }
+
+  .card { background: #2d2d2d; border: 1px solid #3c3c3c; border-radius: 4px; padding: 10px; margin-bottom: 8px; }
+  .card.active { border-color: #007acc; }
+  .card-top { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #888; }
+  .kind { padding: 1px 6px; border-radius: 3px; font-weight: 600; color: #1e1e1e; }
+  .k-maint { background: #9cdcfe; } .k-qa { background: #ce9178; } .k-build { background: #4ec9b0; } .k-adv { background: #c586c0; } .k-next { background: #d7ba7d; }
+  .card-top .right { margin-left: auto; font-family: Consolas, monospace; }
+  .card-title { font-size: 14px; color: #fff; margin: 6px 0; }
+  .req { font-size: 12px; color: #aaa; margin: 2px 0; }
+  .req.done { color: #4ec9b0; }
+  .card-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 12px; color: #d7ba7d; gap: 8px; }
+
+  .row { display: flex; justify-content: space-between; align-items: center; padding: 9px 10px; margin-bottom: 7px; background: #2d2d2d; border: 1px solid #3c3c3c; border-radius: 4px; gap: 10px; }
+  .row.locked { opacity: .35; }
+  .row-name { font-size: 14px; color: #fff; }
+  .row-name .cnt { color: #4ec9b0; font-size: 12px; margin-left: 6px; }
+  .row-desc { font-size: 11px; color: #888; margin-top: 2px; line-height: 1.5; }
+
+  .big-btn { width: 100%; padding: 11px; font-size: 14px; font-weight: 600; background: #0e639c; color: #fff; border: none; border-radius: 4px; cursor: pointer; margin-top: 8px; }
+  .big-btn:disabled { background: #3c3c3c; color: #777; cursor: default; }
+  .big-btn.gold { background: #8a6d08; }
+  .info { font-size: 13px; color: #aaa; line-height: 1.7; }
+  .info b { color: #4ec9b0; }
+
+  .ach { display: flex; gap: 10px; align-items: center; padding: 7px 4px; border-bottom: 1px solid #2f2f2f; font-size: 13px; }
+  .ach .mark { width: 18px; height: 18px; border-radius: 50%; border: 1px solid #555; flex-shrink: 0; }
+  .ach.done .mark { background: #4ec9b0; border-color: #4ec9b0; }
+  .ach .a-desc { font-size: 11px; color: #888; }
+  .ach:not(.done) .a-name { color: #888; }
+
+  .foot { display: flex; gap: 8px; padding: 10px 14px; border-top: 1px solid #333; }
+  .foot button { flex: 1; padding: 7px; background: #3c3c3c; color: #ccc; border: 1px solid #555; border-radius: 4px; cursor: pointer; font-size: 12px; }
+
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; z-index: 50; }
+  .modal { background: #252526; border: 1px solid #007acc; border-radius: 8px; padding: 22px; width: 420px; max-width: 92vw; }
+  .modal h3 { color: #fff; font-size: 17px; margin-bottom: 10px; }
+  .modal .m-desc { font-size: 14px; color: #ccc; line-height: 1.7; margin-bottom: 16px; }
+  .modal .m-btns { display: flex; flex-direction: column; gap: 8px; }
+  .modal .m-btns button { padding: 10px; font-size: 14px; border-radius: 4px; border: none; cursor: pointer; background: #0e639c; color: #fff; }
+  .modal .m-btns button.alt { background: #3c3c3c; color: #ccc; }
+  .modal .m-auto { font-size: 11px; color: #777; margin-top: 10px; text-align: right; }
+
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #007acc; color: #fff; padding: 10px 20px; border-radius: 4px; font-size: 14px; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 60; max-width: 90vw; text-align: center; }
+  .toast.show { opacity: 1; }
+  @media (max-width: 900px) { .main { grid-template-columns: 1fr; } #side { height: auto; max-height: 600px; } }
+</style>
+</head>
+<body>
+
+<div class="top">
+  <h1>코드 키우기 <span class="ver" id="ver">v1.0-dev</span><span class="title-chip" id="titleChip">신입</span></h1>
+  <div class="stats">
+    <div><div class="stat-label">서비스 가치</div><div class="stat-val" id="value">0</div></div>
+    <div><div class="stat-label">초당 가치</div><div class="stat-val rate" id="rate">0</div></div>
+    <div><div class="stat-label">타이핑 1회당</div><div class="stat-val key" id="keyGain">0</div></div>
+    <div><div class="stat-label">평판</div><div class="stat-val rep" id="rep">0</div></div>
+    <div><div class="stat-label">릴리즈 배수</div><div class="stat-val" id="mult">x1</div></div>
+  </div>
+</div>
+
+<div class="goalbar"><span class="goal-label">목표</span><span id="goal"></span><span id="buffs"></span></div>
+
+<div class="main">
+  <div class="panel" id="editorPanel">
+    <div class="tab">
+      <span><span id="filename">Main.java</span><span class="lines" id="lines"></span></span>
+      <span class="right"><span class="stage-name" id="stageName"></span><button class="btn" id="refactorBtn">리팩토링</button></span>
+    </div>
+    <div class="challenge hidden" id="challenge"></div>
+    <div class="status" id="status"></div>
+    <div class="code" id="code"></div>
+    <div class="progress-wrap">
+      <div class="progress-label"><span id="nextLabel">다음 아키텍처</span><span id="nextVal"></span></div>
+      <div class="bar"><div class="bar-fill" id="nextBar"></div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="tabs" id="tabs"></div>
+    <div id="side"></div>
+    <div class="foot">
+      <button id="saveBtn">저장</button>
+      <button id="resetBtn">초기화</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg hidden" id="modal"><div class="modal" id="modalBox"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+ * 설정값
+ * ========================================================= */
+const SAVE_KEY = 'codeIdle_v1';
+const RELEASE_MIN = 1e6;
+const OFFLINE_CAP = 12 * 3600;
+const LINE_CAP = 3000;
+const LINE_TRIM = 500;
+const AUTO_TYPE_SPEED = 30;
+const PENDING_CAP = 800;
+const MAX_TYPED_PER_BUY = 3;
+const KEY_GAIN_RATIO = 0.1;
+const MERGE_MIN = 3;
+const KEY_CHARS_MIN = 1;
+const KEY_CHARS_MAX = 2;
+const IDLE_MS = 1500;
+const MAX_BUGS = 5;
+const OFFER_SLOTS = 3;
+const I = '    ';
+const TITLES = ['신입', '주임', '대리', '과장', '차장', '부장', '대표'];
+
+const UPGRADES = [
+  { id: 'var',    name: '변수 선언',   base: 10,  growth: 1.6, unlock: 0 },
+  { id: 'key',    name: '기계식 키보드', base: 15, growth: 1.9, unlock: 0 },
+  { id: 'func',   name: '메서드 작성', base: 100, growth: 2.2, unlock: 50 },
+  { id: 'test',   name: '테스트 코드', base: 1e3, growth: 3,   unlock: 500 },
+  { id: 'cls',    name: 'VO 설계',     base: 5e3, growth: 4,   unlock: 2e3 },
+  { id: 'review', name: '코드 리뷰',   base: 2e4, growth: 4,   unlock: 1e4 },
+  { id: 'log',    name: '로깅',        base: 5e4, growth: 4,   unlock: 3e4 },
+  { id: 'srv',    name: '서버 증설',   base: 1e5, growth: 12,  unlock: 5e4 },
+];
+
+const STAGES = [
+  { at: 0,    name: 'Hello World', file: 'Main.java',              imports: [], annotations: [] },
+  { at: 1e3,  name: '메서드 분리', file: 'Main.java',              imports: ['java.util.List', 'java.util.Map', 'java.util.HashMap'], annotations: [] },
+  { at: 1e6,  name: '객체지향',    file: 'UserMain.java',          imports: ['lombok.Getter'], annotations: [] },
+  { at: 1e10, name: '계층 분리',   file: 'UserService.java',       imports: ['com.mgl.codeidle.dao.UserDao', 'com.mgl.codeidle.service.UserService'], annotations: [] },
+  { at: 1e15, name: 'Spring Boot', file: 'UserController.java',    imports: ['org.springframework.web.bind.annotation.GetMapping', 'org.springframework.web.bind.annotation.RestController', 'lombok.RequiredArgsConstructor'], annotations: ['@RestController', '@RequiredArgsConstructor'] },
+  { at: 1e25, name: 'MSA',         file: 'GatewayController.java', imports: ['org.springframework.cloud.client.discovery.EnableDiscoveryClient'], annotations: ['@EnableDiscoveryClient'] },
+  { at: 1e40, name: 'AI 에이전트', file: 'DevAgent.java',          imports: ['com.mgl.codeidle.ai.Agent'], annotations: [] },
+];
+
+const VARS = [
+  ['int', 'userCount', '0', '사용자 수'], ['int', 'maxRetry', '3', '최대 재시도 횟수'], ['long', 'timeout', '30L', '타임아웃(초)'],
+  ['int', 'cacheSize', '1024', '캐시 크기'], ['int', 'pageSize', '20', '페이지 크기'], ['long', 'retryDelay', '5L', '재시도 간격(초)'],
+  ['int', 'batchSize', '100', '배치 크기'], ['int', 'offset', '0', '조회 시작 위치'], ['String', 'apiVersion', '"v1"', 'API 버전'],
+  ['String', 'logLevel', '"INFO"', '로그 레벨'],
+];
+const NOUNS = ['User', 'Order', 'Payment', 'Login', 'Cart', 'Report', 'Search', 'Notice', 'Schedule', 'Token'];
+const KO = { User: '사용자', Order: '주문', Payment: '결제', Login: '로그인', Cart: '장바구니', Report: '리포트', Search: '검색', Notice: '공지사항', Schedule: '근무표', Token: '토큰' };
+const REVIEWS = ['네이밍 컨벤션 수정', '매직넘버 상수화', 'null 체크 추가', '중복 로직 제거', '주석 보완', '예외 처리 보강'];
+
+const FILLERS = [
+  ['// 사용자 목록 조회', 'List<UserVo> userList = userDao.selectUserList(searchVo);', 'for (UserVo user : userList) {', '    if ("Y".equals(user.getUseYn())) {', '        resultList.add(user);', '    }', '}'],
+  ['try {', '    int result = orderDao.insertOrder(orderVo);', '    log.info("insert result : " + result);', '} catch (Exception e) {', '    log.error("주문 등록 실패", e);', '    throw new BizException("ERR_ORDER_001");', '}'],
+  ['StringBuilder sb = new StringBuilder();', 'sb.append("SELECT USER_ID, USER_NM FROM TB_USER");', 'sb.append(" WHERE USE_YN = \'Y\'");', 'sb.append(" ORDER BY REG_DT DESC");', 'String query = sb.toString();'],
+  ['Map<String, Object> paramMap = new HashMap<>();', 'paramMap.put("userId", userId);', 'paramMap.put("startDt", startDt);', 'paramMap.put("endDt", endDt);', 'List<Map<String, Object>> rows = commonDao.selectList("schedule.selectList", paramMap);'],
+  ['if (StringUtils.isEmpty(userId)) {', '    throw new IllegalArgumentException("userId is required");', '}'],
+  ['List<String> names = userList.stream()', '    .filter(u -> u.getAge() > 20)', '    .map(UserVo::getName)', '    .sorted()', '    .collect(Collectors.toList());'],
+  ['SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");', 'String today = sdf.format(new Date());', 'paramMap.put("workDt", today);'],
+  ['// TODO: 다음 배포 때 정리', 'int total = 0;', 'for (int i = 0; i < list.size(); i++) {', '    total += list.get(i).getAmount();', '}'],
+  ['@Transactional', 'public void saveSchedule(ScheduleVo vo) {', '    scheduleDao.deleteSchedule(vo);', '    scheduleDao.insertSchedule(vo);', '}'],
+  ['ResultVo resultVo = new ResultVo();', 'resultVo.setCode("0000");', 'resultVo.setMessage("정상 처리되었습니다.");', 'resultVo.setData(rows);'],
+  ['for (int i = 0; i < userList.size(); i++) {', '    UserVo user = userList.get(i);', '    if (user.getLastLoginDt() == null) {', '        user.setStatus("SLEEP");', '        userDao.updateUser(user);', '    }', '}'],
+  ['String cacheKey = "user:" + userId;', 'UserVo cached = cacheManager.get(cacheKey);', 'if (cached != null) {', '    return cached;', '}'],
+];
+
+const CLIENTS = ['한빛병원', '새솔대학병원', '누리물류', '가람제약', '바른보험', '도담대학교', '하늘은행', '미르성당', '온새미유통', '다온시청'];
+
+const KINDS = [
+  { id: 'maint', name: '유지보수',     rep: 0,  w: 3, time: 90,  rewardSec: 60,   repGain: 1,  spawn: 1,
+    titles: ['로그인 오류 수정', '화면 문구 변경', '조회 조건 추가', '엑셀 다운로드 수정', '권한 메뉴 추가'],
+    gen: () => ({ lines: ri(6, 12), bugs: 1 }) },
+  { id: 'qa',    name: 'QA 결함 조치', rep: 2,  w: 2, time: 60,  rewardSec: 80,   repGain: 2,  spawn: 3,
+    titles: ['통합테스트 결함 조치', 'UAT 결함 조치', '오픈 전 결함 조치'],
+    gen: () => ({ bugs: 3 }) },
+  { id: 'build', name: '신규 구축',    rep: 5,  w: 3, time: 300, rewardSec: 300,  repGain: 5,  spawn: 0,
+    titles: ['근무표관리 화면 개발', '자원봉사자 관리 시스템 구축', '예약 시스템 개발', '재고관리 모듈 개발', '전자결재 연동'],
+    gen: r => ({ lines: ri(25, 40), upgrades: ri(2, 4), earn: r * 120 }) },
+  { id: 'adv',   name: '고도화',       rep: 20, w: 2, time: 420, rewardSec: 600,  repGain: 10, spawn: 0,
+    titles: ['인사 시스템 고도화', '조회 성능 개선', '통계 화면 고도화', '모바일 대응'],
+    gen: r => ({ lines: ri(40, 60), upgrades: ri(4, 6), refactor: 1, earn: r * 240 }) },
+  { id: 'next',  name: '차세대',       rep: 50, w: 1, time: 900, rewardSec: 1500, repGain: 25, spawn: 0, unique: true,
+    titles: ['병원정보시스템 차세대 구축', '전사 ERP 차세대'],
+    gen: r => ({ lines: 100, upgrades: 8, refactor: 2, bugs: 5, earn: r * 500 }) },
+];
+const REQ_LABEL = { lines: '코드 작성', bugs: '버그 수정', refactor: '리팩토링', upgrades: '업그레이드', earn: '가치 벌기' };
+const REQ_UNIT = { lines: '줄', bugs: '개', refactor: '회', upgrades: '회', earn: '' };
+const REQ_STAT = { lines: 'linesTyped', bugs: 'bugsFixed', refactor: 'refactors', upgrades: 'upgrades', earn: 'earned' };
+
+const ROLES = [
+  { id: 'junior', name: '신입 개발자',   rep: 5,  max: 5, base: 1e4, growth: 5,  salary: 0.03, desc: '초당 2회 자동 타이핑 (수익도 받음)' },
+  { id: 'senior', name: '시니어 개발자', rep: 15, max: 3, base: 1e7, growth: 10, salary: 0.08, desc: '코드 복잡도 증가 -20%, 복잡도 60% 이상이면 자동 리팩토링, 리팩토링 시간 단축' },
+  { id: 'pm',     name: 'PM',            rep: 25, max: 2, base: 1e9, growth: 10, salary: 0.05, desc: '동시 진행 의뢰 +1, 의뢰 자동 수락, 의뢰 보상 +25%' },
+];
+
+const SKILLS = [
+  { id: 'sql',     name: 'SQL 튜닝', max: 3, desc: '수입 x2' },
+  { id: 'clean',   name: '클린코드', max: 3, desc: '코드 복잡도 증가 -25%' },
+  { id: 'cicd',    name: 'CI/CD',    max: 3, desc: '버그 확률 -25%, 리팩토링 시간 -30%' },
+  { id: 'nego',    name: '협상력',   max: 3, desc: '의뢰 보상 +50%' },
+  { id: 'lead',    name: '리더십',   max: 2, desc: '팀원 월급 -30%' },
+  { id: 'typist',  name: '타자왕',   max: 3, desc: '타이핑 수익 x2' },
+  { id: 'network', name: '인맥',     max: 2, desc: '시작 평판 +10, 평판 효과 +50%' },
+];
+
+const WORDS = ['select', 'commit', 'return', 'public', 'static', 'null', 'void', 'class', 'import', 'insert', 'update', 'delete', 'rollback', 'spring', 'mybatis', 'oracle', 'deploy', 'refactor', 'debug', 'merge', 'override', 'private', 'final', 'interface'];
+
+const ACHS = [
+  ['first_quest', '첫 납품', '의뢰 1건 완료', () => S().questsDone >= 1],
+  ['quest10', '단골 고객', '의뢰 10건 완료', () => S().questsDone >= 10],
+  ['quest50', '믿고 맡기는 개발자', '의뢰 50건 완료', () => S().questsDone >= 50],
+  ['release1', '첫 릴리즈', '릴리즈 1회', () => S().releases >= 1],
+  ['v5', '버전 5.0', 'v5.0 도달', () => state.version >= 5],
+  ['job1', '첫 이직', '이직 1회', () => S().jobs >= 1],
+  ['bujang', '부장 승진', '직급 부장 달성', () => state.career.level >= 5],
+  ['founder', '대표님', '창업 성공', () => state.career.founded],
+  ['bug100', '버그 헌터', '버그 100개 수정', () => S().bugsFixed >= 100],
+  ['ref10', '리팩토링 장인', '리팩토링 10회', () => S().refactors >= 10],
+  ['keys10k', '키보드 워리어', '타이핑 10,000회', () => S().keys >= 10000],
+  ['lines1k', '천 줄의 코드', '코드 1,000줄 작성', () => S().linesTyped >= 1000],
+  ['incident5', '장애 해결사', '장애 5회 무사 대응', () => S().incidentsOk >= 5],
+  ['friday', '금요일의 용자', '금요일 배포 성공', () => S().fridayOk >= 1],
+  ['words50', '타자 장인', '챌린지 단어 50개', () => S().challengeWords >= 50],
+  ['nextgen', '차세대 완수', '차세대 의뢰 완료', () => S().nextGenDone >= 1],
+  ['value15', '천조 클럽', '가치 1,000조원 달성', () => state.runBest >= 1e15],
+  ['value30', '100양 클럽', '가치 100양원 달성', () => state.runBest >= 1e30],
+];
+
+/* =========================================================
+ * 상태
+ * ========================================================= */
+function freshRun(version) {
+  return {
+    value: 0, runBest: 0, lv: { var: 0, key: 0, func: 0, test: 0, cls: 0, review: 0, log: 0, srv: 0 }, stage: 0,
+    lines: [], cur: '', curSrc: '', filler: '', pending: '// v' + version + '.0\nSystem.out.println("hello, world");\n',
+    lineOffset: 0, history: [], refactorCount: 0, fillerIdx: 0,
+    debt: 0, bugs: [], bugInfo: {}, bugQueue: 0, refactoring: null, cleanUntil: 0, incident: null,
+  };
+}
+function freshCompany(career) {
+  return {
+    releaseMult: 1, version: 1, rep: career ? career.skills.network * 10 : 0,
+    team: { junior: 0, senior: 0, pm: 0 },
+    quests: { offers: [], active: [], nextOfferAt: 0, seq: 0 },
+  };
+}
+function freshCareer() {
+  return {
+    level: 0, points: 0, founded: false, ach: {},
+    skills: { sql: 0, clean: 0, cicd: 0, nego: 0, lead: 0, typist: 0, network: 0 },
+    stats: { keys: 0, linesTyped: 0, questsDone: 0, questsFailed: 0, bugsFixed: 0, refactors: 0, incidentsOk: 0, releases: 0, jobs: 0, playTime: 0, upgrades: 0, earned: 0, fridayOk: 0, nextGenDone: 0, challengeWords: 0 },
+  };
+}
+function defaultState() {
+  const c = freshCareer();
+  return Object.assign(freshRun(1), freshCompany(c), { career: c, time: 0, lastSave: Date.now(), buffs: [], nextEventAt: 150, nextChallengeAt: 60, challenge: null });
+}
+
+let state = defaultState();
+let tab = 'upg';
+let buyMax = false;
+let autoAcc = 0;
+let juniorAcc = 0;
+let secAcc = 0;
+let curEl = null;
+let lastFloatAt = 0;
+let lastKeyAt = 0;
+let modalSpec = null;
+let lastSideHtml = '';
+let lastStatusHtml = '';
+
+/* =========================================================
+ * 유틸
+ * ========================================================= */
+const $ = id => document.getElementById(id);
+const S = () => state.career.stats;
+const SK = () => state.career.skills;
+function ri(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+const KR_UNITS = ['', '만', '억', '조', '경', '해', '자', '양', '구', '간', '정', '재', '극', '항하사', '아승기', '나유타', '불가사의', '무량대수'];
+// 1만 이상은 한국식 단위(만, 억, 조...)로 표시
+function fmt(n) {
+  if (typeof n !== 'number' || !isFinite(n)) return '0';
+  if (n < 100) return n.toFixed(1);
+  if (n < 1e4) return Math.floor(n).toLocaleString();
+  const k = Math.floor(Math.log10(n) / 4);
+  if (k >= KR_UNITS.length) {
+    const e = Math.floor(Math.log10(n));
+    return (n / Math.pow(10, e)).toFixed(2) + 'e' + e;
+  }
+  const v = n / Math.pow(10, 4 * k);
+  return (v < 10 ? v.toFixed(2) : v < 100 ? v.toFixed(1) : Math.floor(v).toString()) + KR_UNITS[k];
+}
+function won(n) { return fmt(n) + '원'; }
+function fmtInt(n) { return Math.floor(n).toLocaleString(); }
+function fmtSec(s) { return Math.max(0, Math.ceil(s)) + '초'; }
+function lower(s) { return s.charAt(0).toLowerCase() + s.slice(1); }
+function suffix(n, len) { const r = Math.floor(n / len); return r > 0 ? String(r + 1) : ''; }
+function countOf(lv, i, len) { return lv > i ? Math.floor((lv - 1 - i) / len) + 1 : 0; }
+
+/* =========================================================
+ * 수치 공식
+ * ========================================================= */
+function achCount() { return Object.keys(state.career.ach).length; }
+function buffMult(kind) {
+  let m = 1;
+  for (const b of state.buffs) if (b.kind === kind && b.until > state.time) m *= b.mult;
+  return m;
+}
+function hasBuff(kind) { return state.buffs.some(b => b.kind === kind && b.until > state.time); }
+function addBuff(kind, mult, sec, label, bad) { state.buffs.push({ kind, mult, until: state.time + sec, label, bad: !!bad }); }
+function salaryRate() {
+  let s = 0;
+  for (const r of ROLES) s += state.team[r.id] * r.salary;
+  return s * Math.pow(0.7, SK().lead);
+}
+function bugPenalty() { return Math.min(0.85, 0.6 + 0.05 * state.lv.log); }
+function offlineEff() { return Math.min(1, 0.5 + 0.1 * state.lv.srv); }
+function debtFactor() { return 1 / (1 + 0.25 * state.lv.review) * Math.pow(0.75, SK().clean) / (1 + 0.2 * state.team.senior); }
+function bugChance() { return 0.004 * (1 + state.debt / 25) / (1 + 0.3 * state.lv.test) * Math.pow(0.75, SK().cicd); }
+function refactorDuration() { return Math.max(1.5, 8 / (1 + 0.25 * state.lv.cls) * Math.pow(0.7, SK().cicd) / (1 + 0.5 * state.team.senior)); }
+function incidentTime() { return 30 + 5 * state.lv.log; }
+function questSlots() { return 1 + state.team.pm; }
+function questRewardMult() { return (1 + 0.5 * SK().nego) * (1 + 0.25 * state.team.pm); }
+function careerMult() { return (1 + 0.5 * Math.min(state.career.level, 5)) * (state.career.founded ? 10 : 1); }
+function repMult() { return 1 + state.rep * 0.03 * (1 + 0.5 * SK().network); }
+
+function upgradeMult() {
+  const L = state.lv;
+  return (1 + L.var) * Math.pow(1 + L.func, 1.5) * (1 + L.cls) * Math.pow(2, L.srv);
+}
+function rate() {
+  let r = upgradeMult() * state.releaseMult * repMult() * Math.pow(2, SK().sql) * careerMult() * (1 + 0.03 * achCount());
+  r *= Math.max(0.1, 1 - salaryRate());
+  r *= 1 - state.debt / 200;
+  r *= Math.pow(bugPenalty(), state.bugs.length);
+  if (state.refactoring) r *= 0.5;
+  if (state.lv.cls > 0 && state.time < state.cleanUntil) r *= 1 + 0.3 * state.lv.cls;
+  return r * buffMult('income');
+}
+function keyGain() {
+  if (state.refactoring) return 0;
+  return (1 + rate() * KEY_GAIN_RATIO) * (1 + state.lv.key) * Math.pow(2, SK().typist) * buffMult('typing');
+}
+function cost(u) { return u.base * Math.pow(u.growth, state.lv[u.id]); }
+function releaseGain() {
+  if (state.runBest < RELEASE_MIN) return 0;
+  return Math.pow(state.runBest / 1e5, 0.3);
+}
+function currentStage() {
+  let s = 0;
+  for (let i = 0; i < STAGES.length; i++) if (state.runBest >= STAGES[i].at) s = i;
+  return s;
+}
+function addValue(v) {
+  if (!(v > 0)) return;
+  state.value += v;
+  S().earned += v;
+  if (state.value > state.runBest) state.runBest = state.value;
+}
+function addDebt(v) { state.debt = Math.min(100, Math.max(0, state.debt + v)); }
+function addRep(v) { state.rep = Math.max(0, state.rep + v); }
+
+function upgDesc(u) {
+  const l = state.lv[u.id];
+  switch (u.id) {
+    case 'var':    return '수입 x' + fmt(1 + l);
+    case 'key':    return '타이핑 수익 x' + fmt(1 + l);
+    case 'func':   return '수입 x' + fmt(Math.pow(1 + l, 1.5));
+    case 'test':   return '버그 확률 ' + Math.round(100 / (1 + 0.3 * l)) + '%로 감소';
+    case 'cls':    return '수입 x' + fmt(1 + l) + ', 리팩토링 ' + refactorDuration().toFixed(1) + '초, 정리 후 30초간 수입 x' + (1 + 0.3 * l).toFixed(1);
+    case 'review': return '코드 복잡도 증가 ' + Math.round(100 / (1 + 0.25 * l)) + '%로 감소';
+    case 'log':    return '장애 대응 ' + incidentTime() + '초, 버그 1개당 수입 x' + bugPenalty().toFixed(2);
+    case 'srv':    return '수입 x' + fmt(Math.pow(2, l)) + ', 트래픽 대응, 오프라인 수익 ' + Math.round(offlineEff() * 100) + '%';
+  }
+  return '';
+}
+
+/* =========================================================
+ * 코드 생성
+ * ========================================================= */
+function codeFor(id, lv) {
+  const stage = state.stage;
+  const n = lv - 1;
+  const noun = NOUNS[n % NOUNS.length] + suffix(n, NOUNS.length);
+  const low = lower(noun);
+  if (id === 'var') {
+    const v = VARS[n % VARS.length];
+    return [v[0] + ' ' + v[1] + suffix(n, VARS.length) + ' = ' + v[2] + ';'];
+  }
+  if (id === 'func') {
+    if (stage >= 4) return ['', '@GetMapping("/' + low + '")', 'public ' + noun + 'Vo get' + noun + '() {', '    return ' + low + 'Service.find();', '}'];
+    if (stage >= 3) return ['', 'public ' + noun + 'Vo get' + noun + '() {', '    return ' + low + 'Dao.select();', '}'];
+    return ['', 'public Object get' + noun + '() {', '    return db.find("' + low + '");', '}'];
+  }
+  if (id === 'cls') {
+    const head = stage >= 2 ? ['', '@Getter', 'public class ' + noun + 'Vo {'] : ['', 'public class ' + noun + 'Vo {'];
+    return head.concat(['    private Long id;', '    private String name;', '}']);
+  }
+  if (id === 'test') return ['', '@Test', 'void test' + noun + 'Find() {', '    assertNotNull(' + low + 'Service.find(1));', '}'];
+  if (id === 'key') return ['// 기계식 키보드 Lv.' + lv + ' 장착 (' + ['청축', '갈축', '적축', '흑축', '저소음 적축'][n % 5] + ')'];
+  if (id === 'review') return ['// [코드리뷰] ' + REVIEWS[n % REVIEWS.length] + ' 반영 완료'];
+  if (id === 'log') return ['log.info("[' + noun + '] 처리 시작");'];
+  if (id === 'srv') {
+    if (stage >= 5) return ['router.route("/svc' + lv + '", ' + Math.pow(2, lv) + ');'];
+    return ['server.scale(' + Math.pow(2, lv) + ');  // 서버 ' + lv + '대'];
+  }
+  return [];
+}
+
+function enqueue(lines, target) {
+  const ind = state.refactorCount > 0 ? I : '';
+  state[target || 'pending'] += lines.map(l => l ? ind + l : '').join('\n') + '\n';
+}
+
+/* =========================================================
+ * 구매
+ * ========================================================= */
+function buy(id) {
+  const u = UPGRADES.find(x => x.id === id);
+  if (!u || state.runBest < u.unlock) return;
+  if (hasBuff('freeze')) { toast('코드 프리징 기간에는 업그레이드를 살 수 없습니다'); return; }
+  let bought = 0;
+  let hidden = 0;
+  do {
+    const c = cost(u);
+    if (!isFinite(c) || state.value < c) break;
+    state.value -= c;
+    state.lv[u.id]++;
+    bought++;
+    if (bought <= MAX_TYPED_PER_BUY) enqueue(codeFor(u.id, state.lv[u.id]));
+    else hidden++;
+  } while (buyMax && bought < 1000);
+  if (hidden > 0) enqueue(['// ... ' + u.name + ' ' + hidden + '건 더 추가']);
+  if (bought > 0) {
+    S().upgrades += bought;
+    addDebt(0.8 * Math.min(bought, 10) * debtFactor());
+  }
+}
+
+/* =========================================================
+ * 리팩토링
+ * ========================================================= */
+function today() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function sectionHeader(title) {
+  const bar = '='.repeat(50);
+  return [I + '/* ' + bar, I + ' * ' + title, I + ' * ' + bar + ' */'];
+}
+function aligned(pairs) {
+  const w = Math.max(...pairs.map(p => p[0].length));
+  return pairs.map(p => I + p[0].padEnd(w + 2) + '// ' + p[1]);
+}
+
+function buildRefactored(history) {
+  const s = state.stage;
+  const lv = state.lv;
+  const cls = STAGES[s].file.replace('.java', '');
+  const out = [];
+
+  out.push('/**', ' * 파일명   : ' + STAGES[s].file, ' * 설명     : ' + STAGES[s].name + ' 단계 메인 클래스', ' * 작성자   : 개발자', ' * 작성일   : ' + today(), ' *', ' * 수정이력');
+  history.slice(-5).forEach(h => out.push(' *   ' + h));
+  out.push(' */', 'package com.mgl.codeidle;', '');
+
+  const imps = new Set();
+  for (let i = 1; i <= s; i++) STAGES[i].imports.forEach(x => imps.add(x));
+  if (lv.log > 0) { imps.add('org.slf4j.Logger'); imps.add('org.slf4j.LoggerFactory'); }
+  [...imps].sort().forEach(x => out.push('import ' + x + ';'));
+  if (imps.size) out.push('');
+
+  for (let i = 1; i <= s; i++) STAGES[i].annotations.forEach(a => out.push(a));
+  out.push('public class ' + cls + ' {', '');
+
+  const consts = [];
+  if (lv.log > 0) consts.push(['private static final Logger log = LoggerFactory.getLogger(' + cls + '.class);', '로거']);
+  if (lv.srv > 0) consts.push(['private static final int SERVER_WORKERS = ' + Math.pow(2, lv.srv) + ';', '서버 ' + lv.srv + '대']);
+  if (s >= 6) consts.push(['private static final String AI_MODEL = "frontier-latest";', 'AI 모델']);
+  if (consts.length) out.push(...sectionHeader('상수'), ...aligned(consts), '');
+
+  const vars = [];
+  for (let i = 0; i < VARS.length; i++) {
+    const k = countOf(lv.var, i, VARS.length);
+    if (!k) continue;
+    const [t, n, v, desc] = VARS[i];
+    if (k === 1) vars.push(['private ' + t + ' ' + n + ' = ' + v + ';', desc]);
+    else vars.push(['private ' + t + '[] ' + n + 's = new ' + t + '[' + k + '];', desc + ' (' + k + '개 통합)']);
+  }
+  if (vars.length) out.push(...sectionHeader('멤버 변수'), ...aligned(vars), '');
+
+  const methods = [];
+  if (lv.srv > 0) methods.push('/** 서버 초기화 */', 'public void init() {', I + 'server.scale(SERVER_WORKERS);', '}', '');
+  const funcKinds = Math.min(lv.func, NOUNS.length);
+  const voKinds = Math.min(lv.cls, NOUNS.length);
+  const voName = voKinds >= MERGE_MIN ? 'BaseVo' : 'Object';
+  if (funcKinds >= MERGE_MIN) {
+    methods.push('/** 공통 조회 (getUser, getOrder 외 ' + (lv.func - 2) + '개 메서드 통합) */');
+    if (s >= 4) methods.push('@GetMapping("/{type}/{idx}")', 'public ' + voName + ' find(@PathVariable String type, @PathVariable int idx) {', I + 'return commonService.find(type, idx);', '}', '');
+    else methods.push('public ' + voName + ' find(String type, int idx) {', I + 'return ' + (s >= 3 ? 'commonDao.select(type, idx)' : 'db.find(type, idx)') + ';', '}', '');
+  } else {
+    for (let i = 0; i < NOUNS.length; i++) {
+      const k = countOf(lv.func, i, NOUNS.length);
+      if (!k) continue;
+      const N = NOUNS[i];
+      const low = lower(N);
+      const multi = k > 1;
+      methods.push('/** ' + KO[N] + ' 조회' + (multi ? ' (get' + N + ' 외 ' + (k - 1) + '개 통합)' : '') + ' */');
+      if (s >= 4) methods.push('@GetMapping("/' + low + '")');
+      const arg = multi ? 'idx' : '';
+      let body;
+      if (s >= 4) body = 'return ' + low + 'Service.find(' + arg + ');';
+      else if (s >= 3) body = 'return ' + low + 'Dao.select(' + arg + ');';
+      else body = 'return db.find("' + low + '"' + (multi ? ', idx' : '') + ');';
+      methods.push('public ' + (s >= 2 ? N + 'Vo' : 'Object') + ' get' + N + '(' + (multi ? 'int idx' : '') + ') {', I + body, '}', '');
+    }
+  }
+  if (lv.test > 0) methods.push('// 단위 테스트 ' + lv.test + '건은 ' + cls + 'Test.java로 분리', '');
+  if (methods.length) out.push(...sectionHeader('메서드'), ...methods.map(m => m ? I + m : ''));
+
+  const vos = [];
+  if (voKinds >= MERGE_MIN) {
+    vos.push('/** 공통 VO (UserVo, OrderVo 외 ' + (lv.cls - 2) + '개 통합) */');
+    if (s >= 2) vos.push('@Getter');
+    vos.push('public static class BaseVo {', I + 'private String type;', I + 'private Long id;', I + 'private String name;', '}', '');
+  } else {
+    for (let i = 0; i < NOUNS.length; i++) {
+      const k = countOf(lv.cls, i, NOUNS.length);
+      if (!k) continue;
+      const N = NOUNS[i];
+      vos.push('/** ' + KO[N] + ' VO' + (k > 1 ? ' (' + N + 'Vo 외 ' + (k - 1) + '개 통합)' : '') + ' */');
+      if (s >= 2) vos.push('@Getter');
+      vos.push('public static class ' + N + 'Vo {', I + 'private Long id;', I + 'private String name;', '}', '');
+    }
+  }
+  if (vos.length) out.push(...sectionHeader('VO'), ...vos.map(m => m ? I + m : ''));
+
+  if (s >= 6) out.push(I + '// 이제 코드가 코드를 키운다', I + 'private final Agent dev = new Agent(AI_MODEL);', '');
+  out.push(...sectionHeader('신규 개발 영역'));
+  return out;
+}
+
+function totalLines() { return state.lineOffset + state.lines.length + 1; }
+function refactorPreview() {
+  const before = totalLines() + state.pending.split('\n').length - 1;
+  const draft = state.history.concat(['v' + state.version + '.0 #' + (state.refactorCount + 1) + ' 미리보기']);
+  return { before, after: buildRefactored(draft).length };
+}
+
+function doRefactor(reason) {
+  const { before, after } = refactorPreview();
+  const summary = after < before ? before + '줄을 ' + after + '줄로 정리' : '구역별 구조 정리';
+  state.history.push('v' + state.version + '.0 #' + (state.refactorCount + 1) + ' ' + reason + ', ' + summary);
+  state.refactorCount++;
+  state.lines = buildRefactored(state.history);
+  state.cur = '';
+  state.curSrc = '';
+  state.pending = '';
+  state.filler = '';
+  state.lineOffset = 0;
+  state.debt = 0;
+  state.bugs = [];
+  state.bugInfo = {};
+  state.refactoring = null;
+  state.cleanUntil = state.time + 30;
+  S().refactors++;
+  renderAllCode();
+  $('code').scrollTop = 0;
+  toast('리팩토링 완료: ' + (after < before ? before.toLocaleString() + '줄을 ' + after.toLocaleString() + '줄로 정리' : '구역별 구조 정리') + ', 코드 복잡도와 버그 0');
+}
+
+function startRefactor(reason, manual) {
+  if (state.refactoring) return;
+  if (manual) {
+    const p = refactorPreview();
+    if (p.after >= p.before && state.debt < 5 && state.bugs.length === 0) { toast('이미 충분히 깔끔합니다'); return; }
+  }
+  const dur = refactorDuration();
+  state.refactoring = { until: state.time + dur, dur, reason };
+  toast('리팩토링 시작 (' + dur.toFixed(1) + '초 동안 개발 중단, 수입 절반)');
+}
+
+function checkStage() {
+  const s = currentStage();
+  if (s <= state.stage) return;
+  state.stage = s;
+  doRefactor(STAGES[s].name + ' 전환');
+}
+
+/* =========================================================
+ * 에디터
+ * ========================================================= */
+function highlight(src) {
+  const esc = src.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  if (/^\s*(\/\*|\*)/.test(src)) return '<span class="cm">' + esc + '</span>';
+  const re = /(\/\/.*$)|("[^"\n]*"?)|(@\w+)|\b(public|private|protected|class|static|void|int|long|boolean|return|new|import|package|final|this|null|true|false|if|for|while|try|catch|throw)\b|\b(\d+L?)\b|\b([a-zA-Z_]\w*)(?=\()|\b([A-Z]\w*)\b/gm;
+  return esc.replace(re, (m, cm, str, dec, kw, num, fn, type) => {
+    if (cm) return '<span class="cm">' + cm + '</span>';
+    if (str) return '<span class="str">' + str + '</span>';
+    if (dec) return '<span class="dec">' + dec + '</span>';
+    if (kw) return '<span class="kw">' + kw + '</span>';
+    if (num) return '<span class="num">' + num + '</span>';
+    if (fn) return '<span class="fn">' + fn + '</span>';
+    if (type) return '<span class="type">' + type + '</span>';
+    return m;
+  });
+}
+
+function escHtml(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+function lineHtml(no, text, cursor) {
+  const info = state.bugs.includes(no) ? state.bugInfo[no] : null;
+  let body;
+  if (info) body = highlight(text.slice(0, info.pos)) + '<span class="typo">' + escHtml(text.substr(info.pos, info.len)) + '</span>' + highlight(text.slice(info.pos + info.len));
+  else body = highlight(text);
+  return '<div class="ln' + (info ? ' bug' : '') + '" data-no="' + no + '"><span class="no">' + no + '</span><span class="tx">' + body + (cursor ? '<span class="cursor"></span>' : '') + '</span></div>';
+}
+
+function renderAllCode() {
+  const box = $('code');
+  let html = '';
+  for (let i = 0; i < state.lines.length; i++) html += lineHtml(state.lineOffset + i + 1, state.lines[i], false);
+  html += lineHtml(totalLines(), state.cur, true);
+  box.innerHTML = html;
+  curEl = box.lastElementChild;
+}
+
+function updateCurLine() { curEl.querySelector('.tx').innerHTML = highlight(state.cur) + '<span class="cursor"></span>'; }
+
+function commitLine() {
+  const box = $('code');
+  state.lines.push(state.cur);
+  curEl.querySelector('.tx').innerHTML = highlight(state.cur);
+  state.cur = '';
+  S().linesTyped++;
+  addDebt(0.4 * debtFactor());
+  const tmp = document.createElement('div');
+  tmp.innerHTML = lineHtml(totalLines(), '', true);
+  curEl = tmp.firstChild;
+  box.appendChild(curEl);
+  if (state.lines.length > LINE_CAP) {
+    state.lines.splice(0, LINE_TRIM);
+    state.lineOffset += LINE_TRIM;
+    for (let i = 0; i < LINE_TRIM; i++) box.removeChild(box.firstChild);
+    state.bugs = state.bugs.filter(n => n > state.lineOffset);
+    for (const k in state.bugInfo) if (+k <= state.lineOffset) delete state.bugInfo[k];
+  }
+}
+
+// src: 'pending'(구매 코드, 자동 타이핑) 또는 'filler'(연습 코드, 키 입력으로만 타이핑)
+function typeFrom(src, n, follow) {
+  const box = $('code');
+  const atBottom = box.scrollTop + box.clientHeight >= box.scrollHeight - 40;
+  const q = state[src];
+  let taken = 0;
+  const skipIndent = () => {
+    while (taken < q.length && q[taken] === ' ' && state.cur.trim() === '') { state.cur += ' '; taken++; state.curSrc = src; }
+  };
+  skipIndent();
+  let typed = 0;
+  while (typed < n && taken < q.length) {
+    const ch = q[taken++];
+    typed++;
+    if (ch === '\n') { commitLine(); state.curSrc = ''; }
+    else { state.cur += ch; state.curSrc = src; }
+    skipIndent();
+  }
+  state[src] = q.slice(taken);
+  updateCurLine();
+  if (follow || atBottom) box.scrollTop = box.scrollHeight;
+}
+
+function finishFillerLine() {
+  const idx = state.filler.indexOf('\n');
+  state.cur += idx < 0 ? state.filler : state.filler.slice(0, idx);
+  state.filler = idx < 0 ? '' : state.filler.slice(idx + 1);
+  commitLine();
+  state.curSrc = '';
+  updateCurLine();
+}
+
+function nextFiller() {
+  const snippet = FILLERS[state.fillerIdx % FILLERS.length];
+  state.fillerIdx++;
+  enqueue([''].concat(snippet), 'filler');
+}
+
+function typeOnce(follow) {
+  let src;
+  if (state.cur && state.curSrc) src = state.curSrc;
+  else if (state.filler) src = 'filler';
+  else if (state.pending) src = 'pending';
+  else { nextFiller(); src = 'filler'; }
+  typeFrom(src, ri(KEY_CHARS_MIN, KEY_CHARS_MAX), follow);
+}
+
+function hack() {
+  S().keys++;
+  lastKeyAt = performance.now();
+  if (state.refactoring) { showFloat('리팩토링 중'); return; }
+  const g = keyGain();
+  addValue(g);
+  typeOnce(true);
+  showFloat('+' + fmt(g));
+}
+
+function juniorKey() {
+  if (state.refactoring) return;
+  addValue(keyGain());
+  typeOnce(false);
+}
+
+function showFloat(text, good) {
+  const now = performance.now();
+  if (!good && now - lastFloatAt < 90) return;
+  lastFloatAt = now;
+  const el = document.createElement('div');
+  el.className = 'float' + (good ? ' good' : '');
+  el.textContent = text;
+  $('editorPanel').appendChild(el);
+  setTimeout(() => el.remove(), 700);
+}
+
+/* =========================================================
+ * 버그, 장애
+ * ========================================================= */
+function bugEl(no) { return $('code').querySelector('.ln[data-no="' + no + '"]'); }
+
+const TYPOS = [
+  ['return', 'retrun'], ['public', 'pubilc'], ['private', 'privte'], ['String', 'Strnig'], ['static', 'statc'],
+  ['void', 'viod'], ['new ', 'nwe '], ['class', 'calss'], ['import', 'improt'], ['null', 'nul'],
+  ['List', 'Lsit'], ['Map', 'Mpa'], ['select', 'slect'], ['insert', 'isnert'], ['user', 'usr'], ['final', 'fianl'],
+];
+const STRAYS = ['/', ';', '.', ',', '\\', '`'];
+
+// 정상 코드 한 줄을 오타나 잘못된 글자가 섞인 줄로 바꿈. pos, len은 틀린 부분 위치
+function corrupt(text) {
+  const start = text.length - text.trimStart().length;
+  const opts = [];
+  for (const [ok, bad] of TYPOS) {
+    const i = text.indexOf(ok, start);
+    if (i >= 0) opts.push({ text: text.slice(0, i) + bad + text.slice(i + ok.length), pos: i, len: bad.length });
+  }
+  const semi = text.lastIndexOf(';');
+  if (semi >= 0) opts.push({ text: text.slice(0, semi) + ':' + text.slice(semi + 1), pos: semi, len: 1 });
+  const eq = text.indexOf('==');
+  if (eq >= 0) opts.push({ text: text.slice(0, eq) + '=' + text.slice(eq + 2), pos: eq, len: 1 });
+  const paren = text.lastIndexOf(')');
+  if (paren >= 0) opts.push({ text: text.slice(0, paren) + ']' + text.slice(paren + 1), pos: paren, len: 1 });
+  if (!opts.length || Math.random() < 0.25) {
+    const p = start + Math.floor(Math.random() * (text.length - start + 1));
+    const ch = pick(STRAYS);
+    opts.push({ text: text.slice(0, p) + ch + text.slice(p), pos: p, len: 1 });
+  }
+  return pick(opts);
+}
+
+function isCodeLine(t) {
+  const s = t.trim();
+  return s && !s.startsWith('//') && !s.startsWith('/*') && !s.startsWith('*');
+}
+
+function setLineDom(no) {
+  const el = bugEl(no);
+  if (!el) return;
+  const fresh = document.createElement('div');
+  fresh.innerHTML = lineHtml(no, state.lines[no - state.lineOffset - 1], false);
+  el.replaceWith(fresh.firstChild);
+}
+
+function spawnBug() {
+  const n = state.lines.length;
+  const collect = (from, test) => {
+    const out = [];
+    for (let i = from; i < n; i++) {
+      const no = state.lineOffset + i + 1;
+      if (!state.bugs.includes(no) && test(state.lines[i])) out.push(no);
+    }
+    return out;
+  };
+  let cands = collect(Math.max(0, n - 30), isCodeLine);
+  if (!cands.length) cands = collect(0, isCodeLine);
+  if (!cands.length) cands = collect(0, t => t.trim());
+  if (!cands.length) return false;
+  const no = pick(cands);
+  const idx = no - state.lineOffset - 1;
+  const orig = state.lines[idx];
+  const c = corrupt(orig);
+  state.lines[idx] = c.text;
+  state.bugInfo[no] = { orig, pos: c.pos, len: c.len };
+  state.bugs.push(no);
+  setLineDom(no);
+  return true;
+}
+
+function queueBugs(n) {
+  for (let i = 0; i < n; i++) if (!spawnBug()) state.bugQueue++;
+}
+
+function fixBug(no) {
+  const info = state.bugInfo[no];
+  const idx = no - state.lineOffset - 1;
+  if (info && idx >= 0 && idx < state.lines.length) state.lines[idx] = info.orig;
+  delete state.bugInfo[no];
+  state.bugs = state.bugs.filter(b => b !== no);
+  setLineDom(no);
+  S().bugsFixed++;
+  showFloat('버그 수정!', true);
+}
+
+function findBug() {
+  if (!state.bugs.length) return;
+  const el = bugEl(state.bugs[0]);
+  if (el) el.scrollIntoView({ block: 'center' });
+}
+
+function startIncident() {
+  queueBugs(3);
+  state.incident = { until: state.time + incidentTime() };
+  findBug();
+}
+
+function checkIncident() {
+  if (!state.incident) return;
+  if (state.bugs.length === 0 && state.bugQueue === 0) {
+    const g = rate() * 30;
+    addValue(g);
+    addRep(2);
+    S().incidentsOk++;
+    state.incident = null;
+    toast('장애 대응 성공! +' + fmt(g) + ', 평판 +2');
+  } else if (state.time > state.incident.until) {
+    addRep(-3);
+    state.incident = null;
+    toast('장애 대응 실패. 평판 -3');
+  }
+}
+
+/* =========================================================
+ * 의뢰
+ * ========================================================= */
+function genQuest() {
+  const all = state.quests.active.concat(state.quests.offers);
+  const avail = KINDS.filter(k => state.rep >= k.rep && !(k.unique && all.some(q => q.kind === k.id)));
+  let total = avail.reduce((a, k) => a + k.w, 0);
+  let roll = Math.random() * total;
+  let k = avail[0];
+  for (const x of avail) { roll -= x.w; if (roll <= 0) { k = x; break; } }
+  const req = k.gen(Math.max(rate(), 1));
+  if (req.earn) req.earn = Math.ceil(req.earn);
+  return { id: ++state.quests.seq, kind: k.id, client: pick(CLIENTS), title: pick(k.titles), req, time: k.time, rewardSec: k.rewardSec, repGain: k.repGain };
+}
+function kindOf(q) { return KINDS.find(k => k.id === q.kind); }
+function reqProgress(q, key) { return Math.max(0, S()[REQ_STAT[key]] - q.snap[key]); }
+function questRatio(q) {
+  const keys = Object.keys(q.req);
+  return keys.reduce((a, k) => a + Math.min(1, reqProgress(q, k) / q.req[k]), 0) / keys.length;
+}
+function questReward(q, rush) { return rate() * q.rewardSec * questRewardMult() * (rush ? 0.6 : 1); }
+
+function acceptQuest(id) {
+  const Q = state.quests;
+  if (Q.active.length >= questSlots()) { toast('진행 중인 의뢰가 가득 찼습니다'); return; }
+  const idx = Q.offers.findIndex(q => q.id === id);
+  if (idx < 0) return;
+  const q = Q.offers.splice(idx, 1)[0];
+  q.snap = {};
+  for (const k in REQ_STAT) q.snap[k] = S()[REQ_STAT[k]];
+  q.endsAt = state.time + q.time;
+  Q.active.push(q);
+  const spawn = kindOf(q).spawn;
+  if (spawn) { queueBugs(spawn); findBug(); }
+  if (Q.nextOfferAt < state.time + 5) Q.nextOfferAt = state.time + 5;
+}
+
+function completeQuest(q, rush) {
+  const g = questReward(q, rush);
+  addValue(g);
+  const rg = rush ? Math.ceil(q.repGain / 2) : q.repGain;
+  addRep(rg);
+  if (rush) addDebt(25);
+  S().questsDone++;
+  if (q.kind === 'next') S().nextGenDone++;
+  state.quests.active = state.quests.active.filter(x => x !== q);
+  toast((rush ? '급하게 납품: ' : '납품 완료: ') + q.client + ' "' + q.title + '" +' + fmt(g) + ', 평판 +' + rg + (rush ? ', 코드 복잡도 +25%' : ''));
+}
+
+function rushQuest(id) {
+  const q = state.quests.active.find(x => x.id === id);
+  if (q && questRatio(q) >= 0.5) completeQuest(q, true);
+}
+
+function tickQuests() {
+  const Q = state.quests;
+  for (const q of Q.active.slice()) {
+    if (questRatio(q) >= 1) completeQuest(q, false);
+    else if (state.time > q.endsAt) {
+      const loss = Math.ceil(q.repGain / 2);
+      addRep(-loss);
+      S().questsFailed++;
+      Q.active = Q.active.filter(x => x !== q);
+      toast('마감 초과: ' + q.client + ' "' + q.title + '" 평판 -' + loss);
+    }
+  }
+  if (Q.offers.length < OFFER_SLOTS && state.time >= Q.nextOfferAt) {
+    Q.offers.push(genQuest());
+    Q.nextOfferAt = state.time + (Q.offers.length < 2 ? 3 : 15);
+  }
+  if (state.team.pm > 0 && Q.offers.length && Q.active.length < questSlots()) acceptQuest(Q.offers[0].id);
+}
+
+/* =========================================================
+ * 팀, 커리어, 스킬
+ * ========================================================= */
+function hireCost(r) { return r.base * Math.pow(r.growth, state.team[r.id]); }
+function hire(id) {
+  const r = ROLES.find(x => x.id === id);
+  if (!r || state.rep < r.rep || state.team[id] >= r.max) return;
+  const c = hireCost(r);
+  if (state.value < c) return;
+  state.value -= c;
+  state.team[id]++;
+  toast(r.name + ' 합류! (월급: 수입의 ' + Math.round(r.salary * Math.pow(0.7, SK().lead) * 100) + '%)');
+}
+
+function canRelease() { return releaseGain() > state.releaseMult; }
+function release() {
+  if (!canRelease()) return;
+  const g = releaseGain();
+  const v = state.version;
+  Object.assign(state, freshRun(v + 1));
+  state.version = v + 1;
+  state.releaseMult = g;
+  state.quests.active = [];
+  state.quests.offers = [];
+  state.quests.nextOfferAt = state.time + 3;
+  S().releases++;
+  renderAllCode();
+  save();
+  toast('v' + v + '.0 릴리즈 완료! 배수 x' + fmt(g) + '. 진행 중이던 의뢰는 유지보수팀에 인계됐습니다');
+}
+
+function jobCond() { return { ver: state.version >= 4, rep: state.rep >= 20, lvl: state.career.level < 5 && !state.career.founded }; }
+function canJobChange() { const c = jobCond(); return c.ver && c.rep && c.lvl; }
+function jobGain() { return 1 + Math.floor(Math.log10(Math.max(1, state.releaseMult))) + Math.floor(state.rep / 25); }
+function jobChange() {
+  if (!canJobChange()) return;
+  const gain = jobGain();
+  const c = state.career;
+  c.points += gain;
+  c.level++;
+  c.stats.jobs++;
+  resetCompany();
+  openModal({ title: TITLES[c.level] + '(으)로 이직 성공!', desc: '경력 포인트 +' + gain + '을 얻었습니다. 커리어 탭에서 스킬을 배우세요.<br>새 회사에서 v1.0부터 다시 시작합니다. 직급 보너스로 수입 x' + (1 + 0.5 * c.level).toFixed(1) + '가 적용됩니다.', choices: [{ label: '출근하기' }] });
+}
+
+function resetCompany() {
+  const career = state.career;
+  Object.assign(state, freshRun(1), freshCompany(career));
+  state.buffs = [];
+  state.challenge = null;
+  renderAllCode();
+  save();
+}
+
+function canFound() { return state.career.level >= 5 && !state.career.founded; }
+function found() {
+  if (!canFound()) return;
+  const c = state.career;
+  c.founded = true;
+  c.level = 6;
+  const st = c.stats;
+  const h = Math.floor(st.playTime / 3600);
+  const m = Math.floor(st.playTime % 3600 / 60);
+  resetCompany();
+  openModal({
+    title: '창업 성공! 이제 대표님입니다',
+    desc: '플레이 시간 ' + h + '시간 ' + m + '분<br>타이핑 ' + fmtInt(st.keys) + '회, 작성한 코드 ' + fmtInt(st.linesTyped) + '줄<br>납품 ' + st.questsDone + '건, 버그 수정 ' + st.bugsFixed + '개, 이직 ' + st.jobs + '회<br><br>내 회사에서 다시 시작합니다. 대표 보너스로 수입 x10이 영구 적용됩니다.',
+    choices: [{ label: '대표로 계속 플레이' }],
+  });
+}
+
+function learnSkill(id) {
+  const sk = SKILLS.find(x => x.id === id);
+  const c = state.career;
+  const rank = c.skills[id];
+  if (rank >= sk.max) return;
+  const price = rank + 1;
+  if (c.points < price) return;
+  c.points -= price;
+  c.skills[id]++;
+  toast(sk.name + ' Lv.' + c.skills[id] + ' 습득');
+}
+
+/* =========================================================
+ * 이벤트, 챌린지
+ * ========================================================= */
+const EVENTS = [
+  { w: 3, make: () => ({
+    title: '금요일 배포 요청', desc: '고객사에서 금요일 오후 5시에 배포해 달라고 합니다.',
+    choices: [
+      { label: '배포한다 (70% 성공)', act: () => {
+        if (Math.random() < 0.7) { const g = rate() * 90; addValue(g); addRep(1); S().fridayOk++; toast('배포 성공! +' + fmt(g) + ', 평판 +1'); }
+        else { toast('배포 실패! 운영 장애 발생'); startIncident(); }
+      } },
+      { label: '월요일로 미룬다 (평판 -1)', alt: true, act: () => addRep(-1) },
+    ], def: 1 }) },
+  { w: 2, make: () => {
+    const q = pick(state.quests.active.length ? state.quests.active : [null]);
+    if (q) {
+      q.req.lines = Math.ceil((q.req.lines || 7) * 1.5);
+      q.endsAt += 60;
+      return { title: '요구사항 변경', desc: q.client + '에서 요구사항을 바꿨습니다.<br>"' + q.title + '" 코드 작성 목표가 ' + q.req.lines + '줄로 늘고, 마감이 60초 연장됩니다.', choices: [{ label: '확인' }] };
+    }
+    addDebt(10);
+    return { title: '요구사항 변경', desc: '기획이 바뀌어 기존 코드를 뜯어고쳐야 합니다. 코드 복잡도 +10%', choices: [{ label: '확인' }] };
+  } },
+  { w: 2, cond: () => state.lines.length >= 10, make: () => ({
+    title: '새벽 2시 장애 알림', desc: '운영 서버에 장애가 발생했습니다.<br>' + incidentTime() + '초 안에 빨간 줄의 버그를 모두 클릭해서 잡으세요. (로깅 업그레이드로 시간 증가)',
+    choices: [{ label: '대응 시작', act: startIncident }], def: 0 }) },
+  { w: 2, make: () => {
+    const need = state.stage + 1;
+    if (state.lv.srv >= need) { addBuff('income', 3, 30, '트래픽 폭주 x3'); return { title: '트래픽 폭주', desc: '이벤트 페이지에 사용자가 몰렸지만 서버가 버텨냈습니다!<br>30초 동안 수입 x3', choices: [{ label: '확인' }] }; }
+    addBuff('income', 0.3, 20, '서버 다운 x0.3', true);
+    return { title: '트래픽 폭주', desc: '사용자가 몰려 서버가 다운됐습니다. 20초 동안 수입 x0.3<br>(버티려면 서버 증설 Lv.' + need + ' 이상 필요)', choices: [{ label: '확인' }] };
+  } },
+  { w: 1, make: () => {
+    addBuff('freeze', 1, 60, '코드 프리징', true);
+    addBuff('typing', 2, 60, '문서화 x2');
+    return { title: '코드 프리징', desc: '오픈 전 코드 프리징 기간입니다.<br>60초 동안 업그레이드를 살 수 없지만, 문서 작업 덕에 타이핑 수익이 2배가 됩니다.', choices: [{ label: '확인' }] };
+  } },
+  { w: 2, make: () => ({
+    title: '야근 요청', desc: '팀장님이 오늘 야근 가능하냐고 묻습니다.',
+    choices: [
+      { label: '야근한다 (45초 타이핑 수익 x3, 코드 복잡도 +10%)', act: () => { addBuff('typing', 3, 45, '야근 x3'); addDebt(10); } },
+      { label: '칼퇴한다', alt: true, act: () => toast('칼퇴 성공. 내일 봬요') },
+    ], def: 1 }) },
+];
+
+function fireEvent() {
+  const avail = EVENTS.filter(e => !e.cond || e.cond());
+  let roll = Math.random() * avail.reduce((a, e) => a + e.w, 0);
+  let ev = avail[0];
+  for (const e of avail) { roll -= e.w; if (roll <= 0) { ev = e; break; } }
+  openModal(ev.make());
+}
+
+function startChallenge() {
+  const words = WORDS.slice().sort(() => Math.random() - 0.5);
+  state.challenge = { words, idx: 0, pos: 0, until: state.time + 15, combo: 0, done: 0, earned: 0 };
+}
+function challengeKey(ch) {
+  const c = state.challenge;
+  const word = c.words[c.idx % c.words.length];
+  if (ch === word[c.pos]) {
+    c.pos++;
+    if (c.pos >= word.length) {
+      const g = keyGain() * 15 * (1 + c.combo * 0.5);
+      addValue(g);
+      c.earned += g;
+      c.combo++;
+      c.done++;
+      c.idx++;
+      c.pos = 0;
+      S().challengeWords++;
+      showFloat(word + ' 콤보 ' + c.combo + ' +' + fmt(g), true);
+    }
+  } else {
+    c.pos = 0;
+    c.combo = 0;
+  }
+}
+function endChallenge() {
+  const c = state.challenge;
+  state.challenge = null;
+  toast('타이핑 챌린지 종료: ' + c.done + '단어, +' + fmt(c.earned));
+}
+
+/* =========================================================
+ * 모달
+ * ========================================================= */
+function openModal(spec) {
+  modalSpec = spec;
+  spec.openedAt = state.time;
+  const box = $('modalBox');
+  let html = '<h3>' + spec.title + '</h3><div class="m-desc">' + spec.desc + '</div><div class="m-btns">';
+  spec.choices.forEach((c, i) => { html += '<button data-choice="' + i + '"' + (c.alt ? ' class="alt"' : '') + '>' + c.label + '</button>'; });
+  html += '</div>';
+  if (spec.def !== undefined) html += '<div class="m-auto" id="modalAuto"></div>';
+  box.innerHTML = html;
+  $('modal').classList.remove('hidden');
+}
+function closeModal(i) {
+  const spec = modalSpec;
+  if (!spec) return;
+  modalSpec = null;
+  $('modal').classList.add('hidden');
+  const c = spec.choices[i];
+  if (c && c.act) c.act();
+}
+$('modalBox').addEventListener('click', e => {
+  const b = e.target.closest('[data-choice]');
+  if (b) closeModal(+b.dataset.choice);
+});
+
+/* =========================================================
+ * 목표
+ * ========================================================= */
+function goalText() {
+  const st = S();
+  const c = state.career;
+  if (st.questsDone === 0) return '의뢰 탭에서 의뢰를 수락하고 첫 납품을 하세요';
+  if (c.founded) return st.nextGenDone === 0 ? '대표님, 평판 50을 모아 차세대 프로젝트를 수주하세요 (현재 ' + fmtInt(state.rep) + ')' : '대표님, 100양원을 향해 회사를 키우세요';
+  if (state.rep < 5) return '평판 5 달성: 신규 구축 의뢰와 신입 개발자 고용 해금 (현재 ' + fmtInt(state.rep) + ')';
+  if (st.releases === 0 && c.level === 0) return '가치 ' + fmt(RELEASE_MIN) + ' 달성 후 첫 릴리즈 (업그레이드 탭 아래)';
+  if (state.rep < 20 && c.level === 0) return '평판 20 달성: 고도화 의뢰 해금, 이직 조건 (현재 ' + fmtInt(state.rep) + ')';
+  if (!c.founded && c.level < 5) {
+    const jc = jobCond();
+    if (!jc.ver || !jc.rep) return (c.level === 0 ? '첫 이직 준비' : TITLES[c.level + 1] + '(으)로 이직 준비') + ': v4.0 도달' + (jc.ver ? ' 완료' : ' (현재 v' + state.version + '.0)') + ', 평판 20' + (jc.rep ? ' 완료' : ' (현재 ' + fmtInt(state.rep) + ')');
+    return '커리어 탭에서 이직하세요 (' + TITLES[c.level] + '에서 ' + TITLES[c.level + 1] + '로)';
+  }
+  if (canFound()) return '최종 목표: 커리어 탭에서 창업하세요!';
+  if (st.nextGenDone === 0) return '대표님, 평판 50을 모아 차세대 프로젝트를 수주하세요';
+  return '대표님, 100양원을 향해 회사를 키우세요';
+}
+
+/* =========================================================
+ * 화면
+ * ========================================================= */
+const TABS = [['upg', '업그레이드'], ['quest', '의뢰'], ['team', '팀'], ['career', '커리어'], ['ach', '업적']];
+
+function renderTabs() {
+  let html = '';
+  for (const [id, name] of TABS) {
+    let badge = '';
+    if (id === 'quest' && state.quests.offers.length && state.quests.active.length < questSlots()) badge = '<span class="badge">' + state.quests.offers.length + '</span>';
+    if (id === 'career' && (canJobChange() || canFound() || (state.career.points > 0 && SKILLS.some(s => state.career.skills[s.id] < s.max && state.career.points > state.career.skills[s.id])))) badge = '<span class="badge">!</span>';
+    html += '<button data-tab="' + id + '" class="' + (tab === id ? 'on' : '') + '">' + name + badge + '</button>';
+  }
+  if ($('tabs').innerHTML !== html) $('tabs').innerHTML = html;
+}
+
+function sideUpg() {
+  const freeze = hasBuff('freeze');
+  let h = '<div class="sec-title">업그레이드 <button class="btn gray" data-act="mode">' + (buyMax ? '최대 구매' : '1개씩') + '</button></div>';
+  if (freeze) h += '<div class="note" style="color:#f48771">코드 프리징 중에는 살 수 없습니다</div>';
+  for (const u of UPGRADES) {
+    const locked = state.runBest < u.unlock;
+    const c = cost(u);
+    const cls = locked ? 'locked' : (state.value < c || freeze ? 'disabled' : '');
+    h += '<div class="upg ' + cls + '" data-act="buy:' + u.id + '"><div><div class="upg-name">' + u.name + (locked ? '' : '<span class="upg-lv">Lv.' + state.lv[u.id] + '</span>') + '</div>' +
+      '<div class="upg-desc">' + (locked ? '가치 ' + fmt(u.unlock) + ' 달성 시 해금' : upgDesc(u)) + '</div></div><div class="upg-cost">' + (locked ? '잠김' : fmt(c)) + '</div></div>';
+  }
+  h += '<div class="divider"></div><div class="sec-title">릴리즈 <span class="sub">v' + state.version + '.0</span></div>';
+  if (state.runBest < RELEASE_MIN) {
+    h += '<div class="info">가치 <b>' + fmt(RELEASE_MIN) + '</b> 달성 시 릴리즈 가능<br>이번 판 최고: ' + fmt(state.runBest) + '</div><button class="big-btn" disabled>릴리즈 불가</button>';
+  } else {
+    h += '<div class="info">현재 배수 x' + fmt(state.releaseMult) + ', 릴리즈 시 <b>x' + fmt(releaseGain()) + '</b><br>가치, 업그레이드, 코드, 코드 복잡도, 진행 중 의뢰가 초기화됩니다. 평판과 팀원은 유지됩니다.</div>' +
+      '<button class="big-btn" data-act="release"' + (canRelease() ? '' : ' disabled') + '>' + (canRelease() ? 'v' + state.version + '.0 릴리즈' : '더 키워야 이득') + '</button>';
+  }
+  return h;
+}
+
+function reqLine(q, key, active) {
+  const target = q.req[key];
+  const label = REQ_LABEL[key];
+  if (!active) return '<div class="req">' + label + ' ' + (key === 'earn' ? fmt(target) : target + REQ_UNIT[key]) + '</div>';
+  const p = Math.min(target, reqProgress(q, key));
+  const done = p >= target;
+  const txt = key === 'earn' ? fmt(p) + ' / ' + fmt(target) : Math.floor(p) + ' / ' + target + REQ_UNIT[key];
+  return '<div class="req' + (done ? ' done' : '') + '">' + (done ? '[완료] ' : '') + label + ' ' + txt + '</div>';
+}
+
+function sideQuest() {
+  const Q = state.quests;
+  let h = '<div class="sec-title">진행 중 <span class="sub">' + Q.active.length + ' / ' + questSlots() + '</span></div>';
+  if (!Q.active.length) h += '<div class="note">아래 의뢰를 수락하세요. 조건을 채우면 자동으로 납품됩니다.</div>';
+  for (const q of Q.active) {
+    const k = kindOf(q);
+    const left = q.endsAt - state.time;
+    const ratio = questRatio(q);
+    h += '<div class="card active"><div class="card-top"><span class="kind k-' + q.kind + '">' + k.name + '</span>' + q.client + '<span class="right">' + fmtSec(left) + '</span></div>' +
+      '<div class="card-title">' + q.title + '</div>';
+    for (const key in q.req) h += reqLine(q, key, true);
+    h += '<div class="bar" style="margin-top:6px"><div class="bar-fill ' + (left < 20 ? 'urgent' : 'time') + '" style="width:' + Math.max(0, left / q.time * 100) + '%"></div></div>' +
+      '<div class="card-foot"><span>보상 약 ' + won(questReward(q)) + ', 평판 +' + q.repGain + '</span>' +
+      '<button class="btn warn' + (ratio >= 0.5 ? '' : ' off') + '" data-act="rush:' + q.id + '">급하게 납품</button></div></div>';
+  }
+  h += '<div class="note">급하게 납품: 진행률 50% 이상이면 바로 납품. 보상 60%, 평판 절반, 코드 복잡도 +25%</div>';
+  h += '<div class="divider"></div><div class="sec-title">들어온 의뢰 <span class="sub">' + (state.team.pm ? 'PM이 자동 수락 중' : '15초마다 새 의뢰') + '</span></div>';
+  const full = Q.active.length >= questSlots();
+  for (const q of Q.offers) {
+    const k = kindOf(q);
+    h += '<div class="card"><div class="card-top"><span class="kind k-' + q.kind + '">' + k.name + '</span>' + q.client + '<span class="right">제한 ' + fmtSec(q.time) + '</span></div><div class="card-title">' + q.title + '</div>';
+    for (const key in q.req) h += reqLine(q, key, false);
+    h += '<div class="card-foot"><span>보상 약 ' + won(questReward(q)) + ', 평판 +' + q.repGain + '</span><button class="btn' + (full ? ' off' : '') + '" data-act="accept:' + q.id + '">수락</button></div></div>';
+  }
+  const nextKind = KINDS.find(k => state.rep < k.rep);
+  if (nextKind) h += '<div class="note">평판 ' + nextKind.rep + ' 달성 시 ' + nextKind.name + ' 의뢰 해금</div>';
+  return h;
+}
+
+function sideTeam() {
+  let h = '<div class="sec-title">팀원 <span class="sub">월급 합계: 수입의 ' + Math.round(salaryRate() * 100) + '%</span></div><div class="note">팀원은 릴리즈해도 남고, 이직하면 헤어집니다.</div>';
+  for (const r of ROLES) {
+    const locked = state.rep < r.rep;
+    const c = hireCost(r);
+    const full = state.team[r.id] >= r.max;
+    const can = !locked && !full && state.value >= c;
+    h += '<div class="row' + (locked ? ' locked' : '') + '"><div><div class="row-name">' + r.name + '<span class="cnt">' + state.team[r.id] + ' / ' + r.max + '</span></div>' +
+      '<div class="row-desc">' + r.desc + '<br>월급: 수입의 ' + Math.round(r.salary * Math.pow(0.7, SK().lead) * 100) + '%' + (locked ? '<br>평판 ' + r.rep + ' 필요' : '') + '</div></div>' +
+      '<button class="btn' + (can ? '' : ' off') + '" data-act="hire:' + r.id + '">' + (full ? '최대' : fmt(c)) + '</button></div>';
+  }
+  return h;
+}
+
+function sideCareer() {
+  const c = state.career;
+  const jc = jobCond();
+  let h = '<div class="sec-title">커리어 <span class="sub">직급 보너스 수입 x' + careerMult().toFixed(1) + '</span></div>';
+  h += '<div class="info">직급: <b>' + TITLES[c.level] + '</b><br>경력 포인트: <b>' + c.points + '</b></div>';
+  if (!c.founded && c.level < 5) {
+    h += '<div class="divider"></div><div class="sec-title">이직</div><div class="note">새 회사에서 v1.0부터 다시 시작합니다. 평판, 팀원, 릴리즈 배수가 초기화되고 직급과 경력 포인트를 얻습니다.<br>' +
+      '조건: v4.0 도달 ' + (jc.ver ? '[완료]' : '(현재 v' + state.version + '.0)') + ', 평판 20 ' + (jc.rep ? '[완료]' : '(현재 ' + fmtInt(state.rep) + ')') + '</div>' +
+      '<button class="big-btn" data-act="job"' + (canJobChange() ? '' : ' disabled') + '>' + TITLES[c.level + 1] + '(으)로 이직 (경력 포인트 +' + jobGain() + ')</button>';
+  }
+  if (!c.founded) {
+    h += '<div class="divider"></div><div class="sec-title">창업 <span class="sub">최종 목표</span></div><div class="note">부장까지 승진하면 내 회사를 차릴 수 있습니다. 대표 보너스 수입 x10</div>' +
+      '<button class="big-btn gold" data-act="found"' + (canFound() ? '' : ' disabled') + '>창업하기</button>';
+  }
+  h += '<div class="divider"></div><div class="sec-title">스킬 <span class="sub">Lv.n을 배우려면 포인트 n 필요</span></div>';
+  for (const s of SKILLS) {
+    const r = c.skills[s.id];
+    const full = r >= s.max;
+    const can = !full && c.points >= r + 1;
+    h += '<div class="row"><div><div class="row-name">' + s.name + '<span class="cnt">Lv.' + r + ' / ' + s.max + '</span></div><div class="row-desc">레벨당 ' + s.desc + '</div></div>' +
+      '<button class="btn' + (can ? '' : ' off') + '" data-act="skill:' + s.id + '">' + (full ? '마스터' : (r + 1) + 'P') + '</button></div>';
+  }
+  return h;
+}
+
+function sideAch() {
+  let h = '<div class="sec-title">업적 <span class="sub">' + achCount() + ' / ' + ACHS.length + ', 개당 수입 +3%</span></div>';
+  for (const [id, name, desc] of ACHS) {
+    const done = state.career.ach[id];
+    h += '<div class="ach' + (done ? ' done' : '') + '"><span class="mark"></span><div><div class="a-name">' + name + '</div><div class="a-desc">' + desc + '</div></div></div>';
+  }
+  const st = S();
+  h += '<div class="divider"></div><div class="note">타이핑 ' + fmtInt(st.keys) + '회, 작성 코드 ' + fmtInt(st.linesTyped) + '줄, 납품 ' + st.questsDone + '건, 버그 수정 ' + st.bugsFixed + '개, 리팩토링 ' + st.refactors + '회</div>';
+  return h;
+}
+
+function renderSide() {
+  renderTabs();
+  const fn = { upg: sideUpg, quest: sideQuest, team: sideTeam, career: sideCareer, ach: sideAch }[tab];
+  const html = fn();
+  if (html !== lastSideHtml) { $('side').innerHTML = html; lastSideHtml = html; }
+}
+
+function renderStatus() {
+  let h = '<span class="debt">코드 복잡도 <span class="mini-bar"><span class="mini-fill" style="display:block;width:' + state.debt + '%;background:' + (state.debt > 60 ? '#f48771' : state.debt > 30 ? '#d7ba7d' : '#6a9955') + '"></span></span> ' + Math.floor(state.debt) + '% (수입 -' + Math.floor(state.debt / 2) + '%, 높을수록 버그 증가)</span>';
+  if (state.bugs.length) h += '<span class="bug-count">버그 ' + state.bugs.length + '개 (수입 x' + Math.pow(bugPenalty(), state.bugs.length).toFixed(2) + ')</span><button class="btn warn" data-act="findbug">버그 찾기</button>';
+  if (state.incident) h += '<span class="incident">장애 대응 ' + fmtSec(state.incident.until - state.time) + '</span>';
+  if (state.refactoring) h += '<span>리팩토링 중 ' + Math.max(0, state.refactoring.until - state.time).toFixed(1) + '초</span>';
+  if (h !== lastStatusHtml) { $('status').innerHTML = h; lastStatusHtml = h; }
+  $('code').classList.toggle('refactoring', !!state.refactoring);
+}
+
+function renderChallenge() {
+  const el = $('challenge');
+  const c = state.challenge;
+  if (!c) { el.classList.add('hidden'); return; }
+  el.classList.remove('hidden');
+  const w = c.words[c.idx % c.words.length];
+  el.innerHTML = '<span>타이핑 챌린지</span><span class="word"><span class="typed">' + w.slice(0, c.pos) + '</span><span class="rest">' + w.slice(c.pos) + '</span></span>' +
+    '<span class="meta">콤보 ' + c.combo + ', 남은 시간 ' + fmtSec(c.until - state.time) + '</span>';
+}
+
+function renderBuffs() {
+  const chips = [];
+  for (const b of state.buffs) if (b.until > state.time) chips.push('<span class="chip' + (b.bad ? ' bad' : '') + '">' + b.label + ' ' + fmtSec(b.until - state.time) + '</span>');
+  if (state.lv.cls > 0 && state.time < state.cleanUntil) chips.push('<span class="chip">클린 코드 x' + (1 + 0.3 * state.lv.cls).toFixed(1) + ' ' + fmtSec(state.cleanUntil - state.time) + '</span>');
+  if (state.refactoring) chips.push('<span class="chip bad">리팩토링 중 수입 x0.5</span>');
+  $('buffs').innerHTML = chips.join('');
+}
+
+function renderTop() {
+  $('value').textContent = won(state.value);
+  $('rate').textContent = won(rate()) + '/초';
+  $('keyGain').textContent = '+' + won(keyGain());
+  $('rep').textContent = fmtInt(state.rep);
+  $('mult').textContent = 'x' + fmt(state.releaseMult);
+  $('ver').textContent = 'v' + state.version + '.0-dev';
+  $('titleChip').textContent = TITLES[state.career.level];
+  $('goal').textContent = goalText();
+
+  const s = state.stage;
+  $('filename').textContent = STAGES[s].file;
+  $('lines').textContent = totalLines().toLocaleString() + ' lines';
+  $('stageName').textContent = STAGES[s].name;
+  const next = STAGES[s + 1];
+  if (next) {
+    const prev = Math.max(STAGES[s].at, 1);
+    const p = Math.max(0, Math.min(1, Math.log10(Math.max(state.runBest, 1) / prev) / Math.log10(next.at / prev)));
+    $('nextLabel').textContent = '다음 아키텍처: ' + next.name + ' (도달 시 자동 리팩토링)';
+    $('nextVal').textContent = fmt(state.runBest) + ' / ' + fmt(next.at);
+    $('nextBar').style.width = (p * 100) + '%';
+  } else {
+    $('nextLabel').textContent = '최종 아키텍처 도달';
+    $('nextVal').textContent = '';
+    $('nextBar').style.width = '100%';
+  }
+  if (modalSpec && modalSpec.def !== undefined) {
+    const left = 20 - (state.time - modalSpec.openedAt);
+    const el = $('modalAuto');
+    if (el) el.textContent = fmtSec(left) + ' 뒤 "' + modalSpec.choices[modalSpec.def].label + '" 자동 선택';
+  }
+}
+
+/* =========================================================
+ * 저장
+ * ========================================================= */
+function save() {
+  state.lastSave = Date.now();
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (e) {}
+}
+function mergeInto(def, src) {
+  for (const k in def) {
+    if (!(k in src)) continue;
+    const d = def[k];
+    const v = src[k];
+    if (d && typeof d === 'object' && !Array.isArray(d) && v && typeof v === 'object' && !Array.isArray(v)) mergeInto(d, v);
+    else def[k] = v;
+  }
+  return def;
+}
+// 숫자가 깨진 값(NaN, null 등)을 안전한 값으로 되돌림
+function sanitize() {
+  const num = (v, d) => (typeof v === 'number' && isFinite(v)) ? v : d;
+  const def = freshRun(1).lv;
+  for (const k in def) state.lv[k] = Math.max(0, Math.floor(num(state.lv[k], 0)));
+  state.value = Math.max(0, num(state.value, 0));
+  state.runBest = Math.max(state.value, num(state.runBest, 0));
+  state.releaseMult = Math.max(1, num(state.releaseMult, 1));
+  state.debt = Math.min(100, Math.max(0, num(state.debt, 0)));
+  state.rep = Math.max(0, num(state.rep, 0));
+  state.time = num(state.time, 0);
+  for (const k in state.team) state.team[k] = Math.max(0, Math.floor(num(state.team[k], 0)));
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    state = mergeInto(defaultState(), s);
+    state.bugs = state.bugs.filter(n => state.bugInfo[n]);
+    sanitize();
+    if (!Array.isArray(s.lines)) {
+      const oldJava = Array.isArray(s.code) && !s.code.some(l => l.startsWith('#') || l.startsWith('print('));
+      state.lines = oldJava ? s.code.slice() : [];
+      if (oldJava) state.pending = '';
+    }
+    const sec = Math.min((Date.now() - state.lastSave) / 1000, OFFLINE_CAP);
+    if (sec > 10) {
+      const gain = rate() * sec * offlineEff();
+      addValue(gain);
+      setTimeout(() => toast('자리 비운 동안 PR ' + Math.max(1, Math.floor(sec / 60)) + '개 머지됨 +' + fmt(gain) + ' (오프라인 효율 ' + Math.round(offlineEff() * 100) + '%)'), 300);
+    }
+  } catch (e) {}
+}
+
+let toastTimer;
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+/* =========================================================
+ * 이벤트 바인딩
+ * ========================================================= */
+document.addEventListener('keydown', e => {
+  if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.key === ' ' || e.key === 'Tab' || e.key === 'Backspace') e.preventDefault();
+  if (state.challenge && e.key.length === 1 && /[a-z]/i.test(e.key)) challengeKey(e.key.toLowerCase());
+  hack();
+});
+
+$('code').addEventListener('click', e => {
+  const ln = e.target.closest('.ln.bug');
+  if (ln) fixBug(+ln.dataset.no);
+  else hack();
+});
+
+$('tabs').addEventListener('pointerdown', e => {
+  const b = e.target.closest('[data-tab]');
+  if (!b) return;
+  tab = b.dataset.tab;
+  lastSideHtml = '';
+  renderSide();
+  $('side').scrollTop = 0;
+});
+
+function doAction(act) {
+  const [a, arg] = act.split(':');
+  if (a === 'buy') buy(arg);
+  else if (a === 'mode') buyMax = !buyMax;
+  else if (a === 'release') release();
+  else if (a === 'accept') acceptQuest(+arg);
+  else if (a === 'rush') rushQuest(+arg);
+  else if (a === 'hire') hire(arg);
+  else if (a === 'skill') learnSkill(arg);
+  else if (a === 'job') jobChange();
+  else if (a === 'found') found();
+  else if (a === 'findbug') findBug();
+  lastSideHtml = '';
+  renderSide();
+}
+// 패널이 주기적으로 다시 그려져도 클릭이 씹히지 않도록 pointerdown으로 처리
+$('side').addEventListener('pointerdown', e => {
+  const el = e.target.closest('[data-act]');
+  if (!el || el.disabled || el.classList.contains('locked')) return;
+  doAction(el.dataset.act);
+});
+$('status').addEventListener('pointerdown', e => {
+  const el = e.target.closest('[data-act]');
+  if (el) doAction(el.dataset.act);
+});
+
+$('refactorBtn').addEventListener('click', e => { e.currentTarget.blur(); startRefactor('중복 제거', true); });
+$('saveBtn').addEventListener('click', () => { save(); toast('저장 완료'); });
+
+let resetArmed = false;
+let resetTimer;
+$('resetBtn').addEventListener('click', () => {
+  const btn = $('resetBtn');
+  if (!resetArmed) {
+    resetArmed = true;
+    btn.textContent = '한 번 더 누르면 전체 초기화';
+    clearTimeout(resetTimer);
+    resetTimer = setTimeout(() => { resetArmed = false; btn.textContent = '초기화'; }, 3000);
+    return;
+  }
+  resetArmed = false;
+  btn.textContent = '초기화';
+  state = defaultState();
+  renderAllCode();
+  save();
+  toast('초기화 완료');
+});
+window.addEventListener('beforeunload', save);
+
+/* =========================================================
+ * 게임 루프
+ * ========================================================= */
+function perSecond() {
+  sanitize();
+  if (state.lines.length > 5 && state.bugs.length < MAX_BUGS && !state.refactoring && Math.random() < bugChance()) {
+    if (spawnBug()) showFloat('버그 발생!');
+  }
+  while (state.bugQueue > 0 && spawnBug()) state.bugQueue--;
+  if (state.team.senior > 0 && state.debt >= 60 && !state.refactoring) startRefactor('시니어 자동 리팩토링', false);
+  if (!modalSpec && state.time >= state.nextEventAt) {
+    if (S().questsDone >= 1 || state.runBest >= 5e3) fireEvent();
+    state.nextEventAt = state.time + 100 + Math.random() * 60;
+  }
+  if (!state.challenge && state.time >= state.nextChallengeAt) {
+    if (S().keys >= 30) startChallenge();
+    state.nextChallengeAt = state.time + 70 + Math.random() * 30;
+  }
+  for (const [id, , , check] of ACHS) {
+    if (!state.career.ach[id] && check()) { state.career.ach[id] = true; toast('업적 달성: ' + ACHS.find(a => a[0] === id)[1] + ' (수입 +3%)'); }
+  }
+  state.buffs = state.buffs.filter(b => b.until > state.time);
+}
+
+let last = performance.now();
+let sideAcc = 0;
+function loop(now) {
+  const dt = Math.min((now - last) / 1000, 1);
+  last = now;
+  state.time += dt;
+  S().playTime += dt;
+
+  addValue(rate() * dt);
+  checkStage();
+  if (state.refactoring && state.time >= state.refactoring.until) doRefactor(state.refactoring.reason);
+
+  autoAcc += dt * AUTO_TYPE_SPEED;
+  const n = Math.floor(autoAcc);
+  autoAcc -= n;
+  if (state.pending && !state.refactoring) {
+    const idle = performance.now() - lastKeyAt > IDLE_MS;
+    if (idle && state.curSrc === 'filler' && !state.team.junior) finishFillerLine();
+    const canAuto = state.curSrc === 'pending' || (state.cur === '' && (!state.filler || idle));
+    if (canAuto) {
+      if (state.pending.length > PENDING_CAP) typeFrom('pending', state.pending.length - PENDING_CAP, false);
+      if (n > 0) typeFrom('pending', n, false);
+    }
+  }
+  if (state.team.junior > 0) {
+    juniorAcc += dt * 2 * state.team.junior;
+    let k = 0;
+    while (juniorAcc >= 1 && k++ < 20) { juniorKey(); juniorAcc--; }
+  }
+
+  tickQuests();
+  checkIncident();
+  if (state.challenge && state.time > state.challenge.until) endChallenge();
+  if (modalSpec && modalSpec.def !== undefined && state.time - modalSpec.openedAt > 20) closeModal(modalSpec.def);
+
+  secAcc += dt;
+  if (secAcc >= 1) { secAcc -= 1; perSecond(); }
+
+  renderTop();
+  renderChallenge();
+  sideAcc += dt;
+  if (sideAcc >= 0.1) { sideAcc = 0; renderSide(); renderStatus(); renderBuffs(); }
+  requestAnimationFrame(loop);
+}
+
+load();
+renderAllCode();
+$('code').scrollTop = $('code').scrollHeight;
+setInterval(save, 5000);
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

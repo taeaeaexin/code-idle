@@ -17,7 +17,7 @@ const KEY_CHARS_MAX = 2;
 const IDLE_MS = 1500;
 const MAX_BUGS = 5;
 const OFFER_SLOTS = 3;
-const BANKRUPT_SEC = 60;
+const BANKRUPT_SEC = 45;
 const ARCHIVE_MAX = 12;
 
 /* =========================================================
@@ -38,13 +38,13 @@ function freshCompany(career) {
     crewNames[c.id] = n;
   });
   return {
-    company: '', crewNames, promoBase: 1,
+    company: '', crewNames, promoBase: 1, lastRefLines: 0,
     releaseMult: 1, version: 1, rep: career ? career.skills.network * 10 : 0, subs, crew,
     quests: { offers: [], active: [], nextOfferAt: 0, seq: 0 },
     file: 0, fileLines: 0, filesDone: 0, archive: [],
     lines: [], cur: '', curSrc: '', pending: '', filler: '', items: [], history: [], refactorCount: 0, lineOffset: 0, fillerIdx: 0,
     bugs: [], bugInfo: {}, bugQueue: 0, debt: 0, legacy: false, grade: -1, cleanUntil: 0,
-    market: 1, equity: 1, bankrupt: 0,
+    market: 1, equity: 1, bankrupt: 0, ceoMonths: 0,
   };
 }
 function freshCareer() {
@@ -208,10 +208,14 @@ function rate() {
   return r;
 }
 // 대표 루트의 초당 운영비 (임대료, 고정비)
+// 대표 루트의 운영비: 시장 상황과 무관한 고정비. 회사가 오래될수록(1분 = 1달) 늘어남
+function burnMult() { return Math.min(1.6, 1 + 0.02 * state.ceoMonths); }
 function burnRate() {
   if (!isCeo() || state.career.ipo) return 0;
-  return rate() / (3 * state.market);
+  return baseRate() * 1.5 * burnMult();
 }
+// 이 시장 상황 아래로 떨어지면 적자
+function breakEvenMarket() { const g = rate() / state.market; return g > 0 ? burnRate() / g : 0; }
 function netRate() { return rate() - burnRate(); }
 function comboMult() { return 1 + Math.min(combo, 300) / 150; }
 function keyGainAt(keyLv) {
@@ -287,6 +291,7 @@ function startFile() {
   state.refactorCount = 0;
   state.lineOffset = 0;
   state.fileLines = 0;
+  state.lastRefLines = S().linesTyped;
   state.bugs = [];
   state.bugInfo = {};
   state.bugQueue = 0;
@@ -392,6 +397,20 @@ function buildRefactored(history) {
   return out;
 }
 
+// 품질 점수: 깔끔하게 유지할수록(복잡도 낮음), 충분히 작업하고(작업량), 많이 정리할수록(정리 규모) 높음
+function qualityScore(reduction) {
+  if (reduction === undefined) { const p = refactorPreview(); reduction = p.before > 0 ? clamp(1 - p.after / p.before, 0, 1) : 0; }
+  const work = Math.min(1, (S().linesTyped - state.lastRefLines) / 60);
+  const parts = {
+    clean: Math.round(40 * (1 - state.debt / 100)),
+    work: Math.round(30 * work),
+    reduce: Math.round(30 * reduction),
+    bugs: -5 * state.bugs.length,
+  };
+  return Object.assign(parts, { total: Math.max(0, parts.clean + parts.work + parts.reduce + parts.bugs) });
+}
+function gradeOf(score) { return score >= 85 ? 4 : score >= 70 ? 3 : score >= 50 ? 2 : score >= 30 ? 1 : 0; }
+
 function totalLines() { return state.lineOffset + state.lines.length + 1; }
 function refactorPreview() {
   const before = totalLines() + state.pending.split('\n').length - 1;
@@ -402,8 +421,8 @@ function refactorPreview() {
 function doRefactor(reason) {
   const { before, after } = refactorPreview();
   const reduction = before > 0 ? clamp(1 - after / before, 0, 1) : 0;
-  const score = 50 * Math.min(1, state.debt / 60) + 50 * reduction;
-  let g = score >= 80 ? 4 : score >= 60 ? 3 : score >= 40 ? 2 : score >= 20 ? 1 : 0;
+  const q = qualityScore(reduction);
+  let g = gradeOf(q.total);
   if (hasCrew('han')) g = Math.min(4, g + 1);
   const summary = after < before ? before + '줄을 ' + after + '줄로 정리' : '구역별 구조 정리';
   state.history.push('v' + state.version + '.0 #' + (state.refactorCount + 1) + ' ' + reason + ', ' + summary + ', 품질 ' + GRADES[g]);
@@ -421,6 +440,7 @@ function doRefactor(reason) {
   state.refactoring = null;
   state.grade = g;
   state.cleanUntil = state.time + 30;
+  state.lastRefLines = S().linesTyped;
   S().refactors++;
   if (g === 4) S().gradeS++;
   renderAllCode();
@@ -945,7 +965,7 @@ function found() {
   state.value = 1e5;
   askCompany('found', () => openModal({
     title: '창업! 이제 ' + companyName() + ' ' + devName() + ' 대표님입니다',
-    desc: '자본금 ' + won(1e5) + '으로 시작합니다.<br>매출은 3배지만 <b>시장 상황</b>에 따라 크게 출렁이고, 매초 <b>운영비</b>가 빠져나갑니다.<br>서비스 가치(운영자금)가 바닥난 채 ' + BANKRUPT_SEC + '초를 버티지 못하면 <b>폐업</b>합니다.<br>목표: 서비스 가치 ' + won(IPO_VALUE) + ' 달성으로 상장(IPO)',
+    desc: '자본금 ' + won(1e5) + '으로 시작합니다.<br>매출은 3배지만 <b>시장 상황</b>(x0.15~x3)에 따라 10초마다 크게 출렁입니다.<br>시장과 상관없이 매초 <b>운영비</b>(임대료, 인건비)가 나가고, 회사가 오래될수록 늘어납니다. 시장이 x0.5~0.8 아래로 떨어지면 적자예요.<br>세무조사, 해킹 같은 사고로 운영자금이 한 번에 깎이기도 합니다.<br>서비스 가치(운영자금)가 바닥난 채 ' + BANKRUPT_SEC + '초를 버티지 못하면 <b>폐업</b>합니다.<br>목표: 서비스 가치 ' + won(IPO_VALUE) + ' 달성으로 상장(IPO)',
     choices: [{ label: '사업 시작' }],
   }));
 }
@@ -1087,7 +1107,18 @@ const EVENTS = [
       { label: '투자 받는다 (자금 확보, 수입 영구 x0.9)', act: () => { addValue(baseRate() * 600); state.equity *= 0.9; } },
       { label: '거절한다', alt: true },
     ], def: 1 }) },
-  { w: 2, cond: () => isCeo() && !state.career.ipo, make: () => { state.market = 0.25; return { title: '경기 침체', desc: '경기가 얼어붙어 매출이 급감했습니다. 시장 상황 x0.25<br>운영자금이 바닥나지 않게 조심하세요.', choices: [{ label: '버텨보자' }] }; } },
+  { w: 2, cond: () => isCeo() && !state.career.ipo, make: () => { state.market = 0.2; return { title: '경기 침체', desc: '경기가 얼어붙어 매출이 급감했습니다. 시장 상황 x0.2<br>운영비는 그대로 나가니 운영자금이 바닥나지 않게 조심하세요.', choices: [{ label: '버텨보자' }] }; } },
+  { w: 3, cond: () => isCeo() && !state.career.ipo, make: () => {
+    const loss = state.value * 0.4;
+    state.value -= loss;
+    return { title: '세무조사', desc: '국세청에서 세무조사가 나왔습니다. 추징금으로 운영자금의 40%(' + won(loss) + ')가 나갔습니다.', choices: [{ label: '눈물을 머금고 납부' }] };
+  } },
+  { w: 2, cond: () => isCeo() && !state.career.ipo, make: () => ({
+    title: '해킹 사고', desc: '서비스가 해킹당해 개인정보 유출 의혹이 생겼습니다.',
+    choices: [
+      { label: '바로 공지하고 보상 (운영자금 -30%, 평판 유지)', act: () => { const l = state.value * 0.3; state.value -= l; toast('보상금 ' + won(l) + ' 지급. 고객 신뢰는 지켰습니다'); } },
+      { label: '조용히 넘어간다 (50% 확률로 들킴: 운영자금 -60%, 평판 -5)', alt: true, act: () => { if (Math.random() < 0.5) { const l = state.value * 0.6; state.value -= l; addRep(-5); toast('언론에 터졌습니다. 과징금 ' + won(l) + ', 평판 -5'); } else toast('다행히 조용히 지나갔습니다'); } },
+    ], def: 0 }) },
   { w: 2, cond: () => isCeo(), make: () => { const g = baseRate() * 300; addValue(g); addRep(3); return { title: '대형 계약 수주', desc: '대기업과 대형 계약을 맺었습니다! +' + won(g) + ', 평판 +3', choices: [{ label: '좋았어' }] }; } },
   { w: 2, cond: () => isCeo() && CREW.some(c => hasCrew(c.id)), make: () => {
     const c = pick(CREW.filter(x => hasCrew(x.id)));
@@ -1410,7 +1441,7 @@ function sideCareer() {
     const e = EXEC[0];
     h += '<div class="divider"></div><div class="sec-title">갈림길</div><div class="route-box">' +
       '<div class="route"><h4>이사 루트</h4>지금 회사에서 이사, 상무, 전무, CTO로 승진. 리스크 없이 꾸준히 강해짐<br>이사 조건: 가치 ' + won(e.value) + ', 평판 ' + e.rep + '<button class="big-btn" data-act="promote"' + (canPromote() ? '' : ' disabled') + '>이사 승진</button></div>' +
-      '<div class="route"><h4>대표 루트</h4>창업해서 매출 3배. 대신 시장이 출렁이고 운영비가 나가며, 자금이 바닥나면 폐업<button class="big-btn gold" data-act="found">창업하기</button></div></div>';
+      '<div class="route"><h4>대표 루트</h4>창업해서 매출 3배. 대신 시장이 크게 출렁이고 시장과 무관한 운영비와 세무조사, 해킹 같은 사고가 있으며, 자금이 바닥나면 폐업<button class="big-btn gold" data-act="found">창업하기</button></div></div>';
   }
   if (c.route === 'exec' && !c.cto) {
     const e = nextExec();
@@ -1419,7 +1450,7 @@ function sideCareer() {
   }
   if (c.route === 'ceo') {
     h += '<div class="divider"></div><div class="sec-title">회사 현황</div><div class="info">' +
-      (c.ipo ? '상장 완료! 리스크 없이 수입 x10' : '시장 상황 <b>x' + state.market.toFixed(2) + '</b><br>매출 ' + won(rate()) + '/초, 운영비 ' + won(burnRate()) + '/초<br>지분 ' + pct(state.equity) + '<br>상장 조건: 서비스 가치 ' + won(IPO_VALUE)) + '</div>';
+      (c.ipo ? '상장 완료! 리스크 없이 수입 x10' : '시장 상황 <b>x' + state.market.toFixed(2) + '</b> (x' + breakEvenMarket().toFixed(2) + ' 아래로 가면 적자)<br>매출 ' + won(rate()) + '/초, 운영비 ' + won(burnRate()) + '/초 (창업 ' + state.ceoMonths + '개월째, 고정비 x' + burnMult().toFixed(2) + ')<br>지분 ' + pct(state.equity) + '<br>상장 조건: 서비스 가치 ' + won(IPO_VALUE)) + '</div>';
   }
   h += '<div class="divider"></div><div class="sec-title">스킬 <span class="sub">Lv.n을 배우려면 포인트 n 필요</span></div>';
   for (const s of SKILLS) {
@@ -1540,6 +1571,8 @@ function viewArchive(idx) {
 function renderStatus() {
   const d = state.debt;
   let h = '<span class="debt">코드 복잡도' + '<span class="mini-bar"><span class="mini-fill" style="width:' + d + '%;background:' + (d > 60 ? 'var(--bad)' : d > 30 ? 'var(--gold)' : 'var(--cm)') + '"></span></span> ' + Math.floor(d) + '% (수입 -' + Math.floor(d / 2) + '%, 높을수록 버그 증가)</span>';
+  const qs = qualityScore();
+  h += '<span title="깔끔함 ' + qs.clean + '/40, 작업량 ' + qs.work + '/30, 정리 규모 ' + qs.reduce + '/30' + (qs.bugs ? ', 버그 ' + qs.bugs : '') + '">지금 리팩토링하면 품질 ' + GRADES[gradeOf(qs.total)] + ' (' + qs.total + '점)</span>';
   if (state.legacy) h += '<span class="alert">레거시화! 수입 x0.7</span>';
   if (state.bugs.length) h += '<span class="bug-count">버그 ' + state.bugs.length + '개 (수입 -' + pct(bugLossPct()) + ')</span><button class="btn warn" data-act="findbug">버그 찾기</button>';
   if (state.incident) h += '<span class="alert">' + state.incident.label + ' ' + fmtSec(state.incident.until - state.time) + '</span>';
@@ -1830,13 +1863,15 @@ function perSecond() {
 
   if (isCeo() && !state.career.ipo) {
     T.market += 1;
-    if (T.market >= 15) { T.market = 0; state.market = clamp(Math.pow(state.market, 0.85) * Math.exp((Math.random() - 0.5) * 0.9), 0.2, 3); }
+    if (T.market >= 10) { T.market = 0; state.market = clamp(Math.pow(state.market, 0.85) * Math.exp((Math.random() - 0.5) * 1.1), 0.15, 3); }
+    T.month = (T.month || 0) + 1;
+    if (T.month >= 60) { T.month = 0; state.ceoMonths++; }
   }
   checkIpo();
 
   if (!modalSpec && state.time >= state.nextEventAt) {
     if (S().questsDone >= 1 || state.runBest >= 5e3) fireEvent();
-    state.nextEventAt = state.time + 100 + Math.random() * 60;
+    state.nextEventAt = state.time + (isCeo() && !state.career.ipo ? 60 + Math.random() * 40 : 100 + Math.random() * 60);
   }
   if (!state.challenge && state.time >= state.nextChallengeAt) {
     if (S().keys >= 30) startChallenge();

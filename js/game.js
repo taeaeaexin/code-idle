@@ -313,12 +313,14 @@ function completeFile() {
   if (state.cur) content.push(state.cur);
   state.archive.push({ idx: f.idx, name: f.name, lang: f.lang, lines: content });
   if (state.archive.length > ARCHIVE_MAX) state.archive.shift();
+  const carry = state.bugs.length + state.bugQueue;
   state.filesDone++;
   S().filesDone++;
   const g = baseRate() * 60;
   addValue(g);
   state.file++;
   startFile();
+  state.bugQueue = carry;
   renderAllCode();
   $('code').scrollTop = 0;
   const nf = curFile();
@@ -425,6 +427,8 @@ function doRefactor(reason) {
   let g = gradeOf(q.total);
   if (hasCrew('han')) g = Math.min(4, g + 1);
   const summary = after < before ? before + '줄을 ' + after + '줄로 정리' : '구역별 구조 정리';
+  const fixedByRefactor = state.bugs.length;
+  S().bugsFixed += fixedByRefactor;
   state.history.push('v' + state.version + '.0 #' + (state.refactorCount + 1) + ' ' + reason + ', ' + summary + ', 품질 ' + GRADES[g]);
   state.refactorCount++;
   state.lines = buildRefactored(state.history);
@@ -445,7 +449,7 @@ function doRefactor(reason) {
   if (g === 4) S().gradeS++;
   renderAllCode();
   $('code').scrollTop = 0;
-  toast('리팩토링 완료: ' + summary + ', 품질 ' + GRADES[g] + ' (수입 x' + GRADE_MULT[g] + '), 복잡도와 버그 0');
+  toast('리팩토링 완료: ' + summary + ', 품질 ' + GRADES[g] + ' (수입 x' + GRADE_MULT[g] + '), 복잡도 0' + (fixedByRefactor ? ', 버그 ' + fixedByRefactor + '개 함께 수정' : ''));
 }
 
 function startRefactor(reason, manual) {

@@ -29,7 +29,16 @@ function freshRun() {
 function freshCompany(career) {
   const subs = {}; AI_SUBS.forEach(s => { subs[s.id] = false; });
   const crew = {}; CREW.forEach(c => { crew[c.id] = false; });
+  const crewNames = {};
+  const used = new Set();
+  CREW.forEach(c => {
+    let n;
+    do { n = pick(SURNAMES) + pick(GIVEN); } while (used.has(n));
+    used.add(n);
+    crewNames[c.id] = n;
+  });
   return {
+    company: '', crewNames, promoBase: 1,
     releaseMult: 1, version: 1, rep: career ? career.skills.network * 10 : 0, subs, crew,
     quests: { offers: [], active: [], nextOfferAt: 0, seq: 0 },
     file: 0, fileLines: 0, filesDone: 0, archive: [],
@@ -111,6 +120,10 @@ function titleOf() {
   return TITLES[c.level];
 }
 function devName() { return state.career.name || '개발자'; }
+function companyName() { return state.company || '무명 회사'; }
+function authorText() { return devName() + (state.company ? ' (' + state.company + ')' : ''); }
+function crewName(c) { return (state.crewNames && state.crewNames[c.id]) || '무명'; }
+function randomCompany() { return pick(CO_PRE) + pick(CO_SUF); }
 function isCeo() { return state.career.route === 'ceo'; }
 function hasCrew(id) { return !!state.crew[id]; }
 function hasSub(id) { return !!state.subs[id]; }
@@ -257,7 +270,7 @@ function curLang() { return LANGS[curFile().lang]; }
 function startFile() {
   const f = curFile();
   const L = LANGS[f.lang];
-  state.lines = L.docHeader(['파일명 : ' + f.name, '설명   : ' + f.desc, '작성자 : ' + devName()]).concat(L.prologue(f, state.stage));
+  state.lines = L.docHeader(['파일명 : ' + f.name, '설명   : ' + f.desc, '작성자 : ' + authorText()]).concat(L.prologue(f, state.stage));
   state.cur = '';
   state.curSrc = '';
   state.pending = '';
@@ -349,7 +362,7 @@ function buildRefactored(history) {
   const f = curFile();
   const L = LANGS[f.lang];
   const ind = L.ind;
-  const out = L.docHeader(['파일명 : ' + f.name, '설명   : ' + f.desc, '작성자 : ' + devName(), '작성일 : ' + today(), '', '수정이력'].concat(history.slice(-5).map(h => '  ' + h)));
+  const out = L.docHeader(['파일명 : ' + f.name, '설명   : ' + f.desc, '작성자 : ' + authorText(), '작성일 : ' + today(), '', '수정이력'].concat(history.slice(-5).map(h => '  ' + h)));
   out.push(...L.prologue(f, state.stage));
   for (const [cat, title] of CATS) {
     const its = state.items.filter(x => x.cat === cat);
@@ -831,7 +844,7 @@ function recruit(id) {
   if (!c || hasCrew(id) || state.rep < c.rep || state.value < c.cost) return;
   state.value -= c.cost;
   state.crew[id] = true;
-  toast(c.name + ' ' + c.title + '(' + c.role + ') 합류! "잘 부탁드립니다"');
+  toast(crewName(c) + ' ' + c.title + '(' + c.role + ') 합류! "잘 부탁드립니다"');
 }
 function aiKps() {
   let k = 0;
@@ -878,7 +891,22 @@ function jobChange() {
   c.level++;
   c.stats.jobs++;
   resetCompany();
-  openModal({ title: TITLES[c.level] + '(으)로 이직 성공!', desc: '경력 포인트 +' + gain + '. 커리어 탭에서 스킬을 배우세요.<br>새 회사에서 v1.0부터 다시 시작합니다. 직급 보너스로 수입 x' + careerMult().toFixed(1) + '가 적용됩니다.', choices: [{ label: '출근하기' }] });
+  askCompany('job', () => openModal({ title: TITLES[c.level] + '(으)로 이직 성공!', desc: companyName() + '에 ' + TITLES[c.level] + '(으)로 입사했습니다. 경력 포인트 +' + gain + '. 커리어 탭에서 스킬을 배우세요.<br>v1.0부터 다시 시작하고, 직급 보너스로 수입 x' + careerMult().toFixed(1) + '가 적용됩니다.', choices: [{ label: '출근하기' }] }));
+}
+
+// 사내 승진: 아무것도 초기화되지 않는 대신 경력 포인트가 적고 조건이 더 까다로움
+function innerCond() {
+  const c = state.career;
+  return { ver: state.version >= state.promoBase + 3, rep: state.rep >= 25 + 5 * c.level, ok: c.level < 5 && !c.route, needVer: state.promoBase + 3, needRep: 25 + 5 * c.level };
+}
+function canInnerPromote() { const p = innerCond(); return p.ver && p.rep && p.ok; }
+function innerPromote() {
+  if (!canInnerPromote()) return;
+  const c = state.career;
+  c.level++;
+  c.points += 1;
+  state.promoBase = state.version;
+  toast(companyName() + '에서 ' + TITLES[c.level] + '(으)로 승진! 경력 포인트 +1, 수입 x' + careerMult().toFixed(1) + '. 진행 상황은 그대로 유지됩니다');
 }
 
 function execIndex() { const c = state.career; return c.route === 'exec' ? c.level - 5 : 0; }
@@ -908,11 +936,11 @@ function found() {
   c.stats.founded++;
   resetCompany();
   state.value = 1e5;
-  openModal({
-    title: '창업! 이제 ' + devName() + ' 대표님입니다',
+  askCompany('found', () => openModal({
+    title: '창업! 이제 ' + companyName() + ' ' + devName() + ' 대표님입니다',
     desc: '자본금 ' + won(1e5) + '으로 시작합니다.<br>매출은 3배지만 <b>시장 상황</b>에 따라 크게 출렁이고, 매초 <b>운영비</b>가 빠져나갑니다.<br>서비스 가치(운영자금)가 바닥난 채 ' + BANKRUPT_SEC + '초를 버티지 못하면 <b>폐업</b>합니다.<br>목표: 서비스 가치 ' + won(IPO_VALUE) + ' 달성으로 상장(IPO)',
     choices: [{ label: '사업 시작' }],
-  });
+  }));
 }
 
 function goBankrupt() {
@@ -922,8 +950,9 @@ function goBankrupt() {
   c.route = null;
   c.level = 5;
   c.stats.bankrupts++;
+  const old = companyName();
   resetCompany();
-  openModal({ title: '폐업했습니다', desc: '운영자금이 바닥나 회사 문을 닫았습니다. 경력 포인트 ' + lost + '을 잃었습니다.<br>부장으로 재취업했습니다. 다시 이사 승진이나 재창업에 도전하세요.', choices: [{ label: '다시 일어서기' }] });
+  openModal({ title: '폐업했습니다', desc: old + '이(가) 운영자금이 바닥나 문을 닫았습니다. 경력 포인트 ' + lost + '을 잃었습니다.<br>다른 회사에 부장으로 재취업합니다. 다시 이사 승진이나 재창업에 도전하세요.', choices: [{ label: '재취업하기', act: () => askCompany('job') }] });
 }
 
 function checkIpo() {
@@ -1049,7 +1078,7 @@ const EVENTS = [
   { w: 2, cond: () => isCeo() && CREW.some(c => hasCrew(c.id)), make: () => {
     const c = pick(CREW.filter(x => hasCrew(x.id)));
     state.crew[c.id] = false;
-    return { title: '핵심 인력 이탈', desc: c.name + ' ' + c.title + '이(가) 경쟁사로 이직했습니다. 다시 섭외하려면 팀 탭에서 섭외하세요.', choices: [{ label: '아쉽지만 보내준다' }] };
+    return { title: '핵심 인력 이탈', desc: crewName(c) + ' ' + c.title + '이(가) 경쟁사로 이직했습니다. 다시 섭외하려면 팀 탭에서 섭외하세요.', choices: [{ label: '아쉽지만 보내준다' }] };
   } },
 ];
 
@@ -1132,16 +1161,46 @@ function askName(first) {
     title: first ? '반갑습니다, 신입 개발자님!' : '이름 바꾸기',
     desc: first ? '코드 키우기는 신입 개발자로 시작해 CTO나 대표까지 성장하는 게임입니다.<br>이름을 알려주세요. 코드 파일의 작성자로도 들어갑니다.' : '새 이름을 입력하세요.',
     input: '이름 (최대 12자)',
-    choices: [{ label: first ? '입사하기' : '바꾸기', act: v => setName(v) }],
+    choices: [{ label: first ? '다음' : '바꾸기', act: v => { setName(v, !first); if (first) askCompany('first'); } }],
   });
 }
-function setName(v) {
+
+// mode: first(처음 입사), job(이직), found(창업), rename(이름 바꾸기)
+function askCompany(mode, after) {
+  const suggest = randomCompany();
+  const T = {
+    first: ['어느 회사에 입사할까요?', '첫 직장의 회사 이름을 정해주세요. 비워두면 "' + suggest + '"(으)로 정해집니다.', '입사하기'],
+    job: ['새 회사 이름', '이직할 회사 이름을 정해주세요. 비워두면 "' + suggest + '"(으)로 정해집니다.', '이직하기'],
+    found: ['내 회사 이름', '창업할 회사 이름을 정해주세요. 비워두면 "' + suggest + '"(으)로 정해집니다.', '창업하기'],
+    rename: ['회사 이름 바꾸기', '새 회사 이름을 입력하세요.', '바꾸기'],
+  }[mode];
+  openModal({
+    title: T[0], desc: T[1], input: suggest,
+    choices: [{ label: T[2], act: v => { setCompany(String(v || '').trim() || suggest); if (mode === 'first') showGuide(); if (after) after(); } }],
+  });
+}
+function setCompany(v) {
+  state.company = String(v).slice(0, 12);
+  refreshAuthor();
+  lastSideHtml = '';
+}
+function refreshAuthor() {
+  state.lines = state.lines.map(l => l.replace(/작성자 : .*?( -->)?$/, (m, tail) => '작성자 : ' + authorText() + (tail || '')));
+  renderAllCode();
+}
+function showGuide() {
+  openModal({
+    title: '코딩을 시작해볼까요?',
+    desc: '<b>키보드 아무 키</b>나 누르거나 <b>에디터를 마우스로 클릭</b>하면 코드가 쳐지고 수익(서비스 가치)이 생깁니다.<br><br>모은 돈으로 오른쪽 <b>업그레이드</b>를 사서 수입을 늘리고, <b>의뢰</b> 탭에서 일감을 받아 평판을 쌓아보세요.<br>코드 줄에 마우스를 올리면 그 코드의 설명도 볼 수 있어요.',
+    choices: [{ label: '시작하기' }],
+  });
+}
+function setName(v, notify) {
   const name = String(v || '').trim().slice(0, 12);
   state.career.name = name || '개발자';
-  state.lines = state.lines.map(l => l.replace(/작성자 : .*?( -->)?$/, (m, tail) => '작성자 : ' + state.career.name + (tail || '')));
-  renderAllCode();
+  refreshAuthor();
   lastSideHtml = '';
-  toast(state.career.name + '님, 환영합니다! 아무 키나 눌러 코딩을 시작하세요');
+  if (notify) toast('이름을 ' + state.career.name + '(으)로 바꿨습니다');
 }
 
 /* =========================================================
@@ -1158,8 +1217,8 @@ function goalText() {
   if (st.releases === 0 && c.level === 0) return '서비스 가치 ' + won(RELEASE_MIN) + ' 달성 후 첫 릴리즈 (업그레이드 탭 아래)';
   if (c.level < 5 && !c.route) {
     const j = jobCond();
-    if (!j.ver || !j.rep) return TITLES[c.level + 1] + '(으)로 이직 준비: v4.0 도달' + (j.ver ? ' 완료' : ' (현재 v' + state.version + '.0)') + ', 평판 20' + (j.rep ? ' 완료' : ' (현재 ' + fmtInt(state.rep) + ')');
-    return '커리어 탭에서 ' + TITLES[c.level + 1] + '(으)로 이직하세요';
+    if (canJobChange() || canInnerPromote()) return '커리어 탭에서 ' + TITLES[c.level + 1] + ' 이직 또는 사내 승진을 고르세요';
+    return TITLES[c.level + 1] + ' 도전: 이직은 v4.0' + (j.ver ? ' 완료' : ' (현재 v' + state.version + '.0)') + '와 평판 20' + (j.rep ? ' 완료' : ' (현재 ' + fmtInt(state.rep) + ')') + ' 필요';
   }
   if (c.level === 5 && !c.route) return '부장 달성! 커리어 탭에서 이사 승진(안정) 또는 창업(고위험 고수익)을 고르세요';
   if (c.route === 'exec' && !c.cto) { const e = nextExec(); return e.title + ' 승진 조건: 서비스 가치 ' + won(e.value) + ', 평판 ' + e.rep + ' (현재 ' + won(state.runBest) + ', ' + fmtInt(state.rep) + ')'; }
@@ -1212,7 +1271,7 @@ function renderTabs() {
   for (const [id, name] of TABS) {
     let badge = '';
     if (id === 'quest' && state.quests.offers.length && state.quests.active.length < questSlots()) badge = '<span class="badge">' + state.quests.offers.length + '</span>';
-    if (id === 'career' && (canJobChange() || canFound() || canPromote() || SKILLS.some(s => state.career.skills[s.id] < s.max && state.career.points > state.career.skills[s.id]))) badge = '<span class="badge">!</span>';
+    if (id === 'career' && (canJobChange() || canInnerPromote() || canFound() || canPromote() || SKILLS.some(s => state.career.skills[s.id] < s.max && state.career.points > state.career.skills[s.id]))) badge = '<span class="badge">!</span>';
     html += '<button data-tab="' + id + '" class="' + (tab === id ? 'on' : '') + '">' + name + badge + '</button>';
   }
   if ($('tabs').innerHTML !== html) $('tabs').innerHTML = html;
@@ -1300,7 +1359,7 @@ function sideTeam() {
     const locked = state.rep < c.rep;
     const on = hasCrew(c.id);
     const btn = on ? '<span class="cnt" style="color:var(--good);font-size:12px">합류</span>' : '<button class="btn' + (!locked && state.value >= c.cost ? '' : ' off') + '" data-act="crew:' + c.id + '">' + won(c.cost) + '</button>';
-    h += '<div class="row' + (locked ? ' locked' : '') + (on ? ' owned' : '') + '"><div><div class="row-name">' + c.name + ' ' + c.title + '<span class="role">' + c.role + '</span></div><div class="row-desc">' + c.desc + '<br>월급: 수입의 ' + fee(c.salary) + (locked ? ', 평판 ' + c.rep + ' 필요' : '') + '</div></div>' + btn + '</div>';
+    h += '<div class="row' + (locked ? ' locked' : '') + (on ? ' owned' : '') + '"><div><div class="row-name">' + crewName(c) + ' ' + c.title + '<span class="role">' + c.role + '</span></div><div class="row-desc">' + c.desc + '<br>월급: 수입의 ' + fee(c.salary) + (locked ? ', 평판 ' + c.rep + ' 필요' : '') + '</div></div>' + btn + '</div>';
   }
   return h;
 }
@@ -1318,11 +1377,16 @@ function sideCareer() {
   const c = state.career;
   const j = jobCond();
   let h = '<div class="sec-title">커리어 <span class="sub">직급 보너스 수입 x' + careerMult().toFixed(1) + '</span></div>';
-  h += '<div class="info">' + devName() + ' <b>' + titleOf() + '</b><br>경력 포인트 <b>' + c.points + '</b></div>';
+  h += '<div class="info">' + escHtml(companyName()) + ' ' + escHtml(devName()) + ' <b>' + titleOf() + '</b><br>경력 포인트 <b>' + c.points + '</b></div>';
   if (c.level < 5 && !c.route) {
-    h += '<div class="divider"></div><div class="sec-title">이직</div><div class="note">새 회사에서 v1.0부터 다시 시작합니다. 평판, 팀, 릴리즈 배수, 파일이 초기화되고 직급과 경력 포인트를 얻습니다.<br>' +
-      '조건: v4.0 도달 ' + (j.ver ? '[완료]' : '(현재 v' + state.version + '.0)') + ', 평판 20 ' + (j.rep ? '[완료]' : '(현재 ' + fmtInt(state.rep) + ')') + '</div>' +
-      '<button class="big-btn" data-act="job"' + (canJobChange() ? '' : ' disabled') + '>' + TITLES[c.level + 1] + '(으)로 이직 (경력 포인트 +' + jobGain() + ')</button>';
+    const p = innerCond();
+    h += '<div class="divider"></div><div class="sec-title">' + TITLES[c.level + 1] + '(으)로 가는 두 가지 방법</div><div class="route-box">' +
+      '<div class="route"><h4>이직</h4>새 회사에서 v1.0부터 다시 시작. 평판, 팀, 릴리즈 배수, 파일이 초기화되는 대신 경력 포인트를 많이 받음<br>' +
+      '조건: v4.0 ' + (j.ver ? '[완료]' : '(현재 v' + state.version + '.0)') + ', 평판 20 ' + (j.rep ? '[완료]' : '(현재 ' + fmtInt(state.rep) + ')') +
+      '<button class="big-btn" data-act="job"' + (canJobChange() ? '' : ' disabled') + '>이직 (포인트 +' + jobGain() + ')</button></div>' +
+      '<div class="route"><h4>사내 승진</h4>' + escHtml(companyName()) + '에 남아 승진. 아무것도 초기화되지 않지만 경력 포인트는 1만 받고 조건이 까다로움<br>' +
+      '조건: v' + p.needVer + '.0 ' + (p.ver ? '[완료]' : '(현재 v' + state.version + '.0)') + ', 평판 ' + p.needRep + ' ' + (p.rep ? '[완료]' : '(현재 ' + fmtInt(state.rep) + ')') +
+      '<button class="big-btn" data-act="inner"' + (canInnerPromote() ? '' : ' disabled') + '>승진 (포인트 +1)</button></div></div>';
     h += '<div class="note" style="margin-top:8px">부장이 되면 이사 루트와 대표(창업) 루트 중 하나를 고를 수 있습니다.</div>';
   }
   if (c.level >= 5 && !c.route) {
@@ -1378,6 +1442,7 @@ function sideAch() {
 function sideSet() {
   const s = state.settings;
   let h = '<div class="sec-title">이름</div><div class="set-row"><span>' + escHtml(devName()) + '</span><button class="btn gray" data-act="rename">이름 바꾸기</button></div>';
+  h += '<div class="sec-title">회사</div><div class="set-row"><span>' + escHtml(companyName()) + '</span><button class="btn gray" data-act="recompany">회사 이름 바꾸기</button></div>';
   h += '<div class="sec-title">타이핑 소리</div><div class="set-row">';
   for (const [id, name] of SOUNDS) h += '<button class="btn ' + (s.sound === id ? 'on' : 'gray') + '" data-act="sound:' + id + '">' + name + '</button>';
   h += '</div><div class="sec-title">에디터 테마 <span class="sub">업적을 모으면 해금</span></div><div class="set-row">';
@@ -1510,6 +1575,7 @@ function renderTop() {
   $('mult').textContent = 'x' + fmt(state.releaseMult);
   $('ver').textContent = 'v' + state.version + '.0';
   $('titleChip').textContent = devName() + ' ' + titleOf();
+  $('companyChip').textContent = companyName();
   $('goal').textContent = goalText();
 
   const f = curFile();
@@ -1634,7 +1700,7 @@ function toast(msg) {
 
 function shareText() {
   const st = S();
-  return '코드 키우기 | ' + devName() + ' ' + titleOf() + '\n' +
+  return '코드 키우기 | ' + companyName() + ' ' + devName() + ' ' + titleOf() + '\n' +
     '작성한 코드 ' + fmtInt(st.linesTyped) + '줄, 완성 파일 ' + st.filesDone + '개, 납품 ' + st.questsDone + '건\n' +
     '최고 서비스 가치 ' + won(st.bestValue) + ', 업적 ' + achCount() + '/' + ACHS.length + '\n' + location.href;
 }
@@ -1699,6 +1765,8 @@ function doAction(act) {
   else if (a === 'item') buyItem(arg);
   else if (a === 'skill') learnSkill(arg);
   else if (a === 'job') jobChange();
+  else if (a === 'inner') innerPromote();
+  else if (a === 'recompany') askCompany('rename');
   else if (a === 'promote') promote();
   else if (a === 'found') found();
   else if (a === 'findbug') findBug();
@@ -1744,7 +1812,7 @@ function perSecond() {
   const T = state.timers;
   if (state.lv.log >= 3 && state.bugs.length) { T.logFix += 1; if (T.logFix >= logFixInterval(state.lv.log)) { T.logFix = 0; fixBug(state.bugs[0], true); } }
   if (hasSub('gemini') && state.bugs.length) { T.gemFix += 1; if (T.gemFix >= 20) { T.gemFix = 0; fixBug(state.bugs[0], true); } }
-  if (hasCrew('park') && state.debt >= 60 && !state.refactoring) startRefactor('박준호 과장 리팩토링', false);
+  if (hasCrew('park') && state.debt >= 60 && !state.refactoring) startRefactor(crewName(CREW[0]) + ' 과장 리팩토링', false);
 
   if (isCeo() && !state.career.ipo) {
     T.market += 1;
@@ -1829,4 +1897,5 @@ renderAllCode();
 $('code').scrollTop = $('code').scrollHeight;
 setInterval(save, 5000);
 if (!state.career.name) askName(true);
+else if (!state.company) askCompany('first');
 requestAnimationFrame(loop);

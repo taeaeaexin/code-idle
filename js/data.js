@@ -381,8 +381,8 @@ const SKILLS = [
 const ITEMS = [
   { id: 'coffee', name: '아이스 아메리카노', sec: 20,  min: 50,  desc: '30초 동안 타이핑 수익 x2' },
   { id: 'energy', name: '에너지 드링크',     sec: 40,  min: 200, desc: '60초 동안 수입 x1.5. 끝나면 15초 동안 피곤해서 수입 x0.6' },
-  { id: 'duck',   name: '러버덕',            sec: 15,  min: 30,  desc: '러버덕에게 코드를 설명하다 버그 1개를 찾아 고침' },
-  { id: 'pizza',  name: '팀 야식 피자',      sec: 120, min: 500, desc: '평판 +1, 30초 동안 코드 복잡도가 늘지 않음' },
+  { id: 'glass',  name: '스마트글래스',      sec: 15,  min: 30,  desc: '코드를 스캔해서 버그 1개를 찾아 바로 고침' },
+  { id: 'pizza',  name: '피자',              sec: 120, min: 500, desc: '팀원들과 나눠 먹고 평판 +1, 30초 동안 코드 복잡도가 늘지 않음' },
   { id: 'keycap', name: '키캡 교체',         sec: 30,  min: 100, desc: '60초 동안 콤보가 끊기는 시간 2배' },
 ];
 

@@ -152,7 +152,12 @@ function questSlots() { return 1 + (hasCrew('lee') ? 1 : 0); }
 function questRewardMult() { return (1 + 0.5 * SK().nego) * (hasCrew('lee') ? 1.25 : 1); }
 function questRepMult() { return (state.grade === 4 ? 2 : state.grade === 3 ? 1.5 : 1) * (hasCrew('choi') ? 1.5 : 1); }
 function questTimeMult() { return 1 + 0.1 * state.lv.doc; }
-function deployChance() { return Math.min(0.95, 0.7 + 0.05 * state.lv.ci); }
+function deployBonus() { return 0.05 * state.lv.ci; }
+// 배포할 때마다 성공률이 30~90%에서 랜덤으로 정해지고, 낮을수록 보상이 큼
+function rollDeploy() {
+  const p = clamp(Math.round((0.3 + Math.random() * 0.6 + deployBonus()) * 20) / 20, 0.3, 0.95);
+  return { p, reward: baseRate() * 60 / p, rep: p < 0.5 ? 2 : 1 };
+}
 function careerMult() {
   const c = state.career;
   if (c.route === 'exec') return 3.5 * Math.pow(1.5, c.level - 5);
@@ -237,7 +242,7 @@ function upgDesc(u) {
       if (l < 3) return base + ', 버그 위치 자동 이동<br>다음 레벨: ' + (l + 1 >= 3 ? '버그 자동 수정 시작 (' + logFixInterval(3) + '초마다)' : '대응 시간 +5초');
       return base + '<br>버그 자동 수정 ' + nx(logFixInterval(l) + '초마다', logFixInterval(l + 1) + '초마다');
     }
-    case 'ci': return '업그레이드 코드 입력 ' + nx('x' + (1 + 2 * l), 'x' + (3 + 2 * l)) + '<br>배포 성공률 ' + pct(deployChance()) + ', 리팩토링 시간 ' + refactorDuration().toFixed(1) + '초';
+    case 'ci': return '업그레이드 코드 입력 ' + nx('x' + (1 + 2 * l), 'x' + (3 + 2 * l)) + '<br>배포 성공률 +' + pct(deployBonus()) + ', 리팩토링 시간 ' + refactorDuration().toFixed(1) + '초';
     case 'srv': return '수입 ' + nx('x' + fmt(Math.pow(2, l)), 'x' + fmt(Math.pow(2, l + 1))) + '<br>트래픽 폭주 대응 Lv.' + (state.stage + 1) + ' 필요, 오프라인 수익 ' + pct(offlineEff());
   }
   return '';
@@ -953,11 +958,11 @@ function buyItem(id) {
   const it = ITEMS.find(x => x.id === id);
   const p = itemPrice(it);
   if (state.value < p) return;
-  if (id === 'duck' && !state.bugs.length) { toast('지금은 고칠 버그가 없습니다'); return; }
+  if (id === 'glass' && !state.bugs.length) { toast('지금은 고칠 버그가 없습니다'); return; }
   state.value -= p;
   if (id === 'coffee') addBuff('typing', 2, 30, '커피 타이핑 x2');
   if (id === 'energy') { addBuff('income', 1.5, 60, '에너지 드링크 x1.5'); addBuff('income', 0.6, 15, '피곤함 x0.6', true, 60); }
-  if (id === 'duck') fixBug(state.bugs[0]);
+  if (id === 'glass') { findBug(); fixBug(state.bugs[state.bugs.length - 1]); }
   if (id === 'pizza') { addRep(1); addBuff('calm', 0, 30, '복잡도 증가 없음'); }
   if (id === 'keycap') addBuff('combo', 2, 60, '키캡 콤보 유지 2배');
   toast(it.name + ' 사용!');
@@ -967,15 +972,19 @@ function buyItem(id) {
  * 이벤트
  * ========================================================= */
 const EVENTS = [
-  { w: 3, make: () => ({
-    title: '금요일 배포 요청', desc: '고객사에서 금요일 오후 5시에 배포해 달라고 합니다.',
-    choices: [
-      { label: '배포한다 (성공률 ' + pct(deployChance()) + ')', act: () => {
-        if (Math.random() < deployChance()) { const g = baseRate() * 90; addValue(g); addRep(1); S().fridayOk++; toast('배포 성공! +' + won(g) + ', 평판 +1'); }
-        else { toast('배포 실패! 운영 장애 발생'); startIncident(); }
-      } },
-      { label: '월요일로 미룬다 (평판 -1)', alt: true, act: () => addRep(-1) },
-    ], def: 1 }) },
+  { w: 3, make: () => {
+    const d = rollDeploy();
+    const mood = d.p >= 0.75 ? '테스트도 끝났고 꽤 안정적입니다.' : d.p >= 0.5 ? '테스트가 조금 덜 끝났습니다.' : '테스트를 거의 못 했습니다. 위험합니다.';
+    return {
+      title: '금요일 배포 요청', desc: '고객사에서 금요일 오후 5시에 배포해 달라고 합니다. ' + mood + '<br>성공률이 낮을수록 성공했을 때 보상이 큽니다.',
+      choices: [
+        { label: '배포한다 (성공률 ' + pct(d.p) + ', 성공 시 +' + won(d.reward) + ', 평판 +' + d.rep + ')', act: () => {
+          if (Math.random() < d.p) { addValue(d.reward); addRep(d.rep); S().fridayOk++; toast('배포 성공! +' + won(d.reward) + ', 평판 +' + d.rep); }
+          else { toast('배포 실패! 운영 장애 발생'); startIncident(); }
+        } },
+        { label: '월요일로 미룬다 (평판 -1)', alt: true, act: () => addRep(-1) },
+      ], def: 1 };
+  } },
   { w: 2, make: () => {
     const q = state.quests.active.length ? pick(state.quests.active) : null;
     if (q) {
@@ -1417,22 +1426,27 @@ function filterGlossary(text) {
  * 화면: 에디터 주변
  * ========================================================= */
 function renderExplorer() {
-  let h = '<div class="ex-title">프로젝트 파일</div>';
-  const start = Math.max(0, state.file - 15);
-  for (let i = start; i <= state.file + 2; i++) {
+  let h = '';
+  for (let i = Math.max(0, state.file - 6); i <= state.file + 1; i++) {
     const f = fileInfo(i);
     const L = LANGS[f.lang];
     const badge = '<span class="ex-badge" style="background:' + L.color + '">' + L.badge + '</span>';
     if (i < state.file) {
       const has = state.archive.some(a => a.idx === i);
-      h += '<div class="ex-file done" ' + (has ? 'data-view="' + i + '" title="눌러서 완성한 코드 보기"' : 'title="오래된 파일이라 내용은 보관되지 않음"') + '>' + badge + f.name + '<span class="ex-check">완료</span></div>';
+      h += '<div class="ftab done" ' + (has ? 'data-view="' + i + '" title="완성한 코드 보기"' : 'title="오래된 파일이라 내용은 보관되지 않음"') + '>' + badge + f.name + '<span class="ex-check">완료</span></div>';
     } else if (i === state.file) {
-      h += '<div class="ex-file cur">' + badge + f.name + '</div>';
+      h += '<div class="ftab cur" id="curTab">' + badge + f.name + '</div>';
     } else {
-      h += '<div class="ex-file locked">' + badge + f.name + '</div>';
+      h += '<div class="ftab locked" title="지금 파일을 완성하면 열림">' + badge + f.name + '</div>';
     }
   }
-  if (h !== lastExplorerHtml) { $('explorer').innerHTML = h; lastExplorerHtml = h; }
+  if (h !== lastExplorerHtml) {
+    const el = $('explorer');
+    el.innerHTML = h;
+    lastExplorerHtml = h;
+    const cur = $('curTab');
+    if (cur) el.scrollLeft = Math.max(0, cur.offsetLeft - el.clientWidth + cur.offsetWidth + 80);
+  }
 }
 
 function viewArchive(idx) {
@@ -1459,10 +1473,16 @@ function renderStatus() {
 function renderChallenge() {
   const el = $('challenge');
   const c = state.challenge;
-  if (!c) { el.classList.add('hidden'); return; }
-  el.classList.remove('hidden');
-  const w = c.words[c.idx % c.words.length];
-  el.innerHTML = '<span>타이핑 챌린지</span><span class="word"><span class="typed">' + w.slice(0, c.pos) + '</span><span class="rest">' + w.slice(c.pos) + '</span></span><span class="meta">콤보 ' + c.combo + ', 남은 시간 ' + fmtSec(c.until - state.time) + '</span>';
+  let h;
+  if (!c) {
+    el.classList.remove('on');
+    h = S().keys >= 30 ? '타이핑 챌린지: 약 ' + fmtSec(state.nextChallengeAt - state.time) + ' 뒤 시작 (나온 단어를 정확히 치면 보너스)' : '타이핑 챌린지: 타이핑을 30번 하면 열립니다';
+  } else {
+    el.classList.add('on');
+    const w = c.words[c.idx % c.words.length];
+    h = '<span>타이핑 챌린지</span><span class="word"><span class="typed">' + w.slice(0, c.pos) + '</span><span class="rest">' + w.slice(c.pos) + '</span></span><span class="meta">콤보 ' + c.combo + ', 남은 시간 ' + fmtSec(c.until - state.time) + '</span>';
+  }
+  if (el.innerHTML !== h) el.innerHTML = h;
 }
 
 function renderBuffs() {

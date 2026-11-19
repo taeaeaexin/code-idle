@@ -27,14 +27,13 @@
 
 <div class="main">
   <div class="panel" id="editorPanel">
+    <div class="filetabs" id="explorer"></div>
     <div class="tab">
       <span><span class="lang" id="langBadge">Java</span><span id="filename">Main.java</span><span class="lines" id="lines"></span></span>
       <span class="right"><span class="stage-name" id="stageName"></span><span class="grade-chip" id="gradeChip" title="리팩토링 품질 등급">품질 -</span><button class="btn" id="refactorBtn">리팩토링</button></span>
     </div>
-    <div class="challenge hidden" id="challenge"></div>
     <div class="status" id="status"></div>
     <div class="workspace">
-      <div class="explorer" id="explorer"></div>
       <div class="code" id="code"></div>
     </div>
     <div class="infobar" id="infobar">코드 줄에 마우스를 올리면 설명이 나와요. 아무 키나 누르면 코딩이 시작됩니다.</div>
@@ -46,6 +45,7 @@
       <div class="progress-label"><span id="nextLabel">다음 아키텍처</span><span id="nextVal"></span></div>
       <div class="bar"><div class="bar-fill" id="nextBar"></div></div>
     </div>
+    <div class="challenge" id="challenge"></div>
   </div>
 
   <div class="panel">

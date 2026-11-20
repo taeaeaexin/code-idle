@@ -165,7 +165,7 @@ function debtFactor() {
   return reviewFactor(state.lv.review) * Math.pow(0.75, SK().clean) * (hasCrew('park') ? 0.8 : 1) * (hasSub('claude') ? 0.9 : 1) * buffMult('calm');
 }
 function testFactor(l) { return 1 / (1 + 0.3 * l); }
-function bugChanceAt(testLv) { return 0.004 * (1 + state.debt / 25) * testFactor(testLv) * Math.pow(0.75, SK().cicd) * (hasCrew('jung') ? 0.7 : 1); }
+function bugChanceAt(testLv) { return 0.012 * (1 + state.debt / 25) * testFactor(testLv) * Math.pow(0.75, SK().cicd) * (hasCrew('jung') ? 0.7 : 1); }
 function bugChance() { return bugChanceAt(state.lv.test); }
 function refactorDuration() {
   return Math.max(1.5, 8 * (state.legacy ? 2 : 1) * Math.pow(0.85, state.lv.ci) * Math.pow(0.7, SK().cicd) * (hasCrew('han') ? 0.7 : 1) * (hasCrew('park') ? 0.8 : 1));
@@ -711,22 +711,36 @@ function playClick() {
  * ========================================================= */
 function bugEl(no) { return $('code').querySelector('.ln[data-no="' + no + '"]'); }
 
-// 정상 코드 한 줄에 오타나 엉뚱한 글자를 섞음. pos, len은 틀린 부분 위치
+// 주석이 시작되는 위치 (주석 안에는 버그를 만들지 않음). 문자열 안의 // 는 건너뜀
+function commentStart(text) {
+  let inStr = '';
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inStr) { if (ch === inStr) inStr = ''; continue; }
+    if (ch === '"' || ch === "'") { inStr = ch; continue; }
+    if (text.startsWith('//', i) || text.startsWith('--', i) || text.startsWith('<!--', i)) return i;
+  }
+  return text.length;
+}
+
+// 정상 코드 한 줄에 오타나 엉뚱한 글자를 섞음. pos, len은 틀린 부분 위치. 주석 부분은 건드리지 않음
 function corrupt(text) {
   const start = text.length - text.trimStart().length;
+  const end = text.slice(0, commentStart(text)).trimEnd().length;
+  const code = text.slice(0, end);
   const opts = [];
   for (const [ok, bad] of TYPOS) {
-    const i = text.indexOf(ok, start);
+    const i = code.indexOf(ok, start);
     if (i >= 0) opts.push({ text: text.slice(0, i) + bad + text.slice(i + ok.length), pos: i, len: bad.length });
   }
-  const semi = text.lastIndexOf(';');
+  const semi = code.lastIndexOf(';');
   if (semi >= 0) opts.push({ text: text.slice(0, semi) + ':' + text.slice(semi + 1), pos: semi, len: 1 });
-  const eq = text.indexOf('==');
+  const eq = code.indexOf('==');
   if (eq >= 0) opts.push({ text: text.slice(0, eq) + '=' + text.slice(eq + 2), pos: eq, len: 1 });
-  const paren = text.lastIndexOf(')');
+  const paren = code.lastIndexOf(')');
   if (paren >= 0) opts.push({ text: text.slice(0, paren) + ']' + text.slice(paren + 1), pos: paren, len: 1 });
   if (!opts.length || Math.random() < 0.25) {
-    const p = start + Math.floor(Math.random() * (text.length - start + 1));
+    const p = start + Math.floor(Math.random() * (end - start + 1));
     opts.push({ text: text.slice(0, p) + pick(STRAYS) + text.slice(p), pos: p, len: 1 });
   }
   return pick(opts);

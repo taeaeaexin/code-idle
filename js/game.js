@@ -1920,8 +1920,7 @@ function renderDesk() {
   const key = [t, phase, gender, outfitOf(), theme, items.join('+')].join();
   if (key === lastDeskKey) return;
   lastDeskKey = key;
-  const label = { day: '낮', dusk: '저녁', night: overtime ? '야근 중' : '밤' }[phase];
-  $('desk').innerHTML = sceneSvg(t, phase, gender, outfitOf(), 2.5, { theme, items }) + '<div class="desk-cap">' + UPGRADES[1].tiers[ti] + ', ' + label + '</div>';
+  $('desk').innerHTML = sceneSvg(t, phase, gender, outfitOf(), 2.5, { theme, items });
 }
 
 function renderTop() {

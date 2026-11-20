@@ -85,7 +85,6 @@ button, input { font-family: inherit; }
 
 .workspace { display: flex; height: 430px; position: relative; }
 .desk { position: absolute; right: 16px; bottom: 6px; pointer-events: none; opacity: .92; text-align: center; background: var(--panel3); border: 1px solid var(--border); border-radius: 6px; padding: 6px 6px 3px; }
-.desk-cap { font-size: 10px; color: var(--muted); margin-top: 2px; }
 .desk .h2 { display: none; }
 .desk.pose .h1 { display: none; }
 .desk.pose .h2 { display: inline; }

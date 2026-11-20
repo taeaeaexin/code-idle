@@ -1831,8 +1831,6 @@ function viewArchive(idx) {
 function renderStatus() {
   const d = state.debt;
   let h = '<span class="debt">코드 복잡도' + '<span class="mini-bar"><span class="mini-fill" style="width:' + d + '%;background:' + (d > 60 ? 'var(--bad)' : d > 30 ? 'var(--gold)' : 'var(--cm)') + '"></span></span> ' + Math.floor(d) + '% (수입 -' + Math.floor(d / 2) + '%, 줄당 +' + lineDebt().toFixed(2) + '%, 업그레이드할수록 줄어듦)</span>';
-  const qs = qualityScore();
-  h += '<span title="깔끔함 ' + qs.clean + '/40, 작업량 ' + qs.work + '/30, 정리 규모 ' + qs.reduce + '/30' + (qs.bugs ? ', 버그 ' + qs.bugs : '') + '">지금 리팩토링하면 품질 ' + GRADES[gradeOf(qs.total)] + ' (' + qs.total + '점)</span>';
   if (state.legacy) h += '<span class="alert">레거시화! 수입 x0.7</span>';
   if (state.bugs.length) h += '<span class="bug-count">버그 ' + state.bugs.length + '개 (수입 -' + pct(bugLossPct()) + ')</span><button class="btn warn" data-act="findbug">버그 찾기</button>';
   if (state.incident) h += '<span class="alert">' + state.incident.label + ' ' + fmtSec(state.incident.until - state.time) + '</span>';

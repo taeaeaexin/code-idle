@@ -1078,7 +1078,8 @@ function learnSkill(id) {
 // 뒷모습 개발자 장면: 데스크 셋업 단계(0~7), 시간대, 성별, 직급별 옷에 따라 바뀜. 모니터 속 코드는 위로 흘러감
 // 뒷모습 개발자 장면 (80x48 도트)
 // tier: 데스크 셋업 단계 0~7, phase: day|dusk|night, gender: m|f, outfit: 0 후드티/가디건, 1 셔츠/블라우스, 2 정장, 3 터틀넥(대표)
-function sceneSvg(tier, phase, gender, outfit, scale) {
+function sceneSvg(tier, phase, gender, outfit, scale, opts) {
+  opts = opts || {};
   const R = [];
   const r = (x, y, w, h, c, cls) => { if (w > 0 && h > 0) R.push('<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="' + c + '"' + (cls ? ' class="' + cls + '"' : '') + '/>'); };
   const oval = (cx, cy, rx, ry, c) => { for (let y = -ry; y <= ry; y++) { const w = Math.round(rx * Math.sqrt(Math.max(0, 1 - (y * y) / (ry * ry)))); r(cx - w, cy + y, w * 2 + 1, 1, c); } };
@@ -1101,15 +1102,16 @@ function sceneSvg(tier, phase, gender, outfit, scale) {
   const mon = (x, y, w, h, seed, speed) => {
     const id = 'scr' + (mid++);
     r(x, y, w, h, '#1d2328'); r(x, y, w, 1, '#2b3238');
-    r(x + 1, y + 1, w - 2, h - 2, night ? '#081321' : '#0c1a29');
-    const cols = ['#4ec9b0', '#569cd6', '#ce9178', '#c586c0', '#9cdcfe', '#6a9955', '#dcdcaa'];
+    const sc = SCREEN[opts.theme] || SCREEN.dark;
+    r(x + 1, y + 1, w - 2, h - 2, night && sc.night ? sc.night : sc.bg);
+    const cols = sc.cols;
     const lens = [9, 5, 12, 7, 0, 10, 8, 4, 11, 6], ind = [0, 2, 4, 4, 0, 2, 4, 6, 2, 0];
     let lines = '';
     const add = (xx, yy, ww, c) => { if (ww > 0) lines += '<rect x="' + xx + '" y="' + yy + '" width="' + ww + '" height="1" fill="' + c + '"/>'; };
     for (let i = 0; i < 20; i++) {
       const k = (i + seed) % 10;
       const yy = y + 2 + i * 2;
-      add(x + 2, yy, 1, '#33465a');
+      add(x + 2, yy, 1, sc.ln);
       if (!lens[k]) continue;
       const len = Math.min(lens[k], w - 6 - ind[k]);
       add(x + 4 + ind[k], yy, Math.ceil(len * 0.6), cols[k % cols.length]);
@@ -1146,6 +1148,17 @@ function sceneSvg(tier, phase, gender, outfit, scale) {
   if (tier >= 6) { r(27, 25, 28, 3, '#e9e9e9'); for (let i = 0; i < 13; i++) r(28 + i * 2, 25, 1, 1, '#c4c4c4'); r(27, 27, 28, 1, '#cfcfcf'); }
   else if (tier >= 1) { r(27, 25, 28, 3, '#26292c'); const k = ['#e74c3c', '#f1c40f', '#2ecc71', '#3498db', '#9b59b6', '#e67e22']; for (let i = 0; i < 13; i++) r(28 + i * 2, 25, 1, 1, k[i % 6]); r(27, 27, 28, 1, '#1a1c1e'); }
   else { r(27, 25, 28, 3, '#a7a7a7'); for (let i = 0; i < 13; i++) r(28 + i * 2, 25, 1, 1, '#c8c8c8'); r(27, 27, 28, 1, '#8f8f8f'); }
+
+  // 책상 위 소품: 지금 쓰고 있는 아이템과 먹고 있는 음식
+  const items = (opts.items || []).slice();
+  const slots = [19, 66, 9, 0];
+  let si = 0;
+  for (const k of items) {
+    const m = DESK_MINI[k];
+    if (!m || si >= slots.length) continue;
+    const ox = slots[si++], oy = 28 - m.rows.length;
+    m.rows.forEach((row, yy) => { for (let xx = 0; xx < row.length; xx++) if (row[xx] !== '.') r(ox + xx, oy + yy, 1, 1, m.pal[row[xx]]); });
+  }
 
   // 사람
   const skin = '#f2c6a0', skinS = '#dba982';
@@ -1901,11 +1914,14 @@ function renderDesk() {
   const overtime = state.buffs.some(b => b.label.startsWith('야근') && buffActive(b));
   const phase = overtime ? 'night' : dayPhase();
   const gender = state.career.gender === 'f' ? 'f' : 'm';
-  const key = [t, phase, gender, outfitOf()].join();
+  const items = [];
+  for (const b of state.buffs) if (buffActive(b) && !b.bad) { const ic = (BUFF_INFO[b.label] || {}).icon; if (ic && !items.includes(ic)) items.push(ic); }
+  const theme = state.settings.theme;
+  const key = [t, phase, gender, outfitOf(), theme, items.join('+')].join();
   if (key === lastDeskKey) return;
   lastDeskKey = key;
   const label = { day: '낮', dusk: '저녁', night: overtime ? '야근 중' : '밤' }[phase];
-  $('desk').innerHTML = sceneSvg(t, phase, gender, outfitOf(), 2.5) + '<div class="desk-cap">' + UPGRADES[1].tiers[t] + ', ' + label + '</div>';
+  $('desk').innerHTML = sceneSvg(t, phase, gender, outfitOf(), 2.5, { theme, items }) + '<div class="desk-cap">' + UPGRADES[1].tiers[ti] + ', ' + label + '</div>';
 }
 
 function renderTop() {

@@ -978,6 +978,35 @@ const BUFF_INFO = {
   '도시락 복잡도 0': { icon: 'dosirak', name: '편의점 도시락', desc: '코드 복잡도가 늘지 않음' },
 };
 
+/* ---------- 책상 그림: 테마별 모니터 화면 색 ---------- */
+const SCREEN = {
+  dark:     { bg: '#0c1a29', night: '#081321', ln: '#33465a', cols: ['#4ec9b0', '#569cd6', '#ce9178', '#c586c0', '#9cdcfe', '#6a9955', '#dcdcaa'] },
+  light:    { bg: '#f5f7fa', ln: '#b8c2cc', cols: ['#267f99', '#0000ff', '#a31515', '#af00db', '#001080', '#008000', '#795e26'] },
+  monokai:  { bg: '#272822', ln: '#4f5048', cols: ['#a6e22e', '#f92672', '#e6db74', '#ae81ff', '#66d9ef', '#75715e', '#fd971f'] },
+  terminal: { bg: '#020a02', ln: '#1f3a1f', cols: ['#33ff66', '#66ff99', '#2a9d4a', '#99ffcc', '#33ff66', '#2a7a3a', '#ccffcc'] },
+};
+/* ---------- 책상 위 작은 소품 (지속 효과 아이콘 이름과 같은 키) ---------- */
+const bowl = (food, dish) => ({ pal: { f: food, b: dish }, rows: ['fffff', 'bbbbb', '.bbb.'] });
+const plate = (food, food2) => ({ pal: { f: food, g: food2, p: '#f5f5f5' }, rows: ['.fgf.', 'ffgff', 'ppppp'] });
+const DESK_MINI = {
+  coffee:   { pal: { g: '#2e7d32', w: '#ffffff', c: '#cfd8dc', b: '#6b3d1e' }, rows: ['..g.', 'wwww', 'cbbc', 'cbbc', '.cc.'] },
+  energy:   { pal: { s: '#b0bec5', b: '#1e3a8a', y: '#ffd54f' }, rows: ['sss', 'byb', 'byb', 'bbb', 'sss'] },
+  wrist:    { pal: { g: '#6fb6ff', b: '#3f8de0' }, rows: ['gggggg', 'bbbbbb'] },
+  pizza:    { pal: { c: '#c58a3a', o: '#f2b84b', r: '#d84315' }, rows: ['ccccc', 'oroor', '.oro.', '..o..'] },
+  gukbap:   bowl('#f3e3c8', '#2b2b2b'),
+  mala:     bowl('#d62d20', '#2b2b2b'),
+  ramen:    bowl('#f0b030', '#c62828'),
+  jjajang:  bowl('#3b2412', '#f5f5f5'),
+  salad:    bowl('#6bbf4e', '#f5f5f5'),
+  tteok:    bowl('#d62d20', '#3a3a3a'),
+  donkatsu: plate('#c98a3a', '#9be07a'),
+  sushi:    plate('#ff8a65', '#fafafa'),
+  gimbap:   { pal: { k: '#1f3a1f', w: '#fafafa', y: '#ffd54f', p: '#9e9e9e' }, rows: ['kk.kk', 'yk.ky', 'ppppp'] },
+  burger:   { pal: { t: '#e0a040', g: '#6bbf4e', m: '#6b3a1f' }, rows: ['.ttt.', 'ggggg', 'mmmmm', '.ttt.'] },
+  chicken:  { pal: { c: '#d9822b', b: '#f5f0e0' }, rows: ['cc...', 'cccc.', '.ccbb'] },
+  dosirak:  { pal: { k: '#37474f', w: '#fafafa', r: '#e53935', y: '#ffd54f' }, rows: ['kkkkkk', 'kwwkrk', 'kwwkyk', 'kkkkkk'] },
+};
+
 const WORDS = ['select', 'commit', 'return', 'public', 'static', 'null', 'void', 'class', 'import', 'insert', 'update', 'delete', 'rollback', 'spring', 'mybatis', 'oracle', 'deploy', 'refactor', 'debug', 'merge', 'override', 'private', 'final', 'interface', 'foreach', 'async', 'await', 'const'];
 
 const THEMES = [

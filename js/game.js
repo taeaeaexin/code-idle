@@ -4,7 +4,7 @@
 'use strict';
 
 const SAVE_KEY = 'codeIdle_v2';
-const BALANCE_VER = 3;
+const BALANCE_VER = 4;
 const RELEASE_MIN = 1e6;
 const OFFLINE_CAP = 12 * 3600;
 const LINE_CAP = 3000;
@@ -211,10 +211,12 @@ function repMult() { return 1 + state.rep * 0.01 * (1 + 0.5 * SK().network); }
 function achMult() { return 1 + 0.02 * achCount(); }
 function fileMult() { return 1 + 0.05 * state.filesDone; }
 function gradeMult() { return state.grade >= 0 ? GRADE_MULT[state.grade] : 1; }
-// 개발 실력: 레벨당 초당 +1원(더하기), 25레벨마다 단계가 올라 x2(곱하기)
-function codeIncome(l) { return l * Math.pow(2, Math.floor(l / 25)); }
-// 데스크 셋업: 레벨당 타이핑 1회 +1원, 25레벨마다 x2
-function deskIncome(l) { return (1 + l) * Math.pow(2, Math.floor(l / 25)); }
+// 개발 실력: 레벨당 초당 +1원(더하기), 10레벨마다 단계가 올라 x3(곱하기)
+// 10레벨마다 단계가 오르고 x3
+const TIER_MULT = 3;
+function codeIncome(l) { return l * Math.pow(TIER_MULT, Math.floor(l / 10)); }
+// 데스크 셋업: 레벨당 타이핑 1회 +1원, 10레벨마다 x3
+function deskIncome(l) { return (1 + l) * Math.pow(TIER_MULT, Math.floor(l / 10)); }
 // 인프라: 비싼 대신 레벨당 수입 x2
 function srvMult(l) { return Math.pow(2, l); }
 // 트래픽 폭주를 버티는 데 필요한 인프라 레벨
@@ -288,11 +290,11 @@ function upgDesc(u) {
   switch (u.id) {
     case 'code': {
       const nextTier = (Math.floor(l / u.step) + 1) * u.step;
-      return '자동 수입 초당 ' + nx('+' + won(codeIncome(l) * srvMult(state.lv.srv)), '+' + won(codeIncome(l + 1) * srvMult(state.lv.srv))) + '<br>Lv.' + nextTier + '에 다음 단계, 수입 x2 (배수 적용 전 기준)';
+      return '자동 수입 초당 ' + nx('+' + won(codeIncome(l) * srvMult(state.lv.srv)), '+' + won(codeIncome(l + 1) * srvMult(state.lv.srv))) + '<br>Lv.' + nextTier + '에 다음 단계, 수입 x' + TIER_MULT + ' (배수 적용 전 기준)';
     }
     case 'key': {
       const nextTier = (Math.floor(l / u.step) + 1) * u.step;
-      return '타이핑 1회당 기본 ' + nx('+' + won(deskIncome(l)), '+' + won(deskIncome(l + 1))) + '<br>Lv.' + nextTier + '에 다음 단계, 타이핑 x2';
+      return '타이핑 1회당 기본 ' + nx('+' + won(deskIncome(l)), '+' + won(deskIncome(l + 1))) + '<br>Lv.' + nextTier + '에 다음 단계, 타이핑 x' + TIER_MULT;
     }
     case 'test': return '버그 발생 분당 ' + nx((bugChanceAt(l) * 60).toFixed(2) + '회', (bugChanceAt(l + 1) * 60).toFixed(2) + '회') + '<br>(복잡도가 높을수록 버그가 자주 생김)';
     case 'review': return '코드 복잡도 증가 ' + nx('-' + pct(1 - reviewFactor(l)), '-' + pct(1 - reviewFactor(l + 1)));
@@ -391,7 +393,7 @@ function buy(id) {
     if (after > before) {
       const name = u.tiers[after];
       enqueue([L.cm(u.name + ' 단계 상승: ' + name)]);
-      toast(u.name + ' 단계 상승! ' + name + (u.id === 'code' ? ' (자동 수입 x2)' : u.id === 'key' ? ' (타이핑 x2)' : ''));
+      toast(u.name + ' 단계 상승! ' + name + (u.id === 'code' ? ' (자동 수입 x' + TIER_MULT + ')' : u.id === 'key' ? ' (타이핑 x' + TIER_MULT + ')' : ''));
     }
   }
   if (bought > 0) {
@@ -1893,7 +1895,9 @@ function outfitOf() {
   return c.level >= 3 ? 1 : 0;
 }
 function renderDesk() {
-  const t = tierIdx(UPGRADES[1], state.lv.key);
+  // 단계 목록(모니터 암 추가)을 그림 단계로 맞춤: 모니터 암은 듀얼 모니터 그림, 트리플 모니터 이후는 마지막 그림
+  const ti = tierIdx(UPGRADES[1], state.lv.key);
+  const t = ti <= 3 ? ti : Math.min(7, ti - 1);
   const overtime = state.buffs.some(b => b.label.startsWith('야근') && buffActive(b));
   const phase = overtime ? 'night' : dayPhase();
   const gender = state.career.gender === 'f' ? 'f' : 'm';

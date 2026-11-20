@@ -60,6 +60,7 @@ function defaultState() {
   const s = Object.assign(freshRun(), freshCompany(c), {
     career: c, settings: { sound: 'off', theme: 'dark' }, balanceVer: BALANCE_VER, time: 0, lastSave: Date.now(), buffs: [],
     nextEventAt: 150, nextChallengeAt: 60, challenge: null, timers: { logFix: 0, gemFix: 0, market: 0 },
+    inv: { glass: 0 }, itemCd: {},
   });
   return s;
 }
@@ -781,6 +782,7 @@ function spawnBug() {
   state.bugInfo[no] = { orig, pos: c.pos, len: c.len };
   state.bugs.push(no);
   setLineDom(no);
+  if (state.inv && state.inv.glass > 0) { useGlass(no); return true; }
   if (state.lv.log >= 1) findBug();
   return true;
 }
@@ -1218,25 +1220,37 @@ function pixelArt(id, size) {
   return '<svg class="pixel" viewBox="0 0 16 16" width="' + size + '" height="' + size + '" shape-rendering="crispEdges">' + r + '</svg>';
 }
 function itemPrice(it) { return Math.max(it.min, incomeRef() * it.sec); }
-const ITEM_LABEL = { coffee: '커피 타이핑 x1.5', energy: '에너지 드링크 x1.3', pizza: '복잡도 증가 없음', keycap: '키캡 콤보 유지 2배' };
-// 효과가 남아 있거나 에너지 드링크 피로가 남아 있으면 다시 못 씀
-function itemBusy(id) {
-  if (id === 'energy') return Math.max(buffLeft(ITEM_LABEL.energy), buffLeft('피곤함 x0.7'));
-  return ITEM_LABEL[id] ? buffLeft(ITEM_LABEL[id]) : 0;
-}
+// 재사용 대기 시간 (사용한 순간부터 계산)
+function itemCdLeft(id) { return Math.max(0, (state.itemCd[id] || 0) - state.time); }
 function buyItem(id) {
   const it = ITEMS.find(x => x.id === id);
   const p = itemPrice(it);
-  if (itemBusy(id) > 0) { toast(it.name + ' 효과가 아직 남아 있습니다'); return; }
   if (state.value < p) return;
-  if (id === 'glass' && !state.bugs.length) { toast('지금은 고칠 버그가 없습니다'); return; }
+  if (it.stack) {
+    if ((state.inv[id] || 0) >= it.stack) { toast(it.name + '은(는) 최대 ' + it.stack + '개까지 가질 수 있습니다'); return; }
+    state.value -= p;
+    state.inv[id] = (state.inv[id] || 0) + 1;
+    toast(it.name + ' 구입 (보관 ' + state.inv[id] + '개). 버그가 생기면 자동으로 고쳐줘요');
+    if (id === 'glass' && state.bugs.length) useGlass(state.bugs[state.bugs.length - 1]);
+    return;
+  }
+  const cd = itemCdLeft(id);
+  if (cd > 0) { toast(it.name + ' 재사용 대기 중 (' + fmtSec(cd) + ')'); return; }
   state.value -= p;
+  state.itemCd[id] = state.time + it.cd;
   if (id === 'coffee') addBuff('typing', 1.5, 30, '커피 타이핑 x1.5');
   if (id === 'energy') { addBuff('income', 1.3, 60, '에너지 드링크 x1.3'); addBuff('income', 0.7, 15, '피곤함 x0.7', true, 60); }
-  if (id === 'glass') { findBug(); fixBug(state.bugs[state.bugs.length - 1]); }
   if (id === 'pizza') { addRep(1); addBuff('calm', 0, 30, '복잡도 증가 없음'); }
-  if (id === 'keycap') addBuff('combo', 2, 60, '키캡 콤보 유지 2배');
+  if (id === 'wrist') addBuff('combo', 2, 60, '손목 받침대');
   toast(it.name + ' 사용!');
+}
+// 스마트글래스 1개를 써서 버그를 바로 고침
+function useGlass(no) {
+  if (!(state.inv.glass > 0)) return false;
+  state.inv.glass--;
+  fixBug(no, true);
+  showFloat('스마트글래스가 버그를 잡았어요 (남은 ' + state.inv.glass + '개)', true);
+  return true;
 }
 
 /* =========================================================
@@ -1539,6 +1553,8 @@ function renderTabs() {
   if ($('tabs').innerHTML !== html) $('tabs').innerHTML = html;
 }
 
+// [[충족 여부, 조건 글], ...]에서 아직 못 채운 조건만 모아서 표시
+function needText(conds) { return conds.filter(c => !c[0]).map(c => c[1] + ' 필요').join('<br>'); }
 function lockTag(text) { return '<span class="lock-tag">' + text + '</span>'; }
 function q(id) { return id ? '<span class="q" data-gloss="' + id + '" title="백과사전에서 보기">?</span>' : ''; }
 
@@ -1628,12 +1644,17 @@ function sideTeam() {
 }
 
 function sideShop() {
-  let h = '<div class="sec-title">상점 <span class="sub">한 번 쓰고 사라지는 아이템</span></div><div class="note">가격은 지금 수입에 맞춰 바뀝니다. 같은 아이템은 효과가 끝나야 다시 쓸 수 있어요.</div>';
+  let h = '<div class="sec-title">상점 <span class="sub">한 번 쓰고 사라지는 아이템</span></div><div class="note">가격은 지금 수입에 맞춰 바뀝니다. 쓰고 나면 재사용 대기 시간이 있어요.</div>';
   for (const it of ITEMS) {
     const p = itemPrice(it);
-    const busy = itemBusy(it.id);
-    const btn = busy > 0 ? '<button class="btn off" data-act="item:' + it.id + '">사용 중 ' + fmtSec(busy) + '</button>' : '<button class="btn' + (state.value >= p ? '' : ' off') + '" data-act="item:' + it.id + '">' + won(p) + '</button>';
-    h += '<div class="row"><div class="item-art">' + pixelArt(it.id, 40) + '</div><div style="flex:1"><div class="row-name">' + it.name + '</div><div class="row-desc">' + it.desc + '</div></div>' + btn + '</div>';
+    const cd = it.stack ? 0 : itemCdLeft(it.id);
+    const full = it.stack && (state.inv[it.id] || 0) >= it.stack;
+    let btn;
+    if (cd > 0) btn = '<button class="btn off" data-act="item:' + it.id + '">재사용 ' + fmtSec(cd) + '</button>';
+    else if (full) btn = '<button class="btn off" data-act="item:' + it.id + '">가득 참</button>';
+    else btn = '<button class="btn' + (state.value >= p ? '' : ' off') + '" data-act="item:' + it.id + '">' + won(p) + '</button>';
+    const extra = it.stack ? '<br>보관 ' + (state.inv[it.id] || 0) + ' / ' + it.stack + '개' : '<br>재사용 대기 ' + it.cd + '초';
+    h += '<div class="row"><div class="item-art">' + pixelArt(it.id, 40) + '</div><div style="flex:1"><div class="row-name">' + it.name + '</div><div class="row-desc">' + it.desc + extra + '</div></div>' + btn + '</div>';
   }
   return h;
 }
@@ -1646,24 +1667,24 @@ function sideCareer() {
   if (c.level < 5 && !c.route) {
     const p = innerCond();
     h += '<div class="divider"></div><div class="sec-title">' + TITLES[c.level + 1] + '(으)로 가는 두 가지 방법</div><div class="route-box">' +
-      '<div class="route"><h4>이직</h4>새 회사에서 v1.0부터 다시 시작. 평판, 팀, 릴리즈 배수, 파일이 초기화되는 대신 경력 포인트를 많이 받음<br>' +
+      '<div class="route' + (canJobChange() ? '' : ' locked') + '"><h4>이직</h4>새 회사에서 v1.0부터 다시 시작. 평판, 팀, 릴리즈 배수, 파일이 초기화되는 대신 경력 포인트를 많이 받음<br>' +
       '조건: v4.0 ' + (j.ver ? '[완료]' : '(현재 v' + state.version + '.0)') + ', 평판 20 ' + (j.rep ? '[완료]' : '(현재 ' + fmtInt(state.rep) + ')') +
-      '<button class="big-btn" data-act="job"' + (canJobChange() ? '' : ' disabled') + '>이직 (포인트 +' + jobGain() + ')</button></div>' +
-      '<div class="route"><h4>사내 승진</h4>' + escHtml(companyName()) + '에 남아 승진. 아무것도 초기화되지 않지만 경력 포인트는 1만 받고 조건이 까다로움<br>' +
+      '<button class="big-btn" data-act="job"' + (canJobChange() ? '' : ' disabled') + '>이직 (포인트 +' + jobGain() + ')</button>' + (canJobChange() ? '' : lockTag(needText([[j.ver, 'v4.0 도달'], [j.rep, '평판 20']]))) + '</div>' +
+      '<div class="route' + (canInnerPromote() ? '' : ' locked') + '"><h4>사내 승진</h4>' + escHtml(companyName()) + '에 남아 승진. 아무것도 초기화되지 않지만 경력 포인트는 1만 받고 조건이 까다로움<br>' +
       '조건: v' + p.needVer + '.0 ' + (p.ver ? '[완료]' : '(현재 v' + state.version + '.0)') + ', 평판 ' + p.needRep + ' ' + (p.rep ? '[완료]' : '(현재 ' + fmtInt(state.rep) + ')') +
-      '<button class="big-btn" data-act="inner"' + (canInnerPromote() ? '' : ' disabled') + '>승진 (포인트 +1)</button></div></div>';
+      '<button class="big-btn" data-act="inner"' + (canInnerPromote() ? '' : ' disabled') + '>승진 (포인트 +1)</button>' + (canInnerPromote() ? '' : lockTag(needText([[p.ver, 'v' + p.needVer + '.0 도달'], [p.rep, '평판 ' + p.needRep]]))) + '</div></div>';
     h += '<div class="note" style="margin-top:8px">부장이 되면 이사 루트와 대표(창업) 루트 중 하나를 고를 수 있습니다.</div>';
   }
   if (c.level >= 5 && !c.route) {
     const e = EXEC[0];
     h += '<div class="divider"></div><div class="sec-title">갈림길</div><div class="route-box">' +
-      '<div class="route"><h4>이사 루트</h4>지금 회사에서 이사, 상무, 전무, CTO로 승진. 리스크 없이 꾸준히 강해짐<br>이사 조건: 가치 ' + won(e.value) + ', 평판 ' + e.rep + '<button class="big-btn" data-act="promote"' + (canPromote() ? '' : ' disabled') + '>이사 승진</button></div>' +
+      '<div class="route' + (canPromote() ? '' : ' locked') + '"><h4>이사 루트</h4>지금 회사에서 이사, 상무, 전무, CTO로 승진. 리스크 없이 꾸준히 강해짐<br>이사 조건: 가치 ' + won(e.value) + ', 평판 ' + e.rep + '<button class="big-btn" data-act="promote"' + (canPromote() ? '' : ' disabled') + '>이사 승진</button>' + (canPromote() ? '' : lockTag(needText([[state.runBest >= e.value, '가치 ' + won(e.value)], [state.rep >= e.rep, '평판 ' + e.rep]]))) + '</div>' +
       '<div class="route"><h4>대표 루트</h4>창업해서 매출 3배. 대신 시장이 크게 출렁이고 시장과 무관한 운영비와 세무조사, 해킹 같은 사고가 있으며, 자금이 바닥나면 폐업<button class="big-btn gold" data-act="found">창업하기</button></div></div>';
   }
   if (c.route === 'exec' && !c.cto) {
     const e = nextExec();
-    h += '<div class="divider"></div><div class="sec-title">다음 승진: ' + e.title + '</div><div class="note">조건: 서비스 가치 ' + won(e.value) + ' (현재 ' + won(state.runBest) + '), 평판 ' + e.rep + ' (현재 ' + fmtInt(state.rep) + ')<br>승진은 초기화 없이 그 자리에서 이뤄집니다.</div>' +
-      '<button class="big-btn" data-act="promote"' + (canPromote() ? '' : ' disabled') + '>' + e.title + ' 승진</button>';
+    h += '<div class="divider"></div><div class="sec-title">다음 승진: ' + e.title + '</div><div class="route-box" style="grid-template-columns:1fr"><div class="route' + (canPromote() ? '' : ' locked') + '">조건: 서비스 가치 ' + won(e.value) + ' (현재 ' + won(state.runBest) + '), 평판 ' + e.rep + ' (현재 ' + fmtInt(state.rep) + ')<br>승진은 초기화 없이 그 자리에서 이뤄집니다.' +
+      '<button class="big-btn" data-act="promote"' + (canPromote() ? '' : ' disabled') + '>' + e.title + ' 승진</button>' + (canPromote() ? '' : lockTag(needText([[state.runBest >= e.value, '가치 ' + won(e.value)], [state.rep >= e.rep, '평판 ' + e.rep]]))) + '</div></div>';
   }
   if (c.route === 'ceo') {
     h += '<div class="divider"></div><div class="sec-title">회사 현황</div><div class="info">' +
@@ -1822,12 +1843,44 @@ function renderChallenge() {
   if (el.innerHTML !== h) el.innerHTML = h;
 }
 
+// 지속 효과를 아이콘으로 표시: 시간이 지날수록 회색이 위에서부터 차오르고, 5초 남으면 깜빡임. 마우스를 올리면 설명
+function buffList() {
+  const list = [];
+  for (const b of state.buffs) if (buffActive(b)) {
+    const info = BUFF_INFO[b.label] || { icon: 'doc', name: b.label, desc: '' };
+    list.push({ key: b.label, icon: info.icon, name: info.name, desc: info.desc, left: b.until - state.time, total: b.until - b.from, bad: b.bad });
+  }
+  if (state.grade >= 0 && state.time < state.cleanUntil) list.push({ key: 'clean', icon: 'broom', name: '방금 리팩토링', desc: '정리된 코드로 기분 좋은 상태', left: state.cleanUntil - state.time, total: 30 });
+  if (state.inv && state.inv.glass > 0) list.push({ key: 'glass', icon: 'glass', name: '스마트글래스', desc: '버그가 생기면 1개를 써서 바로 고침', count: state.inv.glass });
+  return list;
+}
 function renderBuffs() {
-  const chips = [];
-  for (const b of state.buffs) if (buffActive(b)) chips.push('<span class="chip' + (b.bad ? ' bad' : '') + '">' + b.label + ' ' + fmtSec(b.until - state.time) + '</span>');
-  if (state.lv.doc >= 0 && state.time < state.cleanUntil && state.grade >= 0) chips.push('<span class="chip">방금 리팩토링 ' + fmtSec(state.cleanUntil - state.time) + '</span>');
-  if (isCeo() && !state.career.ipo) chips.push('<span class="chip' + (state.market < 0.8 ? ' bad' : '') + '">시장 x' + state.market.toFixed(2) + '</span>');
-  $('buffs').innerHTML = chips.join('');
+  const wrap = $('buffs');
+  const list = buffList();
+  const keys = new Set(list.map(x => x.key));
+  wrap.querySelectorAll('.bicon').forEach(el => { if (!keys.has(el.dataset.key)) el.remove(); });
+  for (const x of list) {
+    let el = null;
+    wrap.querySelectorAll('.bicon').forEach(e => { if (e.dataset.key === x.key) el = e; });
+    if (!el) {
+      el = document.createElement('div');
+      el.className = 'bicon' + (x.bad ? ' bad' : '');
+      el.dataset.key = x.key;
+      el.innerHTML = pixelArt(x.icon, 24) + '<div class="bfill"></div><span class="bcount"></span><div class="btip"></div>';
+      wrap.appendChild(el);
+    }
+    const timed = x.total > 0;
+    el.querySelector('.bfill').style.height = timed ? clamp(100 * (1 - x.left / x.total), 0, 100) + '%' : '0%';
+    el.classList.toggle('blink', timed && x.left <= 5);
+    el.querySelector('.bcount').textContent = x.count ? x.count : '';
+    el.querySelector('.btip').innerHTML = '<b>' + x.name + '</b><br>' + x.desc + (timed ? '<br>남은 시간 ' + fmtSec(x.left) : x.count ? '<br>보관 ' + x.count + '개' : '');
+  }
+  let m = wrap.querySelector('.chip.market');
+  if (isCeo() && !state.career.ipo) {
+    if (!m) { m = document.createElement('span'); m.className = 'chip market'; wrap.prepend(m); }
+    m.classList.toggle('bad', state.market < 0.8);
+    m.textContent = '시장 x' + state.market.toFixed(2);
+  } else if (m) m.remove();
 }
 
 let lastDeskKey = '';
@@ -1946,6 +1999,10 @@ function mergeInto(def, src) {
 // 숫자가 깨진 값(NaN, null 등)을 안전한 값으로 되돌림
 function sanitize() {
   const num = (v, d) => (typeof v === 'number' && isFinite(v)) ? v : d;
+  if (!state.inv || typeof state.inv !== 'object') state.inv = { glass: 0 };
+  state.inv.glass = Math.max(0, Math.min(5, Math.floor(num(state.inv.glass, 0))));
+  if (!state.itemCd || typeof state.itemCd !== 'object') state.itemCd = {};
+  state.buffs = (state.buffs || []).map(b => b.label === '키캡 콤보 유지 2배' ? Object.assign(b, { label: '손목 받침대' }) : b);
   for (const k in state.lv) state.lv[k] = Math.max(0, Math.floor(num(state.lv[k], 0)));
   if (!isCeo()) state.value = Math.max(0, num(state.value, 0));
   else state.value = num(state.value, 0);

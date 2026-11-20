@@ -167,6 +167,20 @@ button, input { font-family: inherit; }
 
 .row { display: flex; justify-content: space-between; align-items: center; padding: 9px 10px; margin-bottom: 7px; background: var(--panel2); border: 1px solid var(--border2); border-radius: 4px; gap: 10px; }
 .row.locked { position: relative; }
+.route { position: relative; }
+.route.locked > :not(.lock-tag) { opacity: .25; }
+.route .lock-tag { text-align: center; padding: 0 8px; line-height: 1.6; white-space: normal; flex-direction: column; }
+#buffs { align-items: center; }
+.bicon { position: relative; width: 30px; height: 30px; border-radius: 5px; background: #f2f2f2; border: 1px solid var(--border2); display: flex; align-items: center; justify-content: center; cursor: default; }
+.bicon.bad { background: #f6d5d0; }
+.bicon .bfill { position: absolute; left: 0; top: 0; right: 0; height: 0; background: rgba(60, 60, 60, .6); border-radius: 5px 5px 0 0; pointer-events: none; }
+.bicon.blink { animation: bblink .5s steps(2, start) infinite; }
+@keyframes bblink { to { opacity: .25; } }
+.bicon .bcount { position: absolute; right: -3px; bottom: -4px; font-size: 10px; font-weight: 700; color: #fff; background: var(--accent); border-radius: 7px; padding: 0 4px; line-height: 14px; }
+.bicon .bcount:empty { display: none; }
+.bicon .btip { display: none; position: absolute; top: 36px; right: 0; width: 180px; background: var(--panel); color: var(--text); border: 1px solid var(--accent); border-radius: 5px; padding: 7px 9px; font-size: 12px; line-height: 1.5; z-index: 40; text-align: left; white-space: normal; }
+.bicon .btip b { color: var(--strong); }
+.bicon:hover .btip { display: block; }
 .lock-tag { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: var(--strong); letter-spacing: .5px; pointer-events: none; }
 .row.owned { border-color: var(--good); }
 .row-name { font-size: 14px; color: var(--strong); }

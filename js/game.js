@@ -1684,7 +1684,7 @@ function sideGloss() {
 }
 
 function sideAch() {
-  let h = '<div class="sec-title">업적 <span class="sub">' + achCount() + ' / ' + ACHS.length + ', 개당 수입 +3%</span></div>';
+  let h = '<div class="sec-title">업적 <span class="sub">' + achCount() + ' / ' + ACHS.length + ', 개당 수입 +2%</span></div>';
   for (const [id, name, desc] of ACHS) {
     const done = state.career.ach[id];
     h += '<div class="ach' + (done ? ' done' : '') + '"><span class="mark"></span><div><div class="a-name">' + name + '</div><div class="a-desc">' + desc + '</div></div></div>';
@@ -1865,7 +1865,7 @@ function renderTop() {
   gc.textContent = '품질 ' + (state.grade >= 0 ? GRADES[state.grade] : '-');
   gc.className = 'grade-chip g' + state.grade;
 
-  $('fileLabel').textContent = '파일 완성: ' + f.name + ' (완성하면 다음 파일이 열리고 파일 보너스 +15%)';
+  $('fileLabel').textContent = '파일 완성: ' + f.name + ' (완성하면 다음 파일이 열리고 파일 보너스 +5%)';
   $('fileVal').textContent = state.fileLines + ' / ' + f.target + '줄';
   $('fileBar').style.width = clamp(state.fileLines / f.target * 100, 0, 100) + '%';
 
@@ -2119,7 +2119,7 @@ function perSecond() {
     state.nextChallengeAt = state.time + 70 + Math.random() * 30;
   }
   for (const [id, name, , check] of ACHS) {
-    if (!state.career.ach[id] && check()) { state.career.ach[id] = true; toast('업적 달성: ' + name + ' (수입 +3%)'); }
+    if (!state.career.ach[id] && check()) { state.career.ach[id] = true; toast('업적 달성: ' + name + ' (수입 +2%)'); }
   }
   state.buffs = state.buffs.filter(b => b.until > state.time);
 }

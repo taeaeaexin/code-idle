@@ -1056,6 +1056,41 @@ function learnSkill(id) {
 /* =========================================================
  * 상점
  * ========================================================= */
+// 데스크 셋업 단계(0~7)에 따라 바뀌는 내 책상 도트 그림 (40x24)
+function deskSvg(tier, scale) {
+  const R = [];
+  const r = (x, y, w, h, c) => R.push('<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="' + c + '"/>');
+  const monitor = (x, y, w, h, lines) => {
+    r(x, y, w, h, '#2b2b2b');
+    r(x + 1, y + 1, w - 2, h - 2, '#16263a');
+    const cols = ['#4ec9b0', '#569cd6', '#d7ba7d', '#c586c0', '#9cdcfe'];
+    for (let i = 0; i < lines && i < h - 3; i++) r(x + 2 + (i % 3 === 1 ? 1 : 0), y + 2 + i, Math.max(2, (w - 5) - ((i * 3) % 4)), 1, cols[i % cols.length]);
+    r(x + Math.floor(w / 2) - 1, y + h, 2, 2, '#3a3a3a');
+    r(x + Math.floor(w / 2) - 2, y + h + 2, 4, 1, '#3a3a3a');
+  };
+  // 책상
+  const wood = tier >= 4 ? '#c8a165' : '#8b5a2b';
+  r(1, 17, 38, 2, wood);
+  r(1, 19, 38, 1, tier >= 4 ? '#a5824e' : '#6b4421');
+  if (tier >= 4) { r(6, 20, 3, 4, '#555'); r(31, 20, 3, 4, '#555'); r(4, 23, 7, 1, '#444'); r(29, 23, 7, 1, '#444'); r(9, 20, 2, 1, '#7cfc00'); }
+  else { r(3, 20, 2, 4, '#5a3a1a'); r(35, 20, 2, 4, '#5a3a1a'); }
+  // 모니터
+  monitor(14, 3, 12, 10, 6);
+  if (tier >= 3) monitor(2, 5, 11, 8, 4);
+  if (tier >= 7) monitor(27, 5, 11, 8, 4);
+  // 키보드
+  if (tier >= 6) { r(13, 15, 13, 2, '#e8e8e8'); for (let i = 0; i < 6; i++) r(14 + i * 2, 15, 1, 1, '#bdbdbd'); }
+  else if (tier >= 1) { r(13, 15, 13, 2, '#333'); const k = ['#e74c3c', '#f1c40f', '#2ecc71', '#3498db', '#9b59b6', '#e67e22']; for (let i = 0; i < 6; i++) r(14 + i * 2, 15, 1, 1, k[i]); }
+  else r(13, 15, 13, 2, '#9e9e9e');
+  // 마우스
+  if (tier >= 2) { r(28, 15, 2, 2, '#222'); r(28, 16, 2, 1, '#e040fb'); }
+  // 커피
+  r(10, 14, 2, 3, '#f2f2f2'); r(10, 14, 2, 1, '#6b3d1e');
+  // 본체
+  if (tier >= 5) { r(22, 20, 6, 4, '#1a1a1a'); r(23, 21, 1, 2, '#00e5ff'); r(25, 21, 2, 1, '#e040fb'); r(25, 22, 2, 1, '#7cfc00'); }
+  return '<svg viewBox="0 0 40 24" width="' + 40 * scale + '" height="' + 24 * scale + '" shape-rendering="crispEdges">' + R.join('') + '</svg>';
+}
+
 function pixelArt(id, size) {
   const a = ITEM_ART[id];
   if (!a) return '';
@@ -1675,6 +1710,14 @@ function renderBuffs() {
   $('buffs').innerHTML = chips.join('');
 }
 
+let lastDeskTier = -1;
+function renderDesk() {
+  const t = tierIdx(UPGRADES[1], state.lv.key);
+  if (t === lastDeskTier) return;
+  lastDeskTier = t;
+  $('desk').innerHTML = deskSvg(t, 3) + '<div class="desk-cap">' + UPGRADES[1].tiers[t] + '</div>';
+}
+
 function renderTop() {
   $('value').textContent = won(state.value);
   if (isCeo() && !state.career.ipo) {
@@ -2015,7 +2058,7 @@ function loop(now) {
   renderTop();
   renderChallenge();
   sideAcc += dt;
-  if (sideAcc >= 0.1) { sideAcc = 0; renderSide(); renderStatus(); renderBuffs(); renderExplorer(); }
+  if (sideAcc >= 0.1) { sideAcc = 0; renderSide(); renderStatus(); renderBuffs(); renderExplorer(); renderDesk(); }
   requestAnimationFrame(loop);
 }
 

@@ -382,7 +382,7 @@ const EXEC = [
   { title: '전무', value: 1e12, rep: 50 },
   { title: 'CTO',  value: 1e13, rep: 60 },
 ];
-const IPO_VALUE = 1e12;
+const IPO_VALUE = 1e13;
 const SKILLS = [
   { id: 'sql',     name: 'SQL 튜닝', max: 3, desc: '수입 x1.5' },
   { id: 'clean',   name: '클린코드', max: 3, desc: '코드 복잡도 증가 -25%' },

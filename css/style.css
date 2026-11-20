@@ -82,7 +82,9 @@ button, input { font-family: inherit; }
 .challenge .rest { color: var(--muted); }
 .challenge .meta { color: var(--gold); margin-left: auto; }
 
-.workspace { display: flex; height: 430px; }
+.workspace { display: flex; height: 430px; position: relative; }
+.desk { position: absolute; right: 16px; bottom: 6px; pointer-events: none; opacity: .92; text-align: center; background: var(--panel3); border: 1px solid var(--border); border-radius: 6px; padding: 6px 6px 3px; }
+.desk-cap { font-size: 10px; color: var(--muted); margin-top: 2px; }
 .filetabs { display: flex; background: var(--panel3); border-bottom: 1px solid var(--border); overflow-x: auto; overflow-y: hidden; height: 34px; scrollbar-width: thin; }
 .ftab { display: flex; align-items: center; gap: 6px; padding: 0 14px; font-size: 12px; white-space: nowrap; border-right: 1px solid var(--border); color: var(--muted); border-top: 2px solid transparent; flex-shrink: 0; }
 .ftab.done { cursor: pointer; }

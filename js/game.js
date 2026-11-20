@@ -1056,15 +1056,45 @@ function learnSkill(id) {
 /* =========================================================
  * 상점
  * ========================================================= */
-// 데스크 셋업 단계(0~7)에 따라 바뀌는 내 책상 도트 그림 (40x24)
-function deskSvg(tier, scale) {
+// 데스크 셋업 단계(0~7)와 시간대에 따라 바뀌는 내 책상 도트 그림 (40x24), 모니터 속 코드는 위로 흘러감
+// phase: 'day' | 'dusk' | 'night'
+function deskSvg(tier, scale, phase) {
   const R = [];
   const r = (x, y, w, h, c) => R.push('<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="' + c + '"/>');
-  const monitor = (x, y, w, h, lines) => {
+  const night = phase === 'night';
+  // 벽과 하늘
+  const wall = { day: '#2f3b4a', dusk: '#4a3442', night: '#0d1220' }[phase];
+  r(0, 0, 40, 24, wall);
+  if (night) {
+    [[3, 1], [9, 2], [22, 1], [30, 2], [17, 0], [6, 3]].forEach(([x, y]) => r(x, y, 1, 1, '#c9d6ff'));
+    r(35, 1, 3, 3, '#f5f1c8'); r(36, 1, 2, 1, '#0d1220'); // 초승달
+  } else if (phase === 'dusk') {
+    r(34, 1, 4, 3, '#ff9a4a'); r(33, 2, 1, 1, '#ff9a4a');
+  } else {
+    r(35, 1, 3, 3, '#ffd54f'); r(34, 2, 1, 1, '#ffd54f'); r(38, 2, 1, 1, '#ffd54f');
+  }
+  let mid = 0;
+  const monitor = (x, y, w, h, speed) => {
+    const id = 'scr' + (mid++);
+    const iw = w - 2, ih = h - 2;
     r(x, y, w, h, '#2b2b2b');
-    r(x + 1, y + 1, w - 2, h - 2, '#16263a');
-    const cols = ['#4ec9b0', '#569cd6', '#d7ba7d', '#c586c0', '#9cdcfe'];
-    for (let i = 0; i < lines && i < h - 3; i++) r(x + 2 + (i % 3 === 1 ? 1 : 0), y + 2 + i, Math.max(2, (w - 5) - ((i * 3) % 4)), 1, cols[i % cols.length]);
+    r(x + 1, y + 1, iw, ih, night ? '#0f1c2e' : '#16263a');
+    const cols = ['#4ec9b0', '#569cd6', '#d7ba7d', '#c586c0', '#9cdcfe', '#6a9955'];
+    const N = 10;
+    let lines = '';
+    for (let i = 0; i < N * 2; i++) {
+      const k = i % N;
+      const indent = [0, 1, 2, 1, 0, 1, 2, 2, 1, 0][k];
+      const len = Math.max(1, Math.min(iw - 1 - indent, [6, 4, 7, 3, 5, 6, 2, 5, 4, 7][k] - (iw < 10 ? 2 : 0)));
+      if (k === 4 || k === 9) continue; // 빈 줄
+      lines += '<rect x="' + (x + 2 + indent) + '" y="' + (y + 1 + i) + '" width="' + len + '" height="1" fill="' + cols[(k + x) % cols.length] + '"/>';
+    }
+    const steps = [];
+    for (let s = 0; s < N; s++) steps.push('0 ' + (-s));
+    R.push('<clipPath id="' + id + '"><rect x="' + (x + 1) + '" y="' + (y + 1) + '" width="' + iw + '" height="' + ih + '"/></clipPath>' +
+      '<g clip-path="url(#' + id + ')"><g>' + lines +
+      '<animateTransform attributeName="transform" type="translate" calcMode="discrete" values="' + steps.join(';') + '" dur="' + speed + 's" repeatCount="indefinite"/></g></g>');
+    if (night) r(x + 1, y + h, w - 2, 1, 'rgba(86,156,214,.25)'); // 화면 불빛
     r(x + Math.floor(w / 2) - 1, y + h, 2, 2, '#3a3a3a');
     r(x + Math.floor(w / 2) - 2, y + h + 2, 4, 1, '#3a3a3a');
   };
@@ -1074,22 +1104,24 @@ function deskSvg(tier, scale) {
   r(1, 19, 38, 1, tier >= 4 ? '#a5824e' : '#6b4421');
   if (tier >= 4) { r(6, 20, 3, 4, '#555'); r(31, 20, 3, 4, '#555'); r(4, 23, 7, 1, '#444'); r(29, 23, 7, 1, '#444'); r(9, 20, 2, 1, '#7cfc00'); }
   else { r(3, 20, 2, 4, '#5a3a1a'); r(35, 20, 2, 4, '#5a3a1a'); }
-  // 모니터
-  monitor(14, 3, 12, 10, 6);
-  if (tier >= 3) monitor(2, 5, 11, 8, 4);
-  if (tier >= 7) monitor(27, 5, 11, 8, 4);
+  // 모니터 (화면 속 코드가 위로 흘러감)
+  monitor(14, 3, 12, 10, 2.2);
+  if (tier >= 3) monitor(2, 5, 11, 8, 3.1);
+  if (tier >= 7) monitor(27, 5, 11, 8, 2.7);
   // 키보드
   if (tier >= 6) { r(13, 15, 13, 2, '#e8e8e8'); for (let i = 0; i < 6; i++) r(14 + i * 2, 15, 1, 1, '#bdbdbd'); }
   else if (tier >= 1) { r(13, 15, 13, 2, '#333'); const k = ['#e74c3c', '#f1c40f', '#2ecc71', '#3498db', '#9b59b6', '#e67e22']; for (let i = 0; i < 6; i++) r(14 + i * 2, 15, 1, 1, k[i]); }
   else r(13, 15, 13, 2, '#9e9e9e');
-  // 마우스
+  // 마우스, 커피, 본체
   if (tier >= 2) { r(28, 15, 2, 2, '#222'); r(28, 16, 2, 1, '#e040fb'); }
-  // 커피
   r(10, 14, 2, 3, '#f2f2f2'); r(10, 14, 2, 1, '#6b3d1e');
-  // 본체
   if (tier >= 5) { r(22, 20, 6, 4, '#1a1a1a'); r(23, 21, 1, 2, '#00e5ff'); r(25, 21, 2, 1, '#e040fb'); r(25, 22, 2, 1, '#7cfc00'); }
+  // 밤에는 스탠드 불빛
+  if (night && tier < 7) { r(36, 12, 1, 5, '#777'); r(34, 11, 4, 1, '#999'); r(34, 12, 4, 1, 'rgba(255,214,120,.35)'); r(33, 13, 6, 4, 'rgba(255,214,120,.12)'); }
   return '<svg viewBox="0 0 40 24" width="' + 40 * scale + '" height="' + 24 * scale + '" shape-rendering="crispEdges">' + R.join('') + '</svg>';
 }
+// 실제 시간 기준: 6~17시 낮, 17~19시 저녁, 그 외 밤
+function dayPhase(d) { const h = (d || new Date()).getHours(); return h >= 6 && h < 17 ? 'day' : h < 19 ? 'dusk' : 'night'; }
 
 function pixelArt(id, size) {
   const a = ITEM_ART[id];
@@ -1710,12 +1742,16 @@ function renderBuffs() {
   $('buffs').innerHTML = chips.join('');
 }
 
-let lastDeskTier = -1;
+let lastDeskKey = '';
 function renderDesk() {
   const t = tierIdx(UPGRADES[1], state.lv.key);
-  if (t === lastDeskTier) return;
-  lastDeskTier = t;
-  $('desk').innerHTML = deskSvg(t, 3) + '<div class="desk-cap">' + UPGRADES[1].tiers[t] + '</div>';
+  const overtime = state.buffs.some(b => b.label.startsWith('야근') && buffActive(b));
+  const phase = overtime ? 'night' : dayPhase();
+  const key = t + phase;
+  if (key === lastDeskKey) return;
+  lastDeskKey = key;
+  const label = { day: '낮', dusk: '저녁', night: overtime ? '야근 중' : '밤' }[phase];
+  $('desk').innerHTML = deskSvg(t, 3, phase) + '<div class="desk-cap">' + UPGRADES[1].tiers[t] + ', ' + label + '</div>';
 }
 
 function renderTop() {

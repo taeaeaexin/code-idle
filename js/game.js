@@ -58,7 +58,7 @@ function freshCareer() {
 function defaultState() {
   const c = freshCareer();
   const s = Object.assign(freshRun(), freshCompany(c), {
-    career: c, settings: { sound: 'off', theme: 'dark' }, balanceVer: BALANCE_VER, time: 0, lastSave: Date.now(), buffs: [],
+    career: c, settings: { sound: 'off', theme: (window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark' }, balanceVer: BALANCE_VER, time: 0, lastSave: Date.now(), buffs: [],
     nextEventAt: 150, nextChallengeAt: 60, challenge: null, timers: { logFix: 0, gemFix: 0, market: 0 },
     inv: { glass: 0 }, itemCd: {},
   });
@@ -1734,8 +1734,10 @@ function sideSet() {
   h += '<div class="sec-title">회사</div><div class="set-row"><span>' + escHtml(companyName()) + '</span><button class="btn gray" data-act="recompany">회사 이름 바꾸기</button></div>';
   h += '<div class="sec-title">타이핑 소리</div><div class="set-row">';
   for (const [id, name] of SOUNDS) h += '<button class="btn ' + (s.sound === id ? 'on' : 'gray') + '" data-act="sound:' + id + '">' + name + '</button>';
-  h += '</div><div class="sec-title">에디터 테마 <span class="sub">업적을 모으면 해금</span></div><div class="set-row">';
-  for (const t of THEMES) {
+  h += '</div><div class="sec-title">화면 모드</div><div class="set-row">';
+  for (const t of THEMES.filter(t => t.mode)) h += '<button class="btn ' + (s.theme === t.id ? 'on' : 'gray') + '" data-act="theme:' + t.id + '">' + t.name + '</button>';
+  h += '</div><div class="sec-title">특별 테마 <span class="sub">업적을 모으면 해금</span></div><div class="set-row">';
+  for (const t of THEMES.filter(t => !t.mode)) {
     const ok = achCount() >= t.need;
     h += '<button class="btn ' + (s.theme === t.id ? 'on' : ok ? 'gray' : 'off') + '" data-act="theme:' + t.id + '">' + t.name + (ok ? '' : ' (업적 ' + t.need + ')') + '</button>';
   }

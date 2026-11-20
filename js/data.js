@@ -981,8 +981,8 @@ const BUFF_INFO = {
 const WORDS = ['select', 'commit', 'return', 'public', 'static', 'null', 'void', 'class', 'import', 'insert', 'update', 'delete', 'rollback', 'spring', 'mybatis', 'oracle', 'deploy', 'refactor', 'debug', 'merge', 'override', 'private', 'final', 'interface', 'foreach', 'async', 'await', 'const'];
 
 const THEMES = [
-  { id: 'dark',     name: '다크',       need: 0 },
-  { id: 'light',    name: '라이트',     need: 3 },
+  { id: 'dark',     name: '다크 모드',   need: 0, mode: true },
+  { id: 'light',    name: '화이트 모드', need: 0, mode: true },
   { id: 'monokai',  name: '모노카이',   need: 6 },
   { id: 'terminal', name: '터미널',     need: 10 },
 ];

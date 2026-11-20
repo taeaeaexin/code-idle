@@ -4,6 +4,7 @@
 'use strict';
 
 const SAVE_KEY = 'codeIdle_v2';
+const BALANCE_VER = 3;
 const RELEASE_MIN = 1e6;
 const OFFLINE_CAP = 12 * 3600;
 const LINE_CAP = 3000;
@@ -11,7 +12,7 @@ const LINE_TRIM = 500;
 const AUTO_TYPE_SPEED = 30;
 const PENDING_CAP = 800;
 const MAX_TYPED_PER_BUY = 3;
-const KEY_GAIN_RATIO = 0.1;
+const KEY_GAIN_RATIO = 0.03;
 const KEY_CHARS_MIN = 1;
 const KEY_CHARS_MAX = 2;
 const IDLE_MS = 1500;
@@ -57,7 +58,7 @@ function freshCareer() {
 function defaultState() {
   const c = freshCareer();
   const s = Object.assign(freshRun(), freshCompany(c), {
-    career: c, settings: { sound: 'off', theme: 'dark' }, time: 0, lastSave: Date.now(), buffs: [],
+    career: c, settings: { sound: 'off', theme: 'dark' }, balanceVer: BALANCE_VER, time: 0, lastSave: Date.now(), buffs: [],
     nextEventAt: 150, nextChallengeAt: 60, challenge: null, timers: { logFix: 0, gemFix: 0, market: 0 },
   });
   return s;
@@ -179,10 +180,10 @@ function deployBonus() { return 0.05 * state.lv.ci; }
 // 배포할 때마다 성공률이 30~90%에서 랜덤으로 정해지고, 낮을수록 보상이 큼
 function rollDeploy() {
   const p = clamp(Math.round((0.3 + Math.random() * 0.6 + deployBonus()) * 20) / 20, 0.3, 0.95);
-  return { p, reward: baseRate() * 60 / p, rep: p < 0.5 ? 2 : 1 };
+  return { p, reward: incomeRef() * 60 / p, rep: p < 0.5 ? 2 : 1 };
 }
-// 회차 보너스: 엔딩 후 다시 시작할 때마다 수입 +50%
-function ngMult() { return 1 + 0.5 * (state.career.ng || 0); }
+// 회차 보너스: 엔딩 후 다시 시작할 때마다 수입 +30%
+function ngMult() { return 1 + 0.3 * (state.career.ng || 0); }
 function endingDone() { return state.career.cto || state.career.ipo; }
 function newGamePlus() {
   const c = state.career;
@@ -197,27 +198,33 @@ function newGamePlus() {
   save();
   askCompany('first', () => toast((ng + 1) + '회차 시작! 회차 보너스 수입 x' + ngMult().toFixed(1) + ', 경력 포인트 ' + (2 * ng) + '개로 시작'));
 }
-function ngChoice() { return { label: (state.career.ng + 2) + '회차 시작 (수입 x' + (1 + 0.5 * (state.career.ng + 1)).toFixed(1) + ', 경력 포인트 ' + (2 * (state.career.ng + 1)) + '개, 업적 유지)', alt: true, act: newGamePlus }; }
+function ngChoice() { return { label: (state.career.ng + 2) + '회차 시작 (수입 x' + (1 + 0.3 * (state.career.ng + 1)).toFixed(1) + ', 경력 포인트 ' + (2 * (state.career.ng + 1)) + '개, 업적 유지)', alt: true, act: newGamePlus }; }
 
 function careerMult() {
   const c = state.career;
-  if (c.route === 'exec') return 3.5 * Math.pow(1.5, c.level - 5);
-  if (c.route === 'ceo') return 3.5 * (c.ipo ? 10 : 1);
-  return 1 + 0.5 * Math.min(c.level, 5);
+  if (c.route === 'exec') return 2.25 * Math.pow(1.3, c.level - 5);
+  if (c.route === 'ceo') return 2.25 * (c.ipo ? 5 : 1);
+  return 1 + 0.25 * Math.min(c.level, 5);
 }
-function repMult() { return 1 + state.rep * 0.03 * (1 + 0.5 * SK().network); }
-function fileMult() { return 1 + 0.15 * state.filesDone; }
+function repMult() { return 1 + state.rep * 0.01 * (1 + 0.5 * SK().network); }
+function achMult() { return 1 + 0.02 * achCount(); }
+function fileMult() { return 1 + 0.05 * state.filesDone; }
 function gradeMult() { return state.grade >= 0 ? GRADE_MULT[state.grade] : 1; }
-// 한 번 살 때마다 수입 x2.2 (가격은 x3.2씩 올라서 모아서 사는 맛이 있음)
-function codeEff(l) { return Math.pow(2.2, l); }
-function keyEff(l) { return Math.pow(1.8, l); }
+// 개발 실력: 레벨당 초당 +1원(더하기), 25레벨마다 단계가 올라 x2(곱하기)
+function codeIncome(l) { return l * Math.pow(2, Math.floor(l / 25)); }
+// 데스크 셋업: 레벨당 타이핑 1회 +1원, 25레벨마다 x2
+function deskIncome(l) { return (1 + l) * Math.pow(2, Math.floor(l / 25)); }
+// 인프라: 비싼 대신 레벨당 수입 x2
+function srvMult(l) { return Math.pow(2, l); }
+// 트래픽 폭주를 버티는 데 필요한 인프라 레벨
+function trafficNeed() { return Math.max(1, state.stage - 1); }
 
 // 일시 효과를 뺀 기본 수입
 function baseRate() {
   const L = state.lv;
-  let r = codeEff(L.code) * Math.pow(2, L.srv);
+  let r = codeIncome(L.code) * srvMult(L.srv);
   r *= ngMult();
-  r *= state.releaseMult * repMult() * Math.pow(2, SK().sql) * careerMult() * (1 + 0.03 * achCount()) * fileMult() * gradeMult() * state.equity;
+  r *= state.releaseMult * repMult() * Math.pow(1.5, SK().sql) * careerMult() * achMult() * fileMult() * gradeMult() * state.equity;
   return r * Math.max(0.1, 1 - salaryRate());
 }
 // 현재 초당 매출
@@ -240,10 +247,12 @@ function burnRate() {
 }
 // 이 시장 상황 아래로 떨어지면 적자
 function breakEvenMarket() { const g = rate() / state.market; return g > 0 ? burnRate() / g : 0; }
+// 보상, 가격 계산 기준이 되는 초당 벌이 (자동 수입 + 초당 2회 타이핑)
+function incomeRef() { return baseRate() + keyGainAt(state.lv.key) * 2; }
 function netRate() { return rate() - burnRate(); }
-function comboMult() { return 1 + Math.min(combo, 300) / 150; }
+function comboMult() { return 1 + Math.min(combo, 200) / 200; }
 function keyGainAt(keyLv) {
-  return (1 + baseRate() * KEY_GAIN_RATIO) * keyEff(keyLv) * Math.pow(2, SK().typist);
+  return (deskIncome(keyLv) + baseRate() * KEY_GAIN_RATIO) * Math.pow(1.5, SK().typist);
 }
 function keyGain() {
   if (state.refactoring) return 0;
@@ -277,9 +286,13 @@ function upgDesc(u) {
   const nx = (a, b) => '<b>' + a + '</b>, 다음 ' + b;
   switch (u.id) {
     case 'code': {
-      return '수입 ' + nx('x' + fmt(codeEff(l)), 'x' + fmt(codeEff(l + 1)));
+      const nextTier = (Math.floor(l / u.step) + 1) * u.step;
+      return '자동 수입 초당 ' + nx('+' + won(codeIncome(l) * srvMult(state.lv.srv)), '+' + won(codeIncome(l + 1) * srvMult(state.lv.srv))) + '<br>Lv.' + nextTier + '에 다음 단계, 수입 x2 (배수 적용 전 기준)';
     }
-    case 'key': return '타이핑 1회당 ' + nx(won(keyGainAt(l)), won(keyGainAt(l + 1)));
+    case 'key': {
+      const nextTier = (Math.floor(l / u.step) + 1) * u.step;
+      return '타이핑 1회당 기본 ' + nx('+' + won(deskIncome(l)), '+' + won(deskIncome(l + 1))) + '<br>Lv.' + nextTier + '에 다음 단계, 타이핑 x2';
+    }
     case 'test': return '버그 발생 분당 ' + nx((bugChanceAt(l) * 60).toFixed(2) + '회', (bugChanceAt(l + 1) * 60).toFixed(2) + '회') + '<br>(복잡도가 높을수록 버그가 자주 생김)';
     case 'review': return '코드 복잡도 증가 ' + nx('-' + pct(1 - reviewFactor(l)), '-' + pct(1 - reviewFactor(l + 1)));
     case 'doc': return '의뢰 마감 시간 ' + nx('+' + (10 * l) + '%', '+' + (10 * (l + 1)) + '%');
@@ -290,7 +303,7 @@ function upgDesc(u) {
       return base + '<br>버그 자동 수정 ' + nx(logFixInterval(l) + '초마다', logFixInterval(l + 1) + '초마다');
     }
     case 'ci': return '업그레이드 코드 입력 ' + nx('x' + (1 + 2 * l), 'x' + (3 + 2 * l)) + '<br>배포 성공률 +' + pct(deployBonus()) + ', 리팩토링 시간 ' + refactorDuration().toFixed(1) + '초';
-    case 'srv': return '수입 ' + nx('x' + fmt(Math.pow(2, l)), 'x' + fmt(Math.pow(2, l + 1))) + '<br>트래픽 폭주 대응 Lv.' + (state.stage + 1) + ' 필요, 오프라인 수익 ' + pct(offlineEff());
+    case 'srv': return '전체 수입 ' + nx('x' + fmt(srvMult(l)), 'x' + fmt(srvMult(l + 1))) + ' (비싸지만 곱하기)' + '<br>트래픽 폭주 대응에 Lv.' + trafficNeed() + ' 필요, 오프라인 수익 ' + pct(offlineEff());
   }
   return '';
 }
@@ -339,7 +352,7 @@ function completeFile() {
   const carry = state.bugs.length + state.bugQueue;
   state.filesDone++;
   S().filesDone++;
-  const g = baseRate() * 60;
+  const g = incomeRef() * 60;
   addValue(g);
   state.file++;
   startFile();
@@ -373,6 +386,14 @@ function buy(id) {
   } while (buyMax && bought < 1000);
   if (hidden > 0) enqueue([L.cm('... ' + u.name + ' ' + hidden + '건 더 추가')]);
   if (bought > 0) {
+    const before = tierIdx(u, state.lv[u.id] - bought), after = tierIdx(u, state.lv[u.id]);
+    if (after > before) {
+      const name = u.tiers[after];
+      enqueue([L.cm(u.name + ' 단계 상승: ' + name)]);
+      toast(u.name + ' 단계 상승! ' + name + (u.id === 'code' ? ' (자동 수입 x2)' : u.id === 'key' ? ' (타이핑 x2)' : ''));
+    }
+  }
+  if (bought > 0) {
     S().upgrades += bought;
   }
 }
@@ -390,7 +411,7 @@ const SUMMARY = {
   log: n => '실행 로그 ' + n + '곳 기록 중 (공통 로거 사용)',
   review: n => '코드리뷰 ' + n + '건 반영 완료',
   ci: n => 'CI 빌드 ' + n + '회 통과',
-  key: () => '기계식 키보드 Lv.' + state.lv.key + ' 사용 중',
+  key: () => '데스크 셋업: ' + tierName(UPGRADES[1], state.lv.key),
 };
 
 // 지금까지 만든 코드를 언어 규칙에 맞게 구역별로 정리하고 중복을 합친 결과
@@ -778,7 +799,7 @@ function checkIncident() {
   const inc = state.incident;
   if (!inc) return;
   if (state.bugs.length === 0 && state.bugQueue === 0) {
-    const g = baseRate() * 30;
+    const g = incomeRef() * 30;
     addValue(g);
     addRep(inc.repWin);
     S().incidentsOk++;
@@ -800,7 +821,7 @@ function genQuest() {
   let roll = Math.random() * avail.reduce((a, k) => a + k.w, 0);
   let k = avail[0];
   for (const x of avail) { roll -= x.w; if (roll <= 0) { k = x; break; } }
-  const req = k.gen(Math.max(baseRate(), 1));
+  const req = k.gen(Math.max(incomeRef(), 1));
   if (req.earn) req.earn = Math.ceil(req.earn);
   return { id: ++state.quests.seq, kind: k.id, client: pick(CLIENTS), title: pick(k.titles), req, time: k.time, rewardSec: k.rewardSec, repGain: k.repGain };
 }
@@ -814,7 +835,7 @@ function questRatio(q) {
   const keys = Object.keys(q.req);
   return keys.reduce((a, k) => a + Math.min(1, reqProgress(q, k) / reqTarget(q, k)), 0) / keys.length;
 }
-function questReward(q, rush) { return baseRate() * q.rewardSec * questRewardMult() * (rush ? 0.6 : 1); }
+function questReward(q, rush) { return incomeRef() * q.rewardSec * questRewardMult() * (rush ? 0.6 : 1); }
 function questRep(q, rush) { const r = Math.ceil(q.repGain * questRepMult()); return rush ? Math.ceil(r / 2) : r; }
 
 function acceptQuest(id) {
@@ -1052,11 +1073,11 @@ function pixelArt(id, size) {
   });
   return '<svg class="pixel" viewBox="0 0 16 16" width="' + size + '" height="' + size + '" shape-rendering="crispEdges">' + r + '</svg>';
 }
-function itemPrice(it) { return Math.max(it.min, baseRate() * it.sec); }
-const ITEM_LABEL = { coffee: '커피 타이핑 x2', energy: '에너지 드링크 x1.5', pizza: '복잡도 증가 없음', keycap: '키캡 콤보 유지 2배' };
+function itemPrice(it) { return Math.max(it.min, incomeRef() * it.sec); }
+const ITEM_LABEL = { coffee: '커피 타이핑 x1.5', energy: '에너지 드링크 x1.3', pizza: '복잡도 증가 없음', keycap: '키캡 콤보 유지 2배' };
 // 효과가 남아 있거나 에너지 드링크 피로가 남아 있으면 다시 못 씀
 function itemBusy(id) {
-  if (id === 'energy') return Math.max(buffLeft(ITEM_LABEL.energy), buffLeft('피곤함 x0.6'));
+  if (id === 'energy') return Math.max(buffLeft(ITEM_LABEL.energy), buffLeft('피곤함 x0.7'));
   return ITEM_LABEL[id] ? buffLeft(ITEM_LABEL[id]) : 0;
 }
 function buyItem(id) {
@@ -1066,8 +1087,8 @@ function buyItem(id) {
   if (state.value < p) return;
   if (id === 'glass' && !state.bugs.length) { toast('지금은 고칠 버그가 없습니다'); return; }
   state.value -= p;
-  if (id === 'coffee') addBuff('typing', 2, 30, '커피 타이핑 x2');
-  if (id === 'energy') { addBuff('income', 1.5, 60, '에너지 드링크 x1.5'); addBuff('income', 0.6, 15, '피곤함 x0.6', true, 60); }
+  if (id === 'coffee') addBuff('typing', 1.5, 30, '커피 타이핑 x1.5');
+  if (id === 'energy') { addBuff('income', 1.3, 60, '에너지 드링크 x1.3'); addBuff('income', 0.7, 15, '피곤함 x0.7', true, 60); }
   if (id === 'glass') { findBug(); fixBug(state.bugs[state.bugs.length - 1]); }
   if (id === 'pizza') { addRep(1); addBuff('calm', 0, 30, '복잡도 증가 없음'); }
   if (id === 'keycap') addBuff('combo', 2, 60, '키캡 콤보 유지 2배');
@@ -1105,7 +1126,7 @@ const EVENTS = [
     title: '새벽 2시 장애 알림', desc: '운영 서버에 장애가 발생했습니다.<br>' + incidentTime() + '초 안에 빨간 줄의 버그를 모두 클릭해서 잡으세요.',
     choices: [{ label: '대응 시작', act: () => startIncident() }], def: 0 }) },
   { w: 2, make: () => {
-    const need = state.stage + 1;
+    const need = trafficNeed();
     if (state.lv.srv >= need || hasCrew('yoon')) { addBuff('income', 3, 30, '트래픽 폭주 x3'); return { title: '트래픽 폭주', desc: '이벤트 페이지에 사용자가 몰렸지만 서버가 버텨냈습니다!<br>30초 동안 수입 x3', choices: [{ label: '확인' }] }; }
     addBuff('income', 0.3, 20, '서버 다운 x0.3', true);
     return { title: '트래픽 폭주', desc: '사용자가 몰려 서버가 다운됐습니다. 20초 동안 수입 x0.3<br>(버티려면 서버 증설 Lv.' + need + ' 이상 필요)', choices: [{ label: '확인' }] };
@@ -1145,9 +1166,9 @@ const EVENTS = [
     ], def: 0 }) },
   // 대표 전용
   { w: 3, cond: () => isCeo() && !state.career.ipo, make: () => ({
-    title: '투자 유치 제안', desc: '벤처캐피털에서 투자를 제안했습니다. 지분 10%를 주면 ' + won(baseRate() * 600) + '을 투자하겠답니다.',
+    title: '투자 유치 제안', desc: '벤처캐피털에서 투자를 제안했습니다. 지분 10%를 주면 ' + won(incomeRef() * 600) + '을 투자하겠답니다.',
     choices: [
-      { label: '투자 받는다 (자금 확보, 수입 영구 x0.9)', act: () => { addValue(baseRate() * 600); state.equity *= 0.9; } },
+      { label: '투자 받는다 (자금 확보, 수입 영구 x0.9)', act: () => { addValue(incomeRef() * 600); state.equity *= 0.9; } },
       { label: '거절한다', alt: true },
     ], def: 1 }) },
   { w: 2, cond: () => isCeo() && !state.career.ipo, make: () => { state.market = 0.2; return { title: '경기 침체', desc: '경기가 얼어붙어 매출이 급감했습니다. 시장 상황 x0.2<br>운영비는 그대로 나가니 운영자금이 바닥나지 않게 조심하세요.', choices: [{ label: '버텨보자' }] }; } },
@@ -1162,7 +1183,7 @@ const EVENTS = [
       { label: '바로 공지하고 보상 (운영자금 -30%, 평판 유지)', act: () => { const l = state.value * 0.3; state.value -= l; toast('보상금 ' + won(l) + ' 지급. 고객 신뢰는 지켰습니다'); } },
       { label: '조용히 넘어간다 (50% 확률로 들킴: 운영자금 -60%, 평판 -5)', alt: true, act: () => { if (Math.random() < 0.5) { const l = state.value * 0.6; state.value -= l; addRep(-5); toast('언론에 터졌습니다. 과징금 ' + won(l) + ', 평판 -5'); } else toast('다행히 조용히 지나갔습니다'); } },
     ], def: 0 }) },
-  { w: 2, cond: () => isCeo(), make: () => { const g = baseRate() * 300; addValue(g); addRep(3); return { title: '대형 계약 수주', desc: '대기업과 대형 계약을 맺었습니다! +' + won(g) + ', 평판 +3', choices: [{ label: '좋았어' }] }; } },
+  { w: 2, cond: () => isCeo(), make: () => { const g = incomeRef() * 300; addValue(g); addRep(3); return { title: '대형 계약 수주', desc: '대기업과 대형 계약을 맺었습니다! +' + won(g) + ', 평판 +3', choices: [{ label: '좋았어' }] }; } },
   { w: 2, cond: () => isCeo() && CREW.some(c => hasCrew(c.id)), make: () => {
     const c = pick(CREW.filter(x => hasCrew(x.id)));
     state.crew[c.id] = false;
@@ -1345,8 +1366,8 @@ const ACHS = [
   ['boss', '진상 대응 전문가', '진상 고객사 의뢰 완료', () => S().bossDone >= 1],
   ['words50', '타자 장인', '챌린지 단어 50개', () => S().challengeWords >= 50],
   ['nextgen', '차세대 완수', '차세대 의뢰 완료', () => S().nextGenDone >= 1],
-  ['value15', '천조 클럽', '서비스 가치 1,000조원', () => S().bestValue >= 1e15],
-  ['value30', '100양 클럽', '서비스 가치 100양원', () => S().bestValue >= 1e30],
+  ['value15', '조 단위 클럽', '서비스 가치 1조원', () => S().bestValue >= 1e12],
+  ['value30', '경 단위 클럽', '서비스 가치 1경원', () => S().bestValue >= 1e16],
 ];
 
 /* =========================================================
@@ -1376,7 +1397,7 @@ function sideUpg() {
     const locked = state.runBest < u.unlock;
     const c = cost(u);
     const cls = locked ? 'locked' : (state.value < c || freeze ? 'disabled' : '');
-    h += '<div class="upg ' + cls + '" data-act="buy:' + u.id + '"><div><div class="upg-name">' + u.name + (locked ? '' : '<span class="upg-lv">Lv.' + state.lv[u.id] + '</span>') + q(u.gloss) + '</div>' +
+    h += '<div class="upg ' + cls + '" data-act="buy:' + u.id + '"><div><div class="upg-name">' + u.name + (locked ? '' : '<span class="upg-lv">Lv.' + state.lv[u.id] + '</span><span class="upg-tier">' + tierName(u, state.lv[u.id]) + '</span>') + q(u.gloss) + '</div>' +
       '<div class="upg-desc">' + (locked ? '잠겨 있는 업그레이드' : upgDesc(u)) + '</div></div><div class="upg-cost">' + (locked ? '' : won(c)) + '</div>' + (locked ? lockTag('서비스 가치 ' + won(u.unlock) + ' 필요') : '') + '</div>';
   }
   h += '<div class="divider"></div><div class="sec-title">릴리즈' + q('release') + '<span class="sub">v' + state.version + '.0</span></div>';
@@ -1496,7 +1517,7 @@ function sideCareer() {
       (c.ipo ? '상장 완료! 리스크 없이 수입 x10' : '시장 상황 <b>x' + state.market.toFixed(2) + '</b> (x' + breakEvenMarket().toFixed(2) + ' 아래로 가면 적자)<br>매출 ' + won(rate()) + '/초, 운영비 ' + won(burnRate()) + '/초 (창업 ' + state.ceoMonths + '개월째, 고정비 x' + burnMult().toFixed(2) + ')<br>지분 ' + pct(state.equity) + '<br>상장 조건: 서비스 가치 ' + won(IPO_VALUE)) + '</div>';
   }
   if (endingDone()) {
-    h += '<div class="divider"></div><div class="sec-title">다음 회차 <span class="sub">지금 ' + (c.ng + 1) + '회차</span></div><div class="note">처음부터 다시 시작합니다. 이름, 업적, 기록, 설정은 남고 회차마다 수입 +50%, 경력 포인트 2개를 더 받고 시작해요.</div>' +
+    h += '<div class="divider"></div><div class="sec-title">다음 회차 <span class="sub">지금 ' + (c.ng + 1) + '회차</span></div><div class="note">처음부터 다시 시작합니다. 이름, 업적, 기록, 설정은 남고 회차마다 수입 +30%, 경력 포인트 2개를 더 받고 시작해요.</div>' +
       '<button class="big-btn gold" data-act="ng">' + (c.ng + 2) + '회차 시작</button>';
   }
   h += '<div class="divider"></div><div class="sec-title">스킬 <span class="sub">Lv.n을 배우려면 포인트 n 필요</span></div>';
@@ -1765,7 +1786,17 @@ function load() {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) { startFile(); return false; }
-    state = mergeInto(defaultState(), JSON.parse(raw));
+    const parsed = JSON.parse(raw);
+    state = mergeInto(defaultState(), parsed);
+    if ((parsed.balanceVer || 0) < BALANCE_VER) {
+      // 밸런스 패치: 이름, 직급, 업적, 기록, 설정, 회사 이름은 남기고 회사 진행만 새로 시작
+      const keep = { career: state.career, settings: state.settings, company: state.company };
+      state = defaultState();
+      Object.assign(state, keep);
+      startFile();
+      setTimeout(() => openModal({ title: '밸런스 패치 안내', desc: '수입 구조가 크게 바뀌어서 지금 회사의 진행(가치, 업그레이드, 파일, 평판)은 새로 시작합니다.<br>이름, 직급, 경력 포인트, 스킬, 업적, 기록은 그대로 남아요.', choices: [{ label: '확인' }] }), 300);
+      return true;
+    }
     state.bugs = state.bugs.filter(n => state.bugInfo[n]);
     sanitize();
     if (!state.lines.length) startFile();

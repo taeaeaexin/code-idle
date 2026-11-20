@@ -144,6 +144,7 @@ button, input { font-family: inherit; }
 .upg.locked > :not(.lock-tag), .row.locked > :not(.lock-tag) { opacity: .25; }
 .upg-name { font-size: 14px; color: var(--strong); display: flex; align-items: center; }
 .upg-lv { color: var(--good); font-size: 12px; margin-left: 6px; }
+.upg-tier { color: var(--gold); font-size: 11px; margin-left: 6px; }
 .upg-desc { font-size: 11px; color: var(--muted); margin-top: 3px; line-height: 1.5; }
 .upg-desc b { color: var(--text); font-weight: 500; }
 .upg-cost { font-family: Consolas, monospace; font-size: 13px; color: var(--gold); text-align: right; white-space: nowrap; margin-left: 8px; }

@@ -93,7 +93,7 @@ const LANGS = {
       review: lv => ['// [코드리뷰] ' + REVIEWS[(lv - 1) % REVIEWS.length] + ' 반영'],
       ci: lv => ['// [CI] 빌드 #' + lv + ' 통과, 자동 배포 완료'],
       srv: lv => ['server.scale(' + Math.pow(2, lv) + ');  // 서버를 ' + lv + '대로 늘림'],
-      key: lv => ['// 기계식 키보드 Lv.' + lv + ' 장착 (' + SWITCHES[(lv - 1) % SWITCHES.length] + ')'],
+      key: lv => ['// 데스크 셋업 Lv.' + lv],
     },
     common: {
       code: (n, f) => ['/** 공통 처리: 비슷하던 메서드 ' + n + '개를 하나로 통합 */', 'public <T> T execute(String action, Long id) {', '    return commonService.execute("' + f.m + '." + action, id);', '}'],
@@ -138,7 +138,7 @@ const LANGS = {
       review: lv => ['<!-- [코드리뷰] ' + REVIEWS[(lv - 1) % REVIEWS.length] + ' 반영 -->'],
       ci: lv => ['<!-- [CI] 빌드 #' + lv + ' 통과 -->'],
       srv: lv => ['<!-- 서버 ' + lv + '대 운영, 커넥션 풀 ' + (10 * lv) + '개 -->'],
-      key: lv => ['<!-- 기계식 키보드 Lv.' + lv + ' 장착 (' + SWITCHES[(lv - 1) % SWITCHES.length] + ') -->'],
+      key: lv => ['<!-- 데스크 셋업 Lv.' + lv + ' -->'],
     },
     common: {
       code: (n, f) => ['<!-- 비슷하던 쿼리 ' + n + '개를 동적 SQL 하나로 통합 -->', '<sql id="baseColumns">ID, NAME, REG_DT</sql>', '<select id="selectDynamic" resultType="map">', '    SELECT <include refid="baseColumns"/> FROM TB_' + f.UP, '    <where>', '        <if test="id != null">AND ID = #{id}</if>', '    </where>', '</select>'],
@@ -179,7 +179,7 @@ const LANGS = {
       review: lv => ['-- [코드리뷰] ' + REVIEWS[(lv - 1) % REVIEWS.length] + ' 반영'],
       ci: lv => ['-- [CI] 스키마 검증 #' + lv + ' 통과'],
       srv: lv => ['-- 서버 ' + lv + '대 운영, 커넥션 풀 ' + (10 * lv) + '개'],
-      key: lv => ['-- 기계식 키보드 Lv.' + lv + ' 장착 (' + SWITCHES[(lv - 1) % SWITCHES.length] + ')'],
+      key: lv => ['-- 데스크 셋업 Lv.' + lv],
     },
     common: {
       code: n => ['-- 비슷하던 테이블 정의 ' + n + '개를 공통 코드 테이블로 통합', 'CREATE TABLE TB_COMMON_CODE (', '    CODE_ID  VARCHAR2(20) PRIMARY KEY,  -- 공통 코드', '    CODE_NM  VARCHAR2(100)              -- 코드 이름', ');'],
@@ -220,7 +220,7 @@ const LANGS = {
       review: lv => ['// [코드리뷰] ' + REVIEWS[(lv - 1) % REVIEWS.length] + ' 반영'],
       ci: lv => ['// [CI] 빌드 #' + lv + ' 통과, 자동 배포 완료'],
       srv: lv => ['const API_SERVERS = ' + lv + ';  // 서버 대수'],
-      key: lv => ['// 기계식 키보드 Lv.' + lv + ' 장착 (' + SWITCHES[(lv - 1) % SWITCHES.length] + ')'],
+      key: lv => ['// 데스크 셋업 Lv.' + lv],
     },
     common: {
       code: n => ['// 비슷하던 API 호출 ' + n + '개를 공통 함수로 통합', 'async function api(path, options = {}) {', "  const res = await fetch('/api/' + path, options);", "  if (!res.ok) throw new Error('API 오류: ' + res.status);", '  return res.json();', '}'],
@@ -261,7 +261,7 @@ const LANGS = {
       review: lv => ['// [코드리뷰] ' + REVIEWS[(lv - 1) % REVIEWS.length] + ' 반영'],
       ci: lv => ['// [CI] 빌드 #' + lv + ' 통과'],
       srv: lv => ['private const int ServerCount = ' + lv + ';  // 서버 대수'],
-      key: lv => ['// 기계식 키보드 Lv.' + lv + ' 장착 (' + SWITCHES[(lv - 1) % SWITCHES.length] + ')'],
+      key: lv => ['// 데스크 셋업 Lv.' + lv],
     },
     common: {
       code: n => ['// 비슷하던 버튼 이벤트 ' + n + '개를 공통 핸들러 하나로 통합', 'private void CommonButton_Click(object sender, EventArgs e)', '{', '    var action = ((Button)sender).Tag.ToString();  // 버튼마다 Tag로 동작 구분', '    gridView.DataSource = dao.Execute(action);', '}'],
@@ -293,25 +293,35 @@ const STRAYS = ['/', ';', '.', ',', '\\', '`'];
 
 /* ---------- 업그레이드 ---------- */
 const UPGRADES = [
-  { id: 'code',   name: '코드 작성',      base: 10,  growth: 3.2,  unlock: 0 },
-  { id: 'key',    name: '기계식 키보드',  base: 25,  growth: 2.6,  unlock: 0 },
-  { id: 'test',   name: '테스트 코드',    base: 500, growth: 2.6,  unlock: 200,  gloss: 'unit-test' },
-  { id: 'review', name: '코드 리뷰',      base: 3e3, growth: 3,    unlock: 1e3,  gloss: 'code-review' },
-  { id: 'doc',    name: '설계 문서',      base: 1e4, growth: 3.5,  unlock: 5e3,  gloss: 'design-doc' },
-  { id: 'log',    name: '로깅',           base: 3e4, growth: 4,    unlock: 1.5e4, gloss: 'logging' },
-  { id: 'ci',     name: 'CI/CD 자동화',   base: 1e5, growth: 5,    unlock: 5e4,  gloss: 'cicd' },
-  { id: 'srv',    name: '서버 증설',      base: 3e5, growth: 10,   unlock: 1e5,  gloss: 'scale-out' },
+  { id: 'code',   name: '개발 실력',   base: 10,  growth: 1.11, unlock: 0,     step: 25,
+    tiers: ['헬로월드 따라치기', '구글링', '스택오버플로우 복붙', '공식 문서 정독', '디자인 패턴', '오픈소스 기여', '아키텍처 설계', '10x 개발자'] },
+  { id: 'key',    name: '데스크 셋업', base: 15,  growth: 1.14, unlock: 0,     step: 25,
+    tiers: ['회사 멤브레인 키보드', '기계식 키보드', '게이밍 마우스', '듀얼 모니터', '모션 데스크', '고성능 PC', '커스텀 무접점 키보드', '트리플 모니터'] },
+  { id: 'test',   name: '테스트 체계', base: 500, growth: 2.6,  unlock: 200,   step: 3, gloss: 'unit-test',
+    tiers: ['눈으로 확인', '수동 테스트', '단위 테스트', '통합 테스트', '테스트 자동화', 'TDD'] },
+  { id: 'review', name: '리뷰 문화',   base: 3e3, growth: 3,    unlock: 1e3,   step: 3, gloss: 'code-review',
+    tiers: ['혼자 확인', '사수 리뷰', 'PR 리뷰', '페어 프로그래밍', 'AI 리뷰 봇'] },
+  { id: 'doc',    name: '설계 문서',   base: 1e4, growth: 3.5,  unlock: 5e3,   step: 3, gloss: 'design-doc',
+    tiers: ['메모장', '엑셀 정의서', '화면 설계서', 'ERD', '아키텍처 문서'] },
+  { id: 'log',    name: '모니터링',    base: 3e4, growth: 4,    unlock: 1.5e4, step: 2, gloss: 'logging',
+    tiers: ['System.out 디버깅', '로그 파일', '로그 검색 시스템', '모니터링 대시보드', '실시간 장애 알림'] },
+  { id: 'ci',     name: '배포 방식',   base: 1e5, growth: 5,    unlock: 5e4,   step: 2, gloss: 'cicd',
+    tiers: ['FTP 수동 업로드', '배포 스크립트', 'Jenkins', 'GitHub Actions', '무중단 자동 배포'] },
+  { id: 'srv',    name: '인프라',      base: 5e4, growth: 25,   unlock: 2e4,   step: 1, gloss: 'scale-out',
+    tiers: ['사무실 PC 서버', '전용 서버', 'IDC 랙', '클라우드', '오토스케일링', '멀티 리전'] },
 ];
+function tierIdx(u, lv) { return Math.min(u.tiers.length - 1, Math.floor(lv / u.step)); }
+function tierName(u, lv) { return u.tiers[tierIdx(u, lv)]; }
 
 /* ---------- 아키텍처 단계 ---------- */
 const STAGES = [
   { at: 0,    name: 'Hello World' },
   { at: 1e3,  name: '메서드 분리' },
-  { at: 1e6,  name: '객체지향' },
-  { at: 1e10, name: '계층 분리' },
-  { at: 1e15, name: 'Spring Boot' },
-  { at: 1e25, name: 'MSA' },
-  { at: 1e40, name: 'AI 에이전트' },
+  { at: 1e5,  name: '객체지향' },
+  { at: 1e7,  name: '계층 분리' },
+  { at: 1e9,  name: 'Spring Boot' },
+  { at: 1e12, name: 'MSA' },
+  { at: 1e15, name: 'AI 에이전트' },
 ];
 
 /* ---------- 의뢰 ---------- */
@@ -340,7 +350,7 @@ const REQ_LABEL = { lines: '코드 작성', bugs: '버그 수정', refactor: '�
 const REQ_UNIT = { lines: '줄', bugs: '개', refactor: '회', upgrades: '회', earn: '', files: '개', grade: '' };
 const REQ_STAT = { lines: 'linesTyped', bugs: 'bugsFixed', refactor: 'refactors', upgrades: 'upgrades', earn: 'earned', files: 'filesDone' };
 const GRADES = ['D', 'C', 'B', 'A', 'S'];
-const GRADE_MULT = [1, 1.05, 1.15, 1.3, 1.5];
+const GRADE_MULT = [1, 1.03, 1.08, 1.15, 1.25];
 
 /* ---------- 팀 ---------- */
 const AI_SUBS = [
@@ -367,26 +377,26 @@ const CO_SUF = ['소프트', '시스템즈', '정보기술', '테크', '아이�
 /* ---------- 커리어 ---------- */
 const TITLES = ['신입', '주임', '대리', '과장', '차장', '부장'];
 const EXEC = [
-  { title: '이사', value: 1e12, rep: 30 },
-  { title: '상무', value: 1e16, rep: 40 },
-  { title: '전무', value: 1e20, rep: 50 },
-  { title: 'CTO',  value: 1e25, rep: 60 },
+  { title: '이사', value: 1e10, rep: 30 },
+  { title: '상무', value: 1e11, rep: 40 },
+  { title: '전무', value: 1e12, rep: 50 },
+  { title: 'CTO',  value: 1e13, rep: 60 },
 ];
-const IPO_VALUE = 1e24;
+const IPO_VALUE = 1e12;
 const SKILLS = [
-  { id: 'sql',     name: 'SQL 튜닝', max: 3, desc: '수입 x2' },
+  { id: 'sql',     name: 'SQL 튜닝', max: 3, desc: '수입 x1.5' },
   { id: 'clean',   name: '클린코드', max: 3, desc: '코드 복잡도 증가 -25%' },
   { id: 'cicd',    name: '자동화 장인', max: 3, desc: '버그 발생 -25%, 리팩토링 시간 -30%' },
   { id: 'nego',    name: '협상력',   max: 3, desc: '의뢰 보상 +50%' },
   { id: 'lead',    name: '리더십',   max: 2, desc: '팀원 월급과 AI 구독료 -30%' },
-  { id: 'typist',  name: '타자왕',   max: 3, desc: '타이핑 수익 x2' },
+  { id: 'typist',  name: '타자왕',   max: 3, desc: '타이핑 수익 x1.5' },
   { id: 'network', name: '인맥',     max: 2, desc: '이직 직후 평판 +10, 평판 효과 +50%' },
 ];
 
 /* ---------- 상점 ---------- */
 const ITEMS = [
-  { id: 'coffee', name: '아이스 아메리카노', sec: 20,  min: 50,  desc: '30초 동안 타이핑 수익 x2' },
-  { id: 'energy', name: '에너지 드링크',     sec: 40,  min: 200, desc: '60초 동안 수입 x1.5. 끝나면 15초 동안 피곤해서 수입 x0.6' },
+  { id: 'coffee', name: '아이스 아메리카노', sec: 20,  min: 50,  desc: '30초 동안 타이핑 수익 x1.5' },
+  { id: 'energy', name: '에너지 드링크',     sec: 40,  min: 200, desc: '60초 동안 수입 x1.3. 끝나면 15초 동안 피곤해서 수입 x0.7' },
   { id: 'glass',  name: '스마트글래스',      sec: 15,  min: 30,  desc: '코드를 스캔해서 버그 1개를 찾아 바로 고침' },
   { id: 'pizza',  name: '피자',              sec: 120, min: 500, desc: '팀원들과 나눠 먹고 평판 +1, 30초 동안 코드 복잡도가 늘지 않음' },
   { id: 'keycap', name: '키캡 교체',         sec: 30,  min: 100, desc: '60초 동안 콤보가 끊기는 시간 2배' },

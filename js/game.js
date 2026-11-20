@@ -50,7 +50,7 @@ function freshCompany(career) {
 }
 function freshCareer() {
   return {
-    name: '', level: 0, points: 0, route: null, ipo: false, cto: false, ach: {}, ng: 0,
+    name: '', gender: '', level: 0, points: 0, route: null, ipo: false, cto: false, ach: {}, ng: 0,
     skills: { sql: 0, clean: 0, cicd: 0, nego: 0, lead: 0, typist: 0, network: 0 },
     stats: { keys: 0, linesTyped: 0, questsDone: 0, questsFailed: 0, bugsFixed: 0, refactors: 0, incidentsOk: 0, releases: 0, jobs: 0, playTime: 0, upgrades: 0, earned: 0, fridayOk: 0, nextGenDone: 0, bossDone: 0, challengeWords: 0, filesDone: 0, gradeS: 0, maxCombo: 0, founded: 0, bankrupts: 0, bestValue: 0 },
   };
@@ -651,6 +651,7 @@ function hack() {
   const g = keyGain();
   addValue(g);
   typeOnce(true);
+  $('desk').classList.toggle('pose');
   showFloat('+' + won(g));
 }
 
@@ -1056,69 +1057,131 @@ function learnSkill(id) {
 /* =========================================================
  * 상점
  * ========================================================= */
-// 데스크 셋업 단계(0~7)와 시간대에 따라 바뀌는 내 책상 도트 그림 (40x24), 모니터 속 코드는 위로 흘러감
-// phase: 'day' | 'dusk' | 'night'
-function deskSvg(tier, scale, phase) {
+// 뒷모습 개발자 장면: 데스크 셋업 단계(0~7), 시간대, 성별, 직급별 옷에 따라 바뀜. 모니터 속 코드는 위로 흘러감
+// 뒷모습 개발자 장면 (80x48 도트)
+// tier: 데스크 셋업 단계 0~7, phase: day|dusk|night, gender: m|f, outfit: 0 후드티/가디건, 1 셔츠/블라우스, 2 정장, 3 터틀넥(대표)
+function sceneSvg(tier, phase, gender, outfit, scale) {
   const R = [];
-  const r = (x, y, w, h, c) => R.push('<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="' + c + '"/>');
-  const night = phase === 'night';
-  // 벽과 하늘
-  const wall = { day: '#2f3b4a', dusk: '#4a3442', night: '#0d1220' }[phase];
-  r(0, 0, 40, 24, wall);
-  if (night) {
-    [[3, 1], [9, 2], [22, 1], [30, 2], [17, 0], [6, 3]].forEach(([x, y]) => r(x, y, 1, 1, '#c9d6ff'));
-    r(35, 1, 3, 3, '#f5f1c8'); r(36, 1, 2, 1, '#0d1220'); // 초승달
-  } else if (phase === 'dusk') {
-    r(34, 1, 4, 3, '#ff9a4a'); r(33, 2, 1, 1, '#ff9a4a');
-  } else {
-    r(35, 1, 3, 3, '#ffd54f'); r(34, 2, 1, 1, '#ffd54f'); r(38, 2, 1, 1, '#ffd54f');
-  }
+  const r = (x, y, w, h, c, cls) => { if (w > 0 && h > 0) R.push('<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="' + c + '"' + (cls ? ' class="' + cls + '"' : '') + '/>'); };
+  const oval = (cx, cy, rx, ry, c) => { for (let y = -ry; y <= ry; y++) { const w = Math.round(rx * Math.sqrt(Math.max(0, 1 - (y * y) / (ry * ry)))); r(cx - w, cy + y, w * 2 + 1, 1, c); } };
+  const night = phase === 'night', dusk = phase === 'dusk';
+
+  // 벽과 창문
+  r(0, 0, 80, 48, night ? '#141b2b' : dusk ? '#c9b3b8' : '#d3dce4');
+  r(0, 26, 80, 3, night ? '#10172a' : dusk ? '#b9a2a8' : '#c3ced8'); // 걸레받이 느낌의 띠
+  r(3, 1, 20, 8, night ? '#0b1020' : '#9fb0bf');
+  r(4, 2, 18, 6, night ? '#1b2546' : dusk ? '#f2a36b' : '#dceefb');
+  r(12, 2, 2, 6, night ? '#0b1020' : '#9fb0bf');
+  if (night) { r(6, 3, 3, 3, '#f5f1c8'); r(7, 3, 2, 1, '#1b2546'); r(17, 4, 1, 1, '#c9d6ff'); r(20, 6, 1, 1, '#c9d6ff'); r(15, 6, 1, 1, '#8ea2d9'); }
+  else if (dusk) { r(16, 5, 4, 2, '#ffcf6b'); r(4, 6, 8, 2, '#e88a5a'); }
+  else { r(5, 3, 4, 1, '#ffffff'); r(15, 4, 5, 1, '#ffffff'); r(16, 3, 2, 1, '#ffffff'); }
+  // 화분
+  if (tier < 7) { r(72, 21, 5, 5, '#b5651d'); r(72, 21, 5, 1, '#cd7f32'); oval(74, 17, 3, 3, '#4caf50'); r(73, 15, 1, 3, '#66bb6a'); r(76, 16, 1, 2, '#388e3c'); }
+
+  // 모니터 (화면 속 코드가 위로 흘러감)
   let mid = 0;
-  const monitor = (x, y, w, h, speed) => {
+  const mon = (x, y, w, h, seed, speed) => {
     const id = 'scr' + (mid++);
-    const iw = w - 2, ih = h - 2;
-    r(x, y, w, h, '#2b2b2b');
-    r(x + 1, y + 1, iw, ih, night ? '#0f1c2e' : '#16263a');
-    const cols = ['#4ec9b0', '#569cd6', '#d7ba7d', '#c586c0', '#9cdcfe', '#6a9955'];
-    const N = 10;
+    r(x, y, w, h, '#1d2328'); r(x, y, w, 1, '#2b3238');
+    r(x + 1, y + 1, w - 2, h - 2, night ? '#081321' : '#0c1a29');
+    const cols = ['#4ec9b0', '#569cd6', '#ce9178', '#c586c0', '#9cdcfe', '#6a9955', '#dcdcaa'];
+    const lens = [9, 5, 12, 7, 0, 10, 8, 4, 11, 6], ind = [0, 2, 4, 4, 0, 2, 4, 6, 2, 0];
     let lines = '';
-    for (let i = 0; i < N * 2; i++) {
-      const k = i % N;
-      const indent = [0, 1, 2, 1, 0, 1, 2, 2, 1, 0][k];
-      const len = Math.max(1, Math.min(iw - 1 - indent, [6, 4, 7, 3, 5, 6, 2, 5, 4, 7][k] - (iw < 10 ? 2 : 0)));
-      if (k === 4 || k === 9) continue; // 빈 줄
-      lines += '<rect x="' + (x + 2 + indent) + '" y="' + (y + 1 + i) + '" width="' + len + '" height="1" fill="' + cols[(k + x) % cols.length] + '"/>';
+    const add = (xx, yy, ww, c) => { if (ww > 0) lines += '<rect x="' + xx + '" y="' + yy + '" width="' + ww + '" height="1" fill="' + c + '"/>'; };
+    for (let i = 0; i < 20; i++) {
+      const k = (i + seed) % 10;
+      const yy = y + 2 + i * 2;
+      add(x + 2, yy, 1, '#33465a');
+      if (!lens[k]) continue;
+      const len = Math.min(lens[k], w - 6 - ind[k]);
+      add(x + 4 + ind[k], yy, Math.ceil(len * 0.6), cols[k % cols.length]);
+      add(x + 5 + ind[k] + Math.ceil(len * 0.6), yy, Math.floor(len * 0.4), cols[(k + 3) % cols.length]);
     }
     const steps = [];
-    for (let s = 0; s < N; s++) steps.push('0 ' + (-s));
-    R.push('<clipPath id="' + id + '"><rect x="' + (x + 1) + '" y="' + (y + 1) + '" width="' + iw + '" height="' + ih + '"/></clipPath>' +
-      '<g clip-path="url(#' + id + ')"><g>' + lines +
+    for (let s = 0; s < 10; s++) steps.push('0 ' + (-s * 2));
+    R.push('<clipPath id="' + id + '"><rect x="' + (x + 1) + '" y="' + (y + 1) + '" width="' + (w - 2) + '" height="' + (h - 2) + '"/></clipPath><g clip-path="url(#' + id + ')"><g>' + lines +
       '<animateTransform attributeName="transform" type="translate" calcMode="discrete" values="' + steps.join(';') + '" dur="' + speed + 's" repeatCount="indefinite"/></g></g>');
-    if (night) r(x + 1, y + h, w - 2, 1, 'rgba(86,156,214,.25)'); // 화면 불빛
-    r(x + Math.floor(w / 2) - 1, y + h, 2, 2, '#3a3a3a');
-    r(x + Math.floor(w / 2) - 2, y + h + 2, 4, 1, '#3a3a3a');
+    r(x + w - 3, y + h - 2, 1, 1, '#7cfc00'); // 전원 표시등
+    if (night) r(x - 1, y - 1, w + 2, 1, 'rgba(86,156,214,.18)');
+    const cx = x + Math.floor(w / 2);
+    r(cx - 1, y + h, 3, 3, '#3d4a54'); r(cx - 5, y + h + 3, 11, 1, '#3d4a54'); r(cx - 5, y + h + 3, 11, 1, '#4b5a65');
   };
+  mon(30, 4, 24, 20, 0, 2.4);
+  if (tier >= 3) mon(7, 9, 21, 16, 3, 3.1);
+  if (tier >= 7) mon(56, 9, 21, 16, 6, 2.8);
+
   // 책상
-  const wood = tier >= 4 ? '#c8a165' : '#8b5a2b';
-  r(1, 17, 38, 2, wood);
-  r(1, 19, 38, 1, tier >= 4 ? '#a5824e' : '#6b4421');
-  if (tier >= 4) { r(6, 20, 3, 4, '#555'); r(31, 20, 3, 4, '#555'); r(4, 23, 7, 1, '#444'); r(29, 23, 7, 1, '#444'); r(9, 20, 2, 1, '#7cfc00'); }
-  else { r(3, 20, 2, 4, '#5a3a1a'); r(35, 20, 2, 4, '#5a3a1a'); }
-  // 모니터 (화면 속 코드가 위로 흘러감)
-  monitor(14, 3, 12, 10, 2.2);
-  if (tier >= 3) monitor(2, 5, 11, 8, 3.1);
-  if (tier >= 7) monitor(27, 5, 11, 8, 2.7);
-  // 키보드
-  if (tier >= 6) { r(13, 15, 13, 2, '#e8e8e8'); for (let i = 0; i < 6; i++) r(14 + i * 2, 15, 1, 1, '#bdbdbd'); }
-  else if (tier >= 1) { r(13, 15, 13, 2, '#333'); const k = ['#e74c3c', '#f1c40f', '#2ecc71', '#3498db', '#9b59b6', '#e67e22']; for (let i = 0; i < 6; i++) r(14 + i * 2, 15, 1, 1, k[i]); }
-  else r(13, 15, 13, 2, '#9e9e9e');
-  // 마우스, 커피, 본체
-  if (tier >= 2) { r(28, 15, 2, 2, '#222'); r(28, 16, 2, 1, '#e040fb'); }
-  r(10, 14, 2, 3, '#f2f2f2'); r(10, 14, 2, 1, '#6b3d1e');
-  if (tier >= 5) { r(22, 20, 6, 4, '#1a1a1a'); r(23, 21, 1, 2, '#00e5ff'); r(25, 21, 2, 1, '#e040fb'); r(25, 22, 2, 1, '#7cfc00'); }
-  // 밤에는 스탠드 불빛
-  if (night && tier < 7) { r(36, 12, 1, 5, '#777'); r(34, 11, 4, 1, '#999'); r(34, 12, 4, 1, 'rgba(255,214,120,.35)'); r(33, 13, 6, 4, 'rgba(255,214,120,.12)'); }
-  return '<svg viewBox="0 0 40 24" width="' + 40 * scale + '" height="' + 24 * scale + '" shape-rendering="crispEdges">' + R.join('') + '</svg>';
+  const top = tier >= 4 ? (night ? '#a8865c' : '#d9b98a') : (night ? '#7d5f3e' : '#b58a57');
+  const edge = tier >= 4 ? (night ? '#8a6c47' : '#bf9d6d') : (night ? '#5f4630' : '#8f6a40');
+  r(0, 28, 80, 4, top); r(0, 28, 80, 1, tier >= 4 ? '#e6cba1' : '#c99b65'); r(0, 32, 80, 2, edge);
+  if (tier >= 4) { // 모션 데스크: 기둥형 다리와 조작 패널
+    r(8, 34, 3, 12, '#4a4f55'); r(69, 34, 3, 12, '#4a4f55'); r(5, 46, 9, 2, '#3a3f45'); r(66, 46, 9, 2, '#3a3f45');
+    r(12, 32, 4, 1, '#2b2f33'); r(13, 32, 1, 1, '#7cfc00');
+  } else { r(4, 34, 3, 14, night ? '#3a2c1d' : '#6b5338'); r(73, 34, 3, 14, night ? '#3a2c1d' : '#6b5338'); }
+  // 마우스패드, 마우스, 커피, 밤 스탠드
+  r(57, 26, 9, 2, '#2c2f33');
+  if (tier >= 2) { r(61, 25, 3, 2, '#1b1b1b'); r(62, 26, 1, 1, '#e040fb'); } else { r(61, 25, 3, 2, '#d0d0d0'); }
+  r(24, 23, 4, 5, '#f5f5f5'); r(24, 23, 4, 1, '#6b3d1e'); r(28, 24, 1, 2, '#f5f5f5');
+  if (night) { r(2, 15, 1, 13, '#7a7a7a'); r(1, 14, 5, 2, '#9a9a9a'); r(0, 16, 12, 12, 'rgba(255,214,120,.10)'); }
+
+  // 키보드 (사람 양옆으로 보임)
+  if (tier >= 6) { r(27, 25, 28, 3, '#e9e9e9'); for (let i = 0; i < 13; i++) r(28 + i * 2, 25, 1, 1, '#c4c4c4'); r(27, 27, 28, 1, '#cfcfcf'); }
+  else if (tier >= 1) { r(27, 25, 28, 3, '#26292c'); const k = ['#e74c3c', '#f1c40f', '#2ecc71', '#3498db', '#9b59b6', '#e67e22']; for (let i = 0; i < 13; i++) r(28 + i * 2, 25, 1, 1, k[i % 6]); r(27, 27, 28, 1, '#1a1c1e'); }
+  else { r(27, 25, 28, 3, '#a7a7a7'); for (let i = 0; i < 13; i++) r(28 + i * 2, 25, 1, 1, '#c8c8c8'); r(27, 27, 28, 1, '#8f8f8f'); }
+
+  // 사람
+  const skin = '#f2c6a0', skinS = '#dba982';
+  const OUT = gender === 'm'
+    ? [['#2f4f7f', '#26406a', '#1f3557'], ['#cfe0f5', '#b4cbe6', '#9fb8d6'], ['#2b2f3a', '#21242d', '#3a3f4d'], ['#1a1a1a', '#121212', '#2a2a2a']]
+    : [['#e8a0b4', '#d48aa0', '#c27890'], ['#f7f4ee', '#e3ded4', '#d1cbbf'], ['#2c3550', '#232b42', '#3a4566'], ['#1a1a1a', '#121212', '#2a2a2a']];
+  const [c1, c2, c3] = OUT[Math.min(outfit, 3)];
+  // 몸과 어깨
+  oval(41, 30, 13, 6, c1); r(28, 26, 27, 5, c1); r(30, 23, 23, 4, c1); r(32, 22, 19, 2, c1);
+  r(30, 24, 3, 6, c2); r(50, 24, 3, 6, c2);                    // 옆구리 그림자
+  // 팔과 손 (h1, h2 두 자세를 번갈아 보여줘서 타이핑 동작)
+  r(26, 25, 4, 3, c1); r(53, 25, 4, 3, c1);
+  r(25, 26, 3, 2, skin, 'h1'); r(55, 25, 3, 2, skin, 'h1');
+  r(25, 25, 3, 2, skin, 'h2'); r(55, 26, 3, 2, skin, 'h2');
+  if (outfit === 0 && gender === 'm') { r(36, 21, 11, 3, c2); r(38, 23, 7, 2, c3); r(39, 24, 1, 3, '#d9d9d9'); r(43, 24, 1, 3, '#d9d9d9'); } // 후드와 끈
+  if (outfit === 1) { r(37, 21, 9, 2, c2); r(39, 22, 5, 1, c3); }        // 셔츠 깃
+  if (outfit === 2) { r(37, 21, 9, 2, '#e8e8e8'); r(36, 22, 2, 2, c3); r(45, 22, 2, 2, c3); } // 정장 깃과 셔츠
+  if (outfit === 3) { r(37, 20, 9, 3, c3); }                              // 터틀넥
+  if (gender === 'm') {
+    r(39, 19, 5, 3, skinS);                                               // 목
+    oval(34, 14, 1, 2, skin); r(34, 14, 1, 1, skinS); oval(48, 14, 1, 2, skin); r(48, 14, 1, 1, skinS); // 귀
+    oval(41, 13, 7, 7, '#2a1c13');
+    r(35, 17, 13, 2, '#3a291d'); r(36, 19, 11, 1, '#4a3526');             // 투블럭 뒷머리
+    r(37, 7, 5, 1, '#4a3526'); r(43, 8, 3, 1, '#4a3526'); r(39, 10, 2, 1, '#3d2a1e'); r(44, 11, 2, 1, '#3d2a1e'); // 머리결
+  } else {
+    r(39, 19, 5, 2, skinS);
+    oval(41, 13, 7, 7, '#5a3420');
+    r(34, 16, 15, 7, '#5a3420'); r(35, 23, 13, 3, '#4c2b1a');
+    r(37, 8, 3, 1, '#7a4a2e'); r(44, 10, 2, 1, '#7a4a2e'); r(38, 17, 1, 8, '#6b3f26'); r(41, 18, 1, 7, '#6b3f26'); r(45, 17, 1, 8, '#6b3f26'); // 머리결
+    r(38, 14, 6, 2, '#ffd166'); r(39, 14, 1, 1, '#fff1b8');               // 머리핀
+  }
+
+  // 의자 (사람 등을 가리는 높은 등받이)
+  const gaming = tier >= 5;
+  const fr = gaming ? '#1b1b1f' : '#2a2d31', frL = gaming ? '#2c2c33' : '#3d4248', me = gaming ? '#151518' : '#1c1f22', meL = gaming ? '#25252b' : '#30353a';
+  r(32, 26, 18, 1, fr); r(31, 27, 20, 1, fr); r(30, 28, 22, 13, fr);
+  r(32, 27, 18, 1, frL);
+  r(31, 29, 20, 11, me);
+  if (gaming) { // 게이밍 의자: 빨간 라인과 로고
+    r(31, 29, 3, 11, '#c62828'); r(48, 29, 3, 11, '#c62828'); r(32, 27, 18, 1, '#e53935');
+    r(39, 31, 4, 3, '#c62828'); r(40, 32, 2, 1, '#ff8a80');
+    for (let y = 29; y < 40; y += 2) r(34, y, 14, 1, meL);
+  } else {
+    for (let y = 29; y < 40; y++) for (let x = 31 + (y % 2); x < 51; x += 2) r(x, y, 1, 1, meL); // 메쉬
+    r(32, 35, 18, 2, frL);
+  }
+  r(26, 34, 5, 2, frL); r(51, 34, 5, 2, frL);
+  r(27, 36, 2, 5, fr); r(53, 36, 2, 5, fr);
+  r(29, 41, 24, 2, fr); r(29, 41, 24, 1, frL);
+  r(40, 43, 2, 2, '#8a9199'); r(40, 43, 1, 2, '#b3bac2');
+  r(33, 45, 16, 1, fr); r(30, 46, 6, 1, fr); r(46, 46, 6, 1, fr); r(39, 46, 4, 1, fr);
+  [30, 35, 40, 45, 50].forEach(x => r(x, 47, 2, 1, '#111'));
+
+  return '<svg viewBox="0 0 80 48" width="' + 80 * scale + '" height="' + 48 * scale + '" shape-rendering="crispEdges">' + R.join('') + '</svg>';
 }
 // 실제 시간 기준: 6~17시 낮, 17~19시 저녁, 그 외 밤
 function dayPhase(d) { const h = (d || new Date()).getHours(); return h >= 6 && h < 17 ? 'day' : h < 19 ? 'dusk' : 'night'; }
@@ -1337,7 +1400,16 @@ function askName(first) {
     title: first ? '반갑습니다, 신입 개발자님!' : '이름 바꾸기',
     desc: first ? '개발자 키우기는 신입 개발자로 시작해 CTO나 대표까지 성장하는 게임입니다.<br>이름을 알려주세요. 코드 파일의 작성자로도 들어갑니다.' : '새 이름을 입력하세요.',
     input: '이름 (최대 12자)',
-    choices: [{ label: first ? '다음' : '바꾸기', act: v => { setName(v, !first); if (first) askCompany('first'); } }],
+    choices: [{ label: first ? '다음' : '바꾸기', act: v => { setName(v, !first); if (first) askGender(true); } }],
+  });
+}
+
+function askGender(first) {
+  const pickG = g => { state.career.gender = g; lastDeskKey = ''; lastSideHtml = ''; if (first) askCompany('first'); };
+  openModal({
+    title: '캐릭터를 골라주세요',
+    desc: '에디터 오른쪽 아래에서 코딩하는 내 모습이에요. 설정 탭에서 언제든 바꿀 수 있습니다.',
+    choices: [{ label: '남자', act: () => pickG('m') }, { label: '여자', act: () => pickG('f') }],
   });
 }
 
@@ -1625,6 +1697,8 @@ function sideAch() {
 function sideSet() {
   const s = state.settings;
   let h = '<div class="sec-title">이름</div><div class="set-row"><span>' + escHtml(devName()) + '</span><button class="btn gray" data-act="rename">이름 바꾸기</button></div>';
+  const gd = state.career.gender === 'f' ? 'f' : 'm';
+  h += '<div class="sec-title">캐릭터</div><div class="set-row"><button class="btn ' + (gd === 'm' ? 'on' : 'gray') + '" data-act="gender:m">남자</button><button class="btn ' + (gd === 'f' ? 'on' : 'gray') + '" data-act="gender:f">여자</button></div>';
   h += '<div class="sec-title">회사</div><div class="set-row"><span>' + escHtml(companyName()) + '</span><button class="btn gray" data-act="recompany">회사 이름 바꾸기</button></div>';
   h += '<div class="sec-title">타이핑 소리</div><div class="set-row">';
   for (const [id, name] of SOUNDS) h += '<button class="btn ' + (s.sound === id ? 'on' : 'gray') + '" data-act="sound:' + id + '">' + name + '</button>';
@@ -1743,15 +1817,23 @@ function renderBuffs() {
 }
 
 let lastDeskKey = '';
+// 직급별 옷: 신입~대리 후드티(가디건), 과장~차장 셔츠(블라우스), 부장과 임원 정장, 대표 터틀넥
+function outfitOf() {
+  const c = state.career;
+  if (c.route === 'ceo') return 3;
+  if (c.route === 'exec' || c.level >= 5) return 2;
+  return c.level >= 3 ? 1 : 0;
+}
 function renderDesk() {
   const t = tierIdx(UPGRADES[1], state.lv.key);
   const overtime = state.buffs.some(b => b.label.startsWith('야근') && buffActive(b));
   const phase = overtime ? 'night' : dayPhase();
-  const key = t + phase;
+  const gender = state.career.gender === 'f' ? 'f' : 'm';
+  const key = [t, phase, gender, outfitOf()].join();
   if (key === lastDeskKey) return;
   lastDeskKey = key;
   const label = { day: '낮', dusk: '저녁', night: overtime ? '야근 중' : '밤' }[phase];
-  $('desk').innerHTML = deskSvg(t, 3, phase) + '<div class="desk-cap">' + UPGRADES[1].tiers[t] + ', ' + label + '</div>';
+  $('desk').innerHTML = sceneSvg(t, phase, gender, outfitOf(), 2.5) + '<div class="desk-cap">' + UPGRADES[1].tiers[t] + ', ' + label + '</div>';
 }
 
 function renderTop() {
@@ -1972,6 +2054,7 @@ function doAction(act) {
   else if (a === 'inner') innerPromote();
   else if (a === 'ng') { if (endingDone()) newGamePlus(); }
   else if (a === 'recompany') askCompany('rename');
+  else if (a === 'gender') { state.career.gender = arg; lastDeskKey = ''; }
   else if (a === 'promote') promote();
   else if (a === 'found') found();
   else if (a === 'findbug') findBug();
@@ -2105,4 +2188,5 @@ $('code').scrollTop = $('code').scrollHeight;
 setInterval(save, 5000);
 if (!state.career.name) askName(true);
 else if (!state.company) askCompany('first');
+else if (!state.career.gender) askGender(false);
 requestAnimationFrame(loop);

@@ -296,7 +296,7 @@ const UPGRADES = [
   { id: 'code',   name: '개발 실력',   base: 10,  growth: 1.11, unlock: 0,     step: 25,
     tiers: ['헬로월드 따라치기', '구글링', '스택오버플로우 복붙', '공식 문서 정독', '디자인 패턴', '오픈소스 기여', '아키텍처 설계', '10x 개발자'] },
   { id: 'key',    name: '데스크 셋업', base: 15,  growth: 1.14, unlock: 0,     step: 25,
-    tiers: ['회사 멤브레인 키보드', '기계식 키보드', '게이밍 마우스', '듀얼 모니터', '모션 데스크', '고성능 PC', '커스텀 무접점 키보드', '트리플 모니터'] },
+    tiers: ['회사 멤브레인 키보드', '기계식 키보드', '게이밍 마우스', '듀얼 모니터', '모션 데스크', '게이밍 의자', '커스텀 무접점 키보드', '트리플 모니터'] },
   { id: 'test',   name: '테스트 체계', base: 500, growth: 2.6,  unlock: 200,   step: 3, gloss: 'unit-test',
     tiers: ['눈으로 확인', '수동 테스트', '단위 테스트', '통합 테스트', '테스트 자동화', 'TDD'] },
   { id: 'review', name: '리뷰 문화',   base: 3e3, growth: 3,    unlock: 1e3,   step: 3, gloss: 'code-review',

@@ -1317,11 +1317,8 @@ const EVENTS = [
     ], def: 0 }) },
   { w: 2, make: () => ({
     title: '점심 메뉴 고르기', desc: '오늘 점심은 뭐 먹을까요?',
-    choices: [
-      { label: '국밥 (60초 수입 x1.2)', act: () => addBuff('income', 1.2, 60, '국밥 x1.2') },
-      { label: '샐러드 (60초 코드 복잡도 증가 없음)', act: () => addBuff('calm', 0, 60, '샐러드 복잡도 0') },
-      { label: '마라탕 (30초 타이핑 x2, 이후 20초 식곤증 x0.5)', act: () => { addBuff('typing', 2, 30, '마라탕 x2'); addBuff('typing', 0.5, 20, '식곤증 x0.5', true, 30); } },
-    ], def: 0 }) },
+    choices: LUNCH.slice().sort(() => Math.random() - 0.5).slice(0, 3).map(f => ({ label: f.label, act: () => { if (f.rep) addRep(f.rep); for (const b of f.buffs) addBuff(...b); } })),
+    def: 0 }) },
   // 대표 전용
   { w: 3, cond: () => isCeo() && !state.career.ipo, make: () => ({
     title: '투자 유치 제안', desc: '벤처캐피털에서 투자를 제안했습니다. 지분 10%를 주면 ' + won(incomeRef() * 600) + '을 투자하겠답니다.',
@@ -1745,6 +1742,8 @@ function sideSet() {
   h += '</div><div class="sec-title">결과 공유</div><div class="set-row"><button class="btn" data-act="share">내 기록 복사하기</button></div>';
   h += '<div class="divider"></div><div class="sec-title">저장</div><div class="note">진행 상황은 이 브라우저에 5초마다 자동 저장됩니다. 다른 기기나 브라우저와는 따로 저장돼요.</div>';
   h += '<div class="set-row"><button class="btn gray" data-act="save">지금 저장</button><button class="btn ' + (resetArmed ? 'warn' : 'gray') + '" data-act="reset">' + (resetArmed ? '한 번 더 누르면 전체 초기화' : '전체 초기화') + '</button></div>';
+  const dl = (url, name) => url ? '<a class="btn" href="' + url + '" target="_blank" rel="noopener">' + name + '</a>' : '<button class="btn off" disabled>' + name + ' (준비 중)</button>';
+  h += '<div class="divider"></div><div class="sec-title">개발자 커피 사주기</div><div class="note">재밌게 즐기셨다면 커피 한 잔으로 응원해 주세요. 후원은 게임 내용에 영향을 주지 않습니다.</div><div class="set-row">' + dl(DONATE.toss, '토스') + dl(DONATE.kakao, '카카오페이') + '</div>';
   return h;
 }
 
@@ -1843,7 +1842,7 @@ function renderChallenge() {
   if (el.innerHTML !== h) el.innerHTML = h;
 }
 
-// 지속 효과를 아이콘으로 표시: 시간이 지날수록 회색이 위에서부터 차오르고, 5초 남으면 깜빡임. 마우스를 올리면 설명
+// 지속 효과를 아이콘으로 표시: 시간이 지날수록 회색이 아래에서부터 차오르고, 5초 남으면 깜빡임. 마우스를 올리면 설명
 function buffList() {
   const list = [];
   for (const b of state.buffs) if (buffActive(b)) {

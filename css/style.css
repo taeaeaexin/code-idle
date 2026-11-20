@@ -43,10 +43,11 @@ button, input { font-family: inherit; }
 .stat-val.key { color: var(--gold); }
 .stat-val.rep { color: var(--purple); }
 
-.goalbar { display: flex; align-items: center; gap: 12px; padding: 7px 20px; background: var(--goal); border-bottom: 1px solid var(--border); font-size: 13px; flex-wrap: wrap; }
+.goalbar { display: flex; align-items: center; gap: 12px; padding: 0 20px; height: 46px; box-sizing: border-box; background: var(--goal); border-bottom: 1px solid var(--border); font-size: 13px; flex-wrap: nowrap; }
 .goal-label { background: var(--accent); color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 3px; font-weight: 600; }
-#goal { color: var(--strong); }
-#buffs { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
+#goal { color: var(--strong); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* 아이콘 개수와 상관없이 칸 크기 고정 (아이콘 10개 자리) */
+#buffs { display: flex; gap: 6px; margin-left: auto; flex-wrap: nowrap; justify-content: flex-end; flex: 0 0 354px; width: 354px; height: 32px; }
 .chip { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: rgba(78, 201, 176, .15); color: var(--good); }
 .chip.bad { background: rgba(244, 135, 113, .15); color: var(--bad); }
 

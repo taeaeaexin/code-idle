@@ -253,7 +253,11 @@ function breakEvenMarket() { const g = rate() / state.market; return g > 0 ? bur
 // 보상, 가격 계산 기준이 되는 초당 벌이 (자동 수입 + 초당 2회 타이핑)
 function incomeRef() { return baseRate() + keyGainAt(state.lv.key) * 2; }
 function netRate() { return rate() - burnRate(); }
-function comboMult() { return 1 + Math.min(combo, 200) / 200; }
+// 콤보 300에서 최대 x2
+const COMBO_MAX = 300;
+function comboMult() { return 1 + Math.min(combo, COMBO_MAX) / COMBO_MAX; }
+// 키를 멈춘 뒤 콤보가 끊기기까지 걸리는 시간(ms)
+function comboWindow() { return 1300 * buffMult('combo'); }
 function keyGainAt(keyLv) {
   return (deskIncome(keyLv) + baseRate() * KEY_GAIN_RATIO) * Math.pow(1.5, SK().typist);
 }
@@ -647,8 +651,7 @@ function hack() {
   lastKeyAt = now;
   playClick();
   if (state.refactoring) { showFloat('리팩토링 중'); return; }
-  const windowMs = 700 * buffMult('combo');
-  combo = now - lastComboAt <= windowMs ? combo + 1 : 1;
+  combo = now - lastComboAt <= comboWindow() ? combo + 1 : 1;
   lastComboAt = now;
   if (combo > S().maxCombo) S().maxCombo = combo;
   const g = keyGain();
@@ -1836,8 +1839,6 @@ function renderStatus() {
   if (state.incident) h += '<span class="alert">' + state.incident.label + ' ' + fmtSec(state.incident.until - state.time) + '</span>';
   if (state.refactoring) h += '<span>리팩토링 중 ' + Math.max(0, state.refactoring.until - state.time).toFixed(1) + '초</span>';
   if (isCeo() && !state.career.ipo && state.bankrupt > 0) h += '<span class="alert">자금난! 폐업까지 ' + fmtSec(BANKRUPT_SEC - state.bankrupt) + '</span>';
-  const comboOn = performance.now() - lastComboAt <= 700 * buffMult('combo') && combo >= 5;
-  if (comboOn) h += '<span class="combo">콤보 ' + combo + ' (x' + comboMult().toFixed(2) + ')</span>';
   if (h !== lastStatusHtml) { $('status').innerHTML = h; lastStatusHtml = h; }
   $('code').classList.toggle('refactoring', !!state.refactoring);
 }
@@ -2214,9 +2215,32 @@ function perSecond() {
 }
 
 let last = performance.now();
+// 콤보 게이지: 키를 치면 가득 차고, 멈추면 줄어들다 0이 되면 끊김
+let comboShown = 0;
+function renderCombo(now) {
+  const left = comboWindow() - (now - lastComboAt);
+  const live = combo > 0 && left > 0;
+  if (!live && combo > 0) {
+    if (combo >= 10) showFloat('콤보 끊김 (' + combo + ')');
+    combo = 0;
+  }
+  const ratio = live ? left / comboWindow() : 0;
+  const bar = $('comboBar');
+  $('cbFill').style.width = (ratio * 100).toFixed(1) + '%';
+  const m = comboMult();
+  const lvl = !live ? 0 : m >= 2 ? 4 : m >= 1.6 ? 3 : m >= 1.3 ? 2 : 1;
+  if (bar.dataset.lv !== String(lvl)) bar.dataset.lv = lvl;
+  bar.classList.toggle('low', live && ratio < 0.2);
+  if (comboShown !== (live ? combo : 0)) {
+    comboShown = live ? combo : 0;
+    $('cbLabel').textContent = live ? '콤보 ' + combo : '콤보';
+    $('cbMult').textContent = 'x' + m.toFixed(2);
+  }
+}
 function loop(now) {
   const dt = Math.min((now - last) / 1000, 1);
   last = now;
+  renderCombo(now);
   if (!modalSpec || !modalSpec.input) {
     state.time += dt;
     S().playTime += dt;

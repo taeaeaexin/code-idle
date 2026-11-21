@@ -2177,6 +2177,8 @@ function load() {
 }
 
 let toastTimer;
+// 알림은 누르면 바로 사라짐
+$('toast').addEventListener('pointerdown', e => { e.stopPropagation(); $('toast').classList.remove('show'); clearTimeout(toastTimer); });
 function toast(msg) {
   const t = $('toast');
   t.textContent = msg;
@@ -2338,7 +2340,7 @@ document.addEventListener('keydown', e => {
 });
 
 /* ---------- 모바일 입력: 메뉴와 버튼을 뺀 화면 아무 곳이나 탭하면 코딩, 밀면 스와이프 챌린지 ---------- */
-const TAP_SKIP = 'button, a, input, textarea, select, label, #mnav, #tabs, #side, .modal-bg, .goalbar, .filetabs, .tab, [data-act], [data-tab], [data-gloss], [data-view]';
+const TAP_SKIP = '.toast, button, a, input, textarea, select, label, #mnav, #tabs, #side, .modal-bg, .goalbar, .filetabs, .tab, [data-act], [data-tab], [data-gloss], [data-view]';
 let swipeStart = null;
 document.addEventListener('pointerdown', e => {
   if (!MOBILE_MQ.matches || mview !== 'code' || modalSpec) return;

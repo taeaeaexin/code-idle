@@ -76,6 +76,7 @@ let curEl = null;
 let lastFloatAt = 0;
 let lastKeyAt = 0;
 let combo = 0;
+let lastLiveGrade = 4;
 let lastComboAt = 0;
 let modalSpec = null;
 let lastSideHtml = '';
@@ -175,7 +176,7 @@ function incidentTime() { return 30 + 5 * state.lv.log + (hasCrew('jung') ? 10 :
 function logFixInterval(l) { return l >= 3 ? Math.max(5, 40 - 5 * (l - 3)) : 0; }
 function questSlots() { return 1 + (hasCrew('lee') ? 1 : 0); }
 function questRewardMult() { return (1 + 0.5 * SK().nego) * (hasCrew('lee') ? 1.25 : 1); }
-function questRepMult() { return (state.grade === 4 ? 2 : state.grade === 3 ? 1.5 : 1) * (hasCrew('choi') ? 1.5 : 1); }
+function questRepMult() { const g = liveGrade(); return (g === 4 ? 2 : g === 3 ? 1.5 : 1) * (hasCrew('choi') ? 1.5 : 1); }
 function questTimeMult() { return 1 + 0.1 * state.lv.doc; }
 function deployBonus() { return 0.05 * state.lv.ci; }
 // 배포할 때마다 성공률이 30~90%에서 랜덤으로 정해지고, 낮을수록 보상이 큼
@@ -210,7 +211,7 @@ function careerMult() {
 function repMult() { return 1 + state.rep * 0.01 * (1 + 0.5 * SK().network); }
 function achMult() { return 1 + 0.02 * achCount(); }
 function fileMult() { return 1 + 0.05 * state.filesDone; }
-function gradeMult() { return state.grade >= 0 ? GRADE_MULT[state.grade] : 1; }
+function gradeMult() { return GRADE_MULT[liveGrade()]; }
 // 개발 실력: 레벨당 초당 +1원(더하기), 10레벨마다 단계가 올라 x3(곱하기)
 // 10레벨마다 단계가 오르고 x3
 const TIER_MULT = 3;
@@ -449,17 +450,18 @@ function buildRefactored(history) {
   return out;
 }
 
-// 코드 품질: 리팩토링하는 순간의 코드 복잡도로 등급을 정하고, 버그가 남아 있으면 한 단계 내려감
+// 코드 상태: 지금 복잡도로 실시간 등급을 매김 (버그가 있으면 한 단계 하락). 등급에 따라 수입 배수가 붙음
 const GRADE_DEBT = [70, 45, 25, 10];   // C, B, A, S가 되는 복잡도 상한(%)
-const REFACTOR_LINES = 30;            // 직접 리팩토링하려면 지난 리팩토링 뒤 써야 하는 줄 수
-function expectedGrade() {
+function liveGrade() {
   let g = 0;
   for (let k = 0; k < GRADE_DEBT.length; k++) if (state.debt <= GRADE_DEBT[k]) g = k + 1;
   if (state.bugs.length) g = Math.max(0, g - 1);
   if (hasCrew('han')) g = Math.min(4, g + 1);
   return g;
 }
-function refactorLinesLeft() { return Math.max(0, REFACTOR_LINES - (S().linesTyped - state.lastRefLines)); }
+// 리팩토링하면 복잡도 0, 버그도 사라지므로 최고 등급
+function bestGrade() { return 4; }
+function canRefactorNow() { return liveGrade() < bestGrade(); }
 
 function totalLines() { return state.lineOffset + state.lines.length + 1; }
 function refactorPreview() {
@@ -470,11 +472,11 @@ function refactorPreview() {
 
 function doRefactor(reason) {
   const { before, after } = refactorPreview();
-  const g = expectedGrade();
+  const g = liveGrade();
   const summary = after < before ? before + '줄을 ' + after + '줄로 정리' : '구역별 구조 정리';
   const fixedByRefactor = state.bugs.length;
   S().bugsFixed += fixedByRefactor;
-  state.history.push('v' + state.version + '.0 #' + (state.refactorCount + 1) + ' ' + reason + ', ' + summary + ', 품질 ' + GRADES[g]);
+  state.history.push('v' + state.version + '.0 #' + (state.refactorCount + 1) + ' ' + reason + ', ' + summary + ', 코드 상태 ' + GRADES[g] + '에서 S로');
   state.refactorCount++;
   state.lines = buildRefactored(state.history);
   state.cur = '';
@@ -491,17 +493,16 @@ function doRefactor(reason) {
   state.cleanUntil = state.time + 30;
   state.lastRefLines = S().linesTyped;
   S().refactors++;
-  if (g === 4) S().gradeS++;
+  if (g === 0) S().gradeS++;
   renderAllCode();
   $('code').scrollTop = 0;
-  toast('리팩토링 완료: ' + summary + ', 품질 ' + GRADES[g] + ' (수입 x' + GRADE_MULT[g] + '), 복잡도 0' + (fixedByRefactor ? ', 버그 ' + fixedByRefactor + '개 함께 수정' : ''));
+  toast('리팩토링 완료: ' + summary + ', 코드 상태 ' + GRADES[g] + '에서 ' + GRADES[liveGrade()] + '로 (수입 x' + GRADE_MULT[liveGrade()] + ')' + (fixedByRefactor ? ', 버그 ' + fixedByRefactor + '개 함께 수정' : ''));
 }
 
 function startRefactor(reason, manual) {
   if (state.refactoring) return;
   if (manual) {
-    const left = refactorLinesLeft();
-    if (left > 0) { toast('코드를 ' + left + '줄 더 작성하면 리팩토링할 수 있어요'); return; }
+    if (!canRefactorNow()) { toast('코드 상태가 이미 S입니다. 코드를 더 쌓고 정리해 보세요'); return; }
   }
   const dur = refactorDuration();
   state.refactoring = { until: state.time + dur, dur, reason };
@@ -844,7 +845,7 @@ function genQuest() {
 }
 function kindOf(q) { return KINDS.find(k => k.id === q.kind); }
 function reqProgress(q, key) {
-  if (key === 'grade') return state.grade >= q.req.grade ? 1 : 0;
+  if (key === 'grade') return liveGrade() >= q.req.grade ? 1 : 0;
   return Math.max(0, S()[REQ_STAT[key]] - q.snap[key]);
 }
 function reqTarget(q, key) { return key === 'grade' ? 1 : q.req[key]; }
@@ -1534,7 +1535,7 @@ const ACHS = [
   ['bankrupt', '쓴맛', '폐업 경험', () => S().bankrupts >= 1],
   ['bug100', '버그 헌터', '버그 100개 수정', () => S().bugsFixed >= 100],
   ['ref10', '리팩토링 장인', '리팩토링 10회', () => S().refactors >= 10],
-  ['gradeS', '클린 코더', '품질 S 등급 받기', () => S().gradeS >= 1],
+  ['gradeS', '클린 코더', '코드 상태 D에서 리팩토링으로 S 만들기', () => S().gradeS >= 1],
   ['keys10k', '키보드 워리어', '타이핑 10,000회', () => S().keys >= 10000],
   ['combo200', '손가락 폭주', '콤보 300 달성', () => S().maxCombo >= 300],
   ['lines1k', '천 줄의 코드', '코드 1,000줄 작성', () => S().linesTyped >= 1000],
@@ -1594,8 +1595,8 @@ function sideUpg() {
 function reqLine(qq, key, active) {
   const label = REQ_LABEL[key];
   if (key === 'grade') {
-    const ok = state.grade >= qq.req.grade;
-    return '<div class="req' + (active && ok ? ' done' : '') + '">' + (active && ok ? '[완료] ' : '') + label + ' ' + GRADES[qq.req.grade] + ' 이상' + (active ? ' (현재 ' + (state.grade >= 0 ? GRADES[state.grade] : '없음') + ')' : '') + '</div>';
+    const ok = liveGrade() >= qq.req.grade;
+    return '<div class="req' + (active && ok ? ' done' : '') + '">' + (active && ok ? '[완료] ' : '') + label + ' ' + GRADES[qq.req.grade] + ' 이상' + (active ? ' (현재 ' + GRADES[liveGrade()] + ')' : '') + '</div>';
   }
   const target = qq.req[key];
   if (!active) return '<div class="req">' + label + ' ' + (key === 'earn' ? won(target) : target + REQ_UNIT[key]) + '</div>';
@@ -1717,13 +1718,25 @@ function sideCareer() {
 }
 
 let glossHtmlCache = '';
+function glossItem(g) {
+  const text = (g.term + ' ' + (g.game || '') + ' ' + g.desc).toLowerCase();
+  let h = '<div class="gl' + (g.game ? ' feat' : '') + '" id="g-' + g.id + '" data-text="' + escHtml(text) + '"><div class="gl-term">' + escHtml(g.term) + (g.game ? '<span class="gl-badge">게임 기능</span>' : '') + '</div>';
+  if (g.game) h += '<div class="gl-sec"><span class="gl-lab game">게임에서</span><div class="gl-desc">' + escHtml(g.game) + '</div></div>';
+  if (g.desc) h += g.game ? '<div class="gl-sec"><span class="gl-lab">실무에서</span><div class="gl-desc">' + escHtml(g.desc) + '</div></div>' : '<div class="gl-desc">' + escHtml(g.desc) + '</div>';
+  if (g.ex) h += '<div class="gl-ex">' + escHtml(g.ex) + '</div>';
+  return h + '</div>';
+}
 function sideGloss() {
   if (glossHtmlCache) return glossHtmlCache;
-  let h = '<input class="gloss-search" id="glossSearch" placeholder="용어 검색 (예: 트랜잭션, JOIN)" autocomplete="off">';
+  let h = '<input class="gloss-search" id="glossSearch" placeholder="용어 검색 (예: 리팩토링, 트랜잭션, JOIN)" autocomplete="off">';
+  const feats = GLOSS_GAME_ORDER.map(id => GLOSSARY.find(x => x.id === id)).filter(Boolean);
+  h += '<div class="gl-cat" data-cat="게임 기능">게임 기능 <span class="gl-cat-sub">게임 속 규칙과 실제 개발 이야기를 함께</span></div>';
+  for (const g of feats) h += glossItem(g);
   let cat = '';
   for (const g of GLOSSARY) {
+    if (feats.includes(g)) continue;
     if (g.cat !== cat) { cat = g.cat; h += '<div class="gl-cat" data-cat="' + cat + '">' + cat + '</div>'; }
-    h += '<div class="gl" id="g-' + g.id + '" data-text="' + escHtml((g.term + ' ' + g.desc).toLowerCase()) + '"><div class="gl-term">' + escHtml(g.term) + '</div><div class="gl-desc">' + escHtml(g.desc) + '</div>' + (g.ex ? '<div class="gl-ex">' + escHtml(g.ex) + '</div>' : '') + '</div>';
+    h += glossItem(g);
   }
   glossHtmlCache = h;
   return h;
@@ -1871,7 +1884,7 @@ function buffList() {
     const info = BUFF_INFO[b.label] || { icon: 'doc', name: b.label, desc: '' };
     list.push({ key: b.label, icon: info.icon, name: info.name, desc: info.desc, left: b.until - state.time, total: b.until - b.from, bad: b.bad });
   }
-  if (state.grade >= 0 && state.time < state.cleanUntil) list.push({ key: 'clean', icon: 'broom', name: '방금 리팩토링', desc: '정리된 코드로 기분 좋은 상태', left: state.cleanUntil - state.time, total: 30 });
+  if (state.time < state.cleanUntil) list.push({ key: 'clean', icon: 'broom', name: '방금 리팩토링', desc: '정리된 코드로 기분 좋은 상태', left: state.cleanUntil - state.time, total: 30 });
   if (state.inv && state.inv.glass > 0) list.push({ key: 'glass', icon: 'glass', name: '스마트글래스', desc: '버그가 생기면 1개를 써서 바로 고침', count: state.inv.glass });
   return list;
 }
@@ -1954,12 +1967,20 @@ function renderTop() {
   $('lines').textContent = totalLines().toLocaleString() + ' lines';
   $('stageName').textContent = STAGES[state.stage].name;
   const gc = $('gradeChip');
-  gc.textContent = '품질 ' + (state.grade >= 0 ? GRADES[state.grade] : '-');
-  gc.className = 'grade-chip g' + state.grade;
-  const rb = $('refactorBtn'), left = refactorLinesLeft();
-  const rbText = state.refactoring ? '리팩토링 중' : left > 0 ? '리팩토링 (' + left + '줄 더)' : '리팩토링 (예상 ' + GRADES[expectedGrade()] + ')';
+  const lg = liveGrade();
+  const gcText = '코드 상태 ' + GRADES[lg];
+  if (gc.textContent !== gcText) {
+    if (lg < lastLiveGrade) { gc.classList.remove('drop'); void gc.offsetWidth; gc.classList.add('drop'); }
+    gc.textContent = gcText;
+    gc.title = '수입 x' + GRADE_MULT[lg] + ' (복잡도가 오르면 등급이 떨어짐, 백과사전 참고)';
+  }
+  lastLiveGrade = lg;
+  gc.classList.remove('g0', 'g1', 'g2', 'g3', 'g4'); gc.classList.add('g' + lg);
+  const rb = $('refactorBtn');
+  const gain = Math.round((GRADE_MULT[bestGrade()] / GRADE_MULT[lg] - 1) * 100);
+  const rbText = state.refactoring ? '리팩토링 중' : !canRefactorNow() ? '리팩토링' : '리팩토링 (' + GRADES[lg] + '에서 S로, 수입 +' + gain + '%)';
   if (rb.textContent !== rbText) rb.textContent = rbText;
-  rb.classList.toggle('off', !!state.refactoring || left > 0);
+  rb.classList.toggle('off', !!state.refactoring || !canRefactorNow());
 
   $('fileLabel').textContent = '파일 완성: ' + f.name + ' (완성하면 다음 파일이 열리고 파일 보너스 +5%)';
   $('fileVal').textContent = state.fileLines + ' / ' + f.target + '줄';
@@ -2234,7 +2255,7 @@ function perSecond() {
   const T = state.timers;
   if (state.lv.log >= 3 && state.bugs.length) { T.logFix += 1; if (T.logFix >= logFixInterval(state.lv.log)) { T.logFix = 0; fixBug(state.bugs[0], true); } }
   if (hasSub('gemini') && state.bugs.length) { T.gemFix += 1; if (T.gemFix >= 20) { T.gemFix = 0; fixBug(state.bugs[0], true); } }
-  if (hasCrew('park') && state.debt >= 60 && !state.refactoring) startRefactor(crewName(CREW[0]) + ' 과장 리팩토링', false);
+  if (hasCrew('park') && liveGrade() <= 1 && !state.refactoring) startRefactor(crewName(CREW[0]) + ' 과장 리팩토링', false);
 
   if (isCeo() && !state.career.ipo) {
     T.market += 1;

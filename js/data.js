@@ -346,7 +346,7 @@ const KINDS = [
     titles: ['병원정보시스템 차세대 구축', '전사 ERP 차세대'],
     gen: r => ({ lines: 100, files: 1, refactor: 2, grade: 3, bugs: 5, earn: r * 500 }) },
 ];
-const REQ_LABEL = { lines: '코드 작성', bugs: '버그 수정', refactor: '리팩토링', upgrades: '업그레이드', earn: '가치 벌기', files: '파일 완성', grade: '코드 품질' };
+const REQ_LABEL = { lines: '코드 작성', bugs: '버그 수정', refactor: '리팩토링', upgrades: '업그레이드', earn: '가치 벌기', files: '파일 완성', grade: '코드 상태' };
 const REQ_UNIT = { lines: '줄', bugs: '개', refactor: '회', upgrades: '회', earn: '', files: '개', grade: '' };
 const REQ_STAT = { lines: 'linesTyped', bugs: 'bugsFixed', refactor: 'refactors', upgrades: 'upgrades', earn: 'earned', files: 'filesDone' };
 const GRADES = ['D', 'C', 'B', 'A', 'S'];
@@ -360,11 +360,11 @@ const AI_SUBS = [
   { id: 'copilot', name: 'Copilot 구독', rep: 15, cost: 5e8, fee: 0.05, kps: 2, desc: '초당 2회 자동 타이핑, 업그레이드 코드 입력 속도 2배' },
 ];
 const CREW = [
-  { id: 'park', title: '과장', role: '백엔드 베테랑',   rep: 8,  cost: 1e6,  salary: 0.08, desc: '코드 복잡도 증가 -20%, 복잡도 60% 이상이면 알아서 리팩토링' },
+  { id: 'park', title: '과장', role: '백엔드 베테랑',   rep: 8,  cost: 1e6,  salary: 0.08, desc: '코드 복잡도 증가 -20%, 코드 상태가 C 이하로 떨어지면 알아서 리팩토링' },
   { id: 'jung', title: '과장', role: 'QA 리드',         rep: 12, cost: 1e7,  salary: 0.06, desc: '버그 발생 -30%, 장애 대응 시간 +10초' },
   { id: 'lee',  title: '차장', role: 'PM',              rep: 18, cost: 1e9,  salary: 0.07, desc: '의뢰 동시 진행 +1, 의뢰 자동 수락, 의뢰 보상 +25%' },
   { id: 'yoon', title: '과장', role: '인프라 엔지니어', rep: 22, cost: 1e11, salary: 0.06, desc: '트래픽 폭주에 항상 대응, 오프라인 수익 +20%' },
-  { id: 'han',  title: '차장', role: '아키텍트',        rep: 30, cost: 1e13, salary: 0.09, desc: '리팩토링 품질 등급 +1단계, 리팩토링 시간 -30%' },
+  { id: 'han',  title: '차장', role: '아키텍트',        rep: 30, cost: 1e13, salary: 0.09, desc: '코드 상태 등급 +1단계, 리팩토링 시간 -30%' },
   { id: 'choi', title: '부장', role: '영업 총괄',       rep: 40, cost: 1e16, salary: 0.1,  desc: '의뢰 평판 +50%, 새 의뢰가 두 배 빨리 들어옴' },
 ];
 
@@ -1019,6 +1019,8 @@ const SOUNDS = [['off', '끄기'], ['blue', '청축'], ['red', '적축'], ['sile
 
 /* ---------- 용어 사전 ---------- */
 // m: 코드 한 줄에 이 글자가 들어 있으면 관련 용어로 보여줌
+// game이 있는 항목은 게임 속 기능: 백과사전 맨 위에 '게임에서'와 '실무에서'를 함께 보여줌
+const GLOSS_GAME_ORDER = ['refactoring', 'grade', 'complexity', 'bug', 'legacy', 'combo', 'release', 'incident', 'deploy', 'freeze', 'unit-test', 'code-review', 'design-doc', 'logging', 'cicd', 'scale-out'];
 const GLOSSARY = [
   // 기초
   { id: 'comment', cat: '기초', term: '주석', m: ['//', '-- ', '<!--', '/*'], desc: '코드 실행에는 영향을 주지 않고 사람이 읽으라고 남기는 설명. 언어마다 // , -- , <!-- --> 처럼 표기법이 다르다.', ex: '// 사용자 목록 조회' },
@@ -1049,8 +1051,8 @@ const GLOSSARY = [
   { id: 'mapper', cat: 'Java', term: '매퍼, DAO', m: ['Mapper', 'Dao', 'dao.'], desc: 'DB에 SQL을 보내고 결과를 받아오는 담당. Controller, Service, Mapper(DAO)로 나누는 것을 계층 분리라고 한다.', ex: 'userMapper.selectUser(id)' },
   { id: 'vo', cat: 'Java', term: 'VO, DTO', m: ['Vo', 'Dto'], desc: '데이터를 담아서 계층 사이에 주고받는 그릇 역할의 클래스.', ex: 'public class UserVo { private String name; }' },
   { id: 'lombok', cat: 'Java', term: 'Lombok', m: ['@Getter', '@RequiredArgsConstructor', 'lombok'], desc: 'getter, 생성자 같은 반복 코드를 어노테이션 하나로 자동 생성해주는 라이브러리.', ex: '@Getter' },
-  { id: 'unit-test', cat: 'Java', term: '단위 테스트', m: ['@Test', 'assert', 'Assert', '[테스트]'], desc: '코드가 의도대로 동작하는지 확인하는 코드. 미리 만들어두면 나중에 고쳐도 기존 기능이 깨졌는지 바로 알 수 있어 버그가 줄어든다.', ex: 'assertNotNull(userService.get(1L));' },
-  { id: 'logging', cat: 'Java', term: '로깅 (log)', m: ['log.', 'Logger', 'console.log', '[로그]'], desc: '프로그램이 실행되며 무슨 일을 했는지 기록을 남기는 것. 장애가 났을 때 원인을 빨리 찾게 해준다.', ex: 'log.info("조회 시작");' },
+  { id: 'unit-test', cat: 'Java', term: '단위 테스트', m: ['@Test', 'assert', 'Assert', '[테스트]'], desc: '코드가 의도대로 동작하는지 확인하는 코드. 미리 만들어두면 나중에 고쳐도 기존 기능이 깨졌는지 바로 알 수 있어 버그가 줄어든다.', game: '업그레이드 \'테스트 체계\'. 레벨이 오를수록 버그가 덜 생깁니다.', ex: 'assertNotNull(userService.get(1L));' },
+  { id: 'logging', cat: 'Java', term: '로깅 (log)', m: ['log.', 'Logger', 'console.log', '[로그]'], desc: '프로그램이 실행되며 무슨 일을 했는지 기록을 남기는 것. 장애가 났을 때 원인을 빨리 찾게 해준다.', game: '업그레이드 \'모니터링\'. 장애 대응 시간이 늘고, 버그가 생기면 그 줄로 자동 이동하며, Lv.3부터는 버그를 알아서 고칩니다.', ex: 'log.info("조회 시작");' },
   // DB, SQL
   { id: 'select', cat: 'SQL', term: 'SELECT', m: ['SELECT'], desc: 'DB에서 데이터를 조회하는 명령. FROM으로 테이블을, WHERE로 조건을 정한다.', ex: 'SELECT NAME FROM TB_USER WHERE ID = 1;' },
   { id: 'dml', cat: 'SQL', term: 'INSERT, UPDATE, DELETE', m: ['INSERT', 'UPDATE ', 'DELETE'], desc: '데이터를 추가(INSERT), 수정(UPDATE), 삭제(DELETE)하는 명령. 운영 DB에서는 WHERE 조건을 빠뜨리지 않게 특히 조심해야 한다.', ex: 'UPDATE TB_USER SET NAME = \'김\' WHERE ID = 1;' },
@@ -1078,21 +1080,21 @@ const GLOSSARY = [
   { id: 'datatable', cat: 'C#', term: 'DataTable, DataRow', m: ['DataTable', 'DataRow'], desc: '표 형태의 데이터를 메모리에 담는 객체. DataRow는 그 표의 한 줄.', ex: 'foreach (DataRow dr in dt.Rows)' },
   { id: 'using-block', cat: 'C#', term: 'using 블록', m: ['using ('], desc: 'DB 연결처럼 다 쓰면 꼭 닫아야 하는 자원을 블록이 끝날 때 자동으로 정리해준다.', ex: 'using (var conn = new OracleConnection())' },
   // 실무, 게임 개념
-  { id: 'complexity', cat: '실무', term: '코드 복잡도', m: [], desc: '급하게 짠 코드가 쌓여 엉키는 정도. 실무에서는 "기술 부채"라고도 한다. 높을수록 수정이 어렵고 버그가 잘 생긴다. 게임에서는 수입이 줄고 버그 확률이 오른다.', ex: '' },
-  { id: 'refactoring', cat: '실무', term: '리팩토링', m: [], desc: '동작은 그대로 두고 코드 구조만 깔끔하게 고치는 일. 중복을 합치고 구역을 정리한다. 게임에서는 복잡도를 0으로 만들고 품질 등급을 받는다.', ex: '' },
-  { id: 'legacy', cat: '실무', term: '레거시', m: [], desc: '오래되고 엉켜서 손대기 무서운 코드. 게임에서는 복잡도가 100%가 되면 레거시가 되어 수입이 크게 줄고 리팩토링도 오래 걸린다.', ex: '' },
-  { id: 'bug', cat: '실무', term: '버그', m: [], desc: '프로그램이 의도와 다르게 동작하게 만드는 코드 실수. 오타, 빠진 기호 같은 작은 실수가 큰 문제를 일으키기도 한다.', ex: 'retrun result;  // return 오타' },
-  { id: 'incident', cat: '실무', term: '장애', m: [], desc: '운영 중인 서비스가 멈추거나 오작동하는 상황. 빨리 원인을 찾아 복구하는 게 최우선이다.', ex: '' },
-  { id: 'release', cat: '실무', term: '릴리즈, 버전', m: [], desc: '개발한 프로그램을 사용자에게 내보내는 것. v1.0, v2.0처럼 버전을 붙여 관리한다.', ex: '' },
-  { id: 'deploy', cat: '실무', term: '배포', m: [], desc: '완성된 코드를 실제 서버에 올려 사용자가 쓸 수 있게 하는 작업. 금요일 오후 배포는 주말 장애로 이어지기 쉬워 개발자들이 꺼린다.', ex: '' },
-  { id: 'code-review', cat: '실무', term: '코드 리뷰', m: ['[코드리뷰]'], desc: '내가 짠 코드를 동료가 읽고 문제점이나 개선점을 짚어주는 과정. 코드가 엉키는 걸 막아준다.', ex: '' },
-  { id: 'design-doc', cat: '실무', term: '설계 문서', m: ['@param', '@return', '<summary>', '설계:'], desc: '무엇을 어떻게 만들지 미리 정리한 문서. 설계가 탄탄하면 개발이 빨라져 마감을 지키기 쉽다.', ex: '' },
-  { id: 'cicd', cat: '실무', term: 'CI/CD', m: ['[CI]'], desc: '코드를 올리면 빌드, 테스트, 배포까지 자동으로 해주는 체계. 사람 손을 덜 타서 실수가 줄고 빨라진다.', ex: '' },
-  { id: 'scale-out', cat: '실무', term: '서버 증설 (스케일 아웃)', m: ['scale(', 'ServerCount', 'API_SERVERS', 'SERVER_WORKERS', '서버 '], desc: '서버 대수를 늘려 더 많은 사용자를 감당하는 것. 사용자가 몰려도 서비스가 버틴다.', ex: '' },
+  { id: 'complexity', cat: '실무', term: '코드 복잡도', m: [], desc: '급하게 짠 코드가 쌓여 엉키는 정도. 실무에서는 "기술 부채"라고도 한다. 높을수록 수정이 어렵고 버그가 잘 생긴다.', game: '코드를 한 줄 칠 때마다 오릅니다. 업그레이드 레벨 합이 높을수록 덜 오르고, 리뷰 문화가 오르는 속도를 줄입니다. 높을수록 수입이 줄고(복잡도의 절반만큼 %), 버그가 자주 생기며, 코드 상태 등급이 떨어집니다. 100%가 되면 레거시가 됩니다.', ex: '' },
+  { id: 'refactoring', cat: '실무', term: '리팩토링', m: [], desc: '동작은 그대로 두고 코드 구조만 깔끔하게 고치는 일. 중복을 합치고 구역을 정리한다.', game: '리팩토링 버튼을 누르면 몇 초 동안 타이핑이 멈추고 수입이 절반이 됩니다. 끝나면 코드 복잡도가 0, 버그가 모두 사라져 코드 상태가 S로 돌아옵니다. 코드 상태가 이미 S면 누를 수 없고, 아키텍처 단계에 도달하면 자동으로 리팩토링됩니다.', ex: '' },
+  { id: 'legacy', cat: '실무', term: '레거시', m: [], desc: '오래되고 엉켜서 손대기 무서운 코드.', game: '코드 복잡도가 100%가 되면 레거시가 됩니다. 수입 x0.7, 리팩토링 시간 2배. 리팩토링하면 풀립니다.', ex: '' },
+  { id: 'bug', cat: '실무', term: '버그', m: [], desc: '프로그램이 의도와 다르게 동작하게 만드는 코드 실수. 오타, 빠진 기호 같은 작은 실수가 큰 문제를 일으키기도 한다.', game: '코드 줄에 오타처럼 끼어듭니다. 버그 하나마다 수입이 줄고 코드 상태가 한 단계 내려갑니다. 빨간 줄을 누르면 고쳐지고, 리팩토링하면 모두 사라집니다. 테스트 체계는 발생을 줄이고, 모니터링은 찾기와 자동 수정을 돕고, 스마트글래스는 생기는 순간 고쳐줍니다.', ex: 'retrun result;  // return 오타' },
+  { id: 'incident', cat: '실무', term: '장애', m: [], desc: '운영 중인 서비스가 멈추거나 오작동하는 상황. 빨리 원인을 찾아 복구하는 게 최우선이다.', game: '장애가 나면 제한 시간 안에 생긴 버그를 모두 고쳐야 합니다. 성공하면 평판이 오르고 실패하면 깎입니다. 모니터링 레벨이 오를수록 대응 시간이 늘어납니다.', ex: '' },
+  { id: 'release', cat: '실무', term: '릴리즈, 버전', m: [], desc: '개발한 프로그램을 사용자에게 내보내는 것. v1.0, v2.0처럼 버전을 붙여 관리한다.', game: '서비스 가치가 100만원을 넘으면 릴리즈할 수 있습니다. 버전이 오르고 그동안의 최고 가치에 따라 영구 수입 배수를 받는 대신, 서비스 가치와 업그레이드가 초기화됩니다.', ex: '' },
+  { id: 'deploy', cat: '실무', term: '배포', m: [], desc: '완성된 코드를 실제 서버에 올려 사용자가 쓸 수 있게 하는 작업. 금요일 오후 배포는 주말 장애로 이어지기 쉬워 개발자들이 꺼린다.', game: '금요일 배포 요청 같은 이벤트로 나옵니다. 성공률이 낮을수록 성공했을 때 보상이 큽니다. 배포 방식 업그레이드가 성공률을 올립니다.', ex: '' },
+  { id: 'code-review', cat: '실무', term: '코드 리뷰', m: ['[코드리뷰]'], desc: '내가 짠 코드를 동료가 읽고 문제점이나 개선점을 짚어주는 과정. 코드가 엉키는 걸 막아준다.', game: '업그레이드 \'리뷰 문화\'. 레벨이 오를수록 코드 복잡도가 천천히 오릅니다.', ex: '' },
+  { id: 'design-doc', cat: '실무', term: '설계 문서', m: ['@param', '@return', '<summary>', '설계:'], desc: '무엇을 어떻게 만들지 미리 정리한 문서. 설계가 탄탄하면 개발이 빨라져 마감을 지키기 쉽다.', game: '업그레이드 \'설계 문서\'. 레벨마다 의뢰 마감 시간이 10% 늘어납니다.', ex: '' },
+  { id: 'cicd', cat: '실무', term: 'CI/CD', m: ['[CI]'], desc: '코드를 올리면 빌드, 테스트, 배포까지 자동으로 해주는 체계. 사람 손을 덜 타서 실수가 줄고 빨라진다.', game: '업그레이드 \'배포 방식\'. 업그레이드할 때 코드가 더 많이 입력되고, 배포 성공률이 오르며, 리팩토링 시간이 줄어듭니다.', ex: '' },
+  { id: 'scale-out', cat: '실무', term: '서버 증설 (스케일 아웃)', m: ['scale(', 'ServerCount', 'API_SERVERS', 'SERVER_WORKERS', '서버 '], desc: '서버 대수를 늘려 더 많은 사용자를 감당하는 것. 사용자가 몰려도 서비스가 버틴다.', game: '업그레이드 \'인프라\'. 비싸지만 레벨마다 전체 수입 x2. 트래픽 폭주 이벤트를 버티게 해주고 오프라인 수익도 늘려줍니다.', ex: '' },
   { id: 'msa', cat: '실무', term: 'MSA', m: ['DiscoveryClient', 'Gateway'], desc: '큰 서비스를 작은 서비스 여러 개로 쪼개 따로 배포하고 운영하는 구조.', ex: '' },
   { id: 'si-sm', cat: '실무', term: 'SI, SM', m: [], desc: 'SI는 고객사 시스템을 새로 구축하는 일, SM은 구축된 시스템을 유지보수하는 일.', ex: '' },
   { id: 'uat', cat: '실무', term: 'UAT', m: [], desc: '오픈 전에 실제 사용자가 직접 써보며 확인하는 인수 테스트.', ex: '' },
-  { id: 'freeze', cat: '실무', term: '코드 프리징', m: [], desc: '오픈 직전 안정성을 위해 코드 변경을 막아두는 기간.', ex: '' },
-  { id: 'combo', cat: '게임', term: '콤보', m: [], desc: '끊지 않고 연속으로 타이핑하면 쌓이는 숫자. 콤보가 높을수록 타이핑 수익이 최대 3배까지 늘어난다.', ex: '' },
-  { id: 'grade', cat: '게임', term: '코드 품질 등급', m: [], desc: '리팩토링하는 순간의 코드 복잡도로 정해지는 S~D 등급. 복잡도 10% 이하 S, 25% 이하 A, 45% 이하 B, 70% 이하 C, 그 이상 D. 버그가 남아 있으면 한 단계 내려간다. 직접 리팩토링하려면 지난 리팩토링 뒤 코드를 30줄 이상 써야 한다. 다음 리팩토링 전까지 수입과 평판 보너스를 준다.', ex: '' },
+  { id: 'freeze', cat: '실무', term: '코드 프리징', m: [], desc: '오픈 직전 안정성을 위해 코드 변경을 막아두는 기간.', game: '코드 프리징 이벤트가 걸리면 60초 동안 업그레이드를 살 수 없습니다.', ex: '' },
+  { id: 'combo', cat: '게임', term: '콤보', m: [], desc: '', game: '끊지 않고 연속으로 치면 쌓입니다. 콤보 300에서 타이핑 수익 최대 x2. 1.3초 동안 안 치면 끊기고, 아래 콤보 게이지로 남은 시간을 볼 수 있습니다. 손목 받침대와 햄버거는 끊기는 시간을 2배로 늘려줍니다.', ex: '' },
+  { id: 'grade', cat: '게임', term: '코드 상태 (S~D)', m: [], desc: '', game: '지금 코드 복잡도로 실시간 매겨지는 등급입니다. 복잡도 10% 이하 S, 25% 이하 A, 45% 이하 B, 70% 이하 C, 그 이상 D. 버그가 있으면 한 단계 내려갑니다. 수입 배수는 D x1, C x1.03, B x1.08, A x1.15, S x1.25이고, 의뢰 평판 보상은 S면 2배, A면 1.5배입니다. 등급이 떨어지면 리팩토링으로 S로 되돌리세요.', ex: '' },
 ];

@@ -1013,7 +1013,7 @@ function promote() {
   c.points += 2;
   if (e.title === 'CTO') {
     c.cto = true;
-    openModal({ title: 'CTO 취임! 기술 총괄이 되었습니다', desc: endingStats() + '<br>안정적인 길 끝에 회사의 기술을 책임지는 자리에 올랐습니다. 계속 플레이하며 더 큰 숫자에 도전하세요.', choices: [{ label: 'CTO로 계속 플레이' }, ngChoice()] });
+    openModal({ title: 'CTO 취임! 기술 총괄이 되었습니다', desc: endingStats() + '<br>안정적인 길 끝에 회사의 기술을 책임지는 자리에 올랐습니다. 계속 플레이하며 더 큰 숫자에 도전하세요.', choices: [{ label: '엔딩 카드 만들기', act: () => showCard('CTO 엔딩') }, { label: 'CTO로 계속 플레이', alt: true }, ngChoice()] });
   } else {
     toast(e.title + ' 승진! 경력 포인트 +2, 수입 x' + careerMult().toFixed(1));
   }
@@ -1051,7 +1051,7 @@ function checkIpo() {
   const c = state.career;
   if (c.route !== 'ceo' || c.ipo || state.runBest < IPO_VALUE) return;
   c.ipo = true;
-  openModal({ title: '상장(IPO) 성공!', desc: endingStats() + '<br>회사가 상장했습니다! 이제 시장 리스크와 운영비 걱정 없이 수입 x10이 영구 적용됩니다.', choices: [{ label: '대표로 계속 플레이' }, ngChoice()] });
+  openModal({ title: '상장(IPO) 성공!', desc: endingStats() + '<br>회사가 상장했습니다! 이제 시장 리스크와 운영비 걱정 없이 수입 x10이 영구 적용됩니다.', choices: [{ label: '엔딩 카드 만들기', act: () => showCard('상장 엔딩') }, { label: '대표로 계속 플레이', alt: true }, ngChoice()] });
 }
 
 function endingStats() {
@@ -1252,7 +1252,7 @@ function buyItem(id) {
   if (cd > 0) { toast(it.name + ' 재사용 대기 중 (' + fmtSec(cd) + ')'); return; }
   state.value -= p;
   state.itemCd[id] = state.time + it.cd;
-  if (id === 'coffee') addBuff('typing', 1.5, 30, '커피 타이핑 x1.5');
+  if (id === 'coffee') { addBuff('typing', 1.5, 30, '커피 타이핑 x1.5'); S().coffee = (S().coffee || 0) + 1; }
   if (id === 'energy') { addBuff('income', 1.3, 60, '에너지 드링크 x1.3'); addBuff('income', 0.7, 15, '피곤함 x0.7', true, 60); }
   if (id === 'pizza') { addRep(1); addBuff('calm', 0, 30, '복잡도 증가 없음'); }
   if (id === 'wrist') addBuff('combo', 2, 60, '손목 받침대');
@@ -1424,9 +1424,10 @@ function closeModal(i) {
   if (!spec) return;
   const inp = $('modalInput');
   const val = inp ? inp.value : '';
+  const c = spec.choices[i];
+  if (c && c.keep) { if (c.act) c.act(val); return; }
   modalSpec = null;
   $('modal').classList.add('hidden');
-  const c = spec.choices[i];
   if (c && c.act) c.act(val);
 }
 $('modalBox').addEventListener('click', e => {
@@ -1768,7 +1769,7 @@ function sideSet() {
     const ok = achCount() >= t.need;
     h += '<button class="btn ' + (s.theme === t.id ? 'on' : ok ? 'gray' : 'off') + '" data-act="theme:' + t.id + '">' + t.name + (ok ? '' : ' (업적 ' + t.need + ')') + '</button>';
   }
-  h += '</div><div class="sec-title">결과 공유</div><div class="set-row"><button class="btn" data-act="share">내 기록 복사하기</button></div>';
+  h += '</div><div class="sec-title">결과 공유</div><div class="set-row"><button class="btn" data-act="card">기록 카드 만들기</button><button class="btn gray" data-act="share">기록 글로 복사</button></div>';
   h += '<div class="divider"></div><div class="sec-title">저장</div><div class="note">진행 상황은 이 브라우저에 5초마다 자동 저장됩니다. 다른 기기나 브라우저와는 따로 저장돼요.</div>';
   h += '<div class="set-row"><button class="btn gray" data-act="save">지금 저장</button><button class="btn ' + (resetArmed ? 'warn' : 'gray') + '" data-act="reset">' + (resetArmed ? '한 번 더 누르면 전체 초기화' : '전체 초기화') + '</button></div>';
   const dl = (url, name) => url ? '<a class="btn" href="' + url + '" target="_blank" rel="noopener">' + name + '</a>' : '<button class="btn off" disabled>' + name + ' (준비 중)</button>';
@@ -2111,6 +2112,112 @@ function shareText() {
     '작성한 코드 ' + fmtInt(st.linesTyped) + '줄, 완성 파일 ' + st.filesDone + '개, 납품 ' + st.questsDone + '건\n' +
     '최고 서비스 가치 ' + won(st.bestValue) + ', 업적 ' + achCount() + '/' + ACHS.length + '\n' + location.href;
 }
+/* ---------- 도트 기록 카드 (공유용 이미지) ---------- */
+const CARD_W = 400, CARD_H = 225, CARD_S = 3;
+let cardFontReady = null;
+// 픽셀 한글 글꼴(Galmuri, OFL). 못 불러오면 기본 글꼴로 그림
+function loadCardFont() {
+  if (!cardFontReady) {
+    cardFontReady = (async () => {
+      try {
+        const f = new FontFace('Galmuri11', 'url(fonts/Galmuri11.woff2)');
+        const bold = new FontFace('Galmuri11Bold', 'url(fonts/Galmuri11-Bold.woff2)');
+        await Promise.race([Promise.all([f.load(), bold.load()]), new Promise((_, rej) => setTimeout(rej, 3000))]);
+        document.fonts.add(f); document.fonts.add(bold);
+        return true;
+      } catch (e) { return false; }
+    })();
+  }
+  return cardFontReady;
+}
+function svgImage(svg) {
+  return new Promise(res => {
+    const img = new Image();
+    img.onload = () => res(img);
+    img.onerror = () => res(null);
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" '));
+  });
+}
+function drawArt(ctx, key, x, y, s) {
+  const a = ITEM_ART[key];
+  if (!a) return;
+  a.rows.forEach((row, yy) => { for (let xx = 0; xx < row.length; xx++) if (row[xx] !== '.') { ctx.fillStyle = a.pal[row[xx]]; ctx.fillRect(x + xx * s, y + yy * s, s, s); } });
+}
+async function makeCard(ending) {
+  const font = await loadCardFont();
+  const F = font ? 'Galmuri11' : 'monospace', FB = font ? 'Galmuri11Bold' : 'monospace';
+  const cv = document.createElement('canvas');
+  cv.width = CARD_W * CARD_S; cv.height = CARD_H * CARD_S;
+  const c = cv.getContext('2d');
+  c.imageSmoothingEnabled = false;
+  const P = CARD_S;
+  const px = (x, y, w, h, col) => { c.fillStyle = col; c.fillRect(x * P, y * P, w * P, h * P); };
+  const text = (t, x, y, size, col, bold, align) => { c.font = (size * P) + 'px ' + (bold ? FB : F); c.fillStyle = col; c.textAlign = align || 'left'; c.textBaseline = 'top'; c.fillText(t, x * P, y * P); };
+  const gold = '#d7ba7d', good = '#4ec9b0', muted = '#8a8a8a', strong = '#ffffff', accent = '#007acc';
+  // 바탕과 창 테두리
+  px(0, 0, CARD_W, CARD_H, '#141414');
+  px(4, 4, CARD_W - 8, CARD_H - 8, '#1e1e1e');
+  px(4, 4, CARD_W - 8, 14, '#2d2d2d');
+  px(4, 18, CARD_W - 8, 1, accent);
+  [['#f48771', 10], ['#d7ba7d', 18], ['#4ec9b0', 26]].forEach(([col, x]) => px(x, 9, 5, 5, col));
+  text('개발자키우기.exe', 38, 7, 8, '#c8c8c8');
+  text(new Date().toLocaleDateString('ko-KR'), CARD_W - 12, 7, 8, muted, false, 'right');
+  // 왼쪽: 내 책상
+  const t = (() => { const ti = tierIdx(UPGRADES[1], state.lv.key); return ti <= 3 ? ti : Math.min(7, ti - 1); })();
+  const img = await svgImage(sceneSvg(t, dayPhase(), state.career.gender === 'f' ? 'f' : 'm', outfitOf(), 1, { theme: state.settings.theme, items: ['coffee'] }));
+  px(14, 28, 164, 100, '#3c3c3c');
+  if (img) c.drawImage(img, 16 * P, 30 * P, 160 * P, 96 * P); else px(16, 30, 160, 96, '#2d2d2d');
+  // 엔딩 리본
+  const done = ending !== '진행 중';
+  px(14, 134, 164, 22, done ? gold : '#3a3a3a');
+  px(16, 136, 160, 18, done ? '#3a3320' : '#2d2d2d');
+  text(done ? ending + ' 달성!' : '진행 중인 기록', 96, 140, 11, done ? gold : '#c8c8c8', true, 'center');
+  text(devName() + '  ' + titleOf(), 16, 164, 11, strong, true);
+  text(companyName() + (state.career.ng ? '  ' + (state.career.ng + 1) + '회차' : ''), 16, 180, 8, muted);
+  // 오른쪽: 기록
+  const st = S();
+  const hh = Math.floor(st.playTime / 3600), mm = Math.floor(st.playTime % 3600 / 60);
+  text('PLAY LOG', 196, 28, 8, accent, true);
+  px(196, 40, 190, 1, '#333333');
+  const rows = [
+    ['플레이 시간', hh + '시간 ' + mm + '분', strong],
+    ['작성한 코드', fmtInt(st.linesTyped) + '줄', strong],
+    ['고친 버그', fmtInt(st.bugsFixed) + '개', '#f48771'],
+    ['최고 콤보', fmtInt(st.maxCombo), gold],
+    ['마신 커피', fmtInt(st.coffee || 0) + '잔', '#ce9178'],
+    ['납품한 의뢰', fmtInt(st.questsDone) + '건', strong],
+    ['이직', fmtInt(st.jobs) + '번', strong],
+    ['업적', achCount() + ' / ' + ACHS.length, good],
+  ];
+  rows.forEach(([k, v, col], i) => {
+    const y = 48 + i * 17;
+    text(k, 196, y, 9, '#b0b0b0');
+    text(v, 386, y, 9, col, true, 'right');
+    if (i < rows.length - 1) for (let x = 196; x < 386; x += 4) px(x, y + 14, 2, 1, '#2a2a2a');
+  });
+  drawArt(c, 'coffee', 196 * P, 188 * P, 1 * P);
+  drawArt(c, 'glass', 214 * P, 188 * P, 1 * P);
+  drawArt(c, 'gukbap', 232 * P, 188 * P, 1 * P);
+  text('taeaeaexin.github.io/code-idle', 386, 200, 8, muted, false, 'right');
+  return cv;
+}
+async function showCard(ending) {
+  toast('기록 카드를 그리는 중...');
+  const cv = await makeCard(ending);
+  const url = cv.toDataURL('image/png');
+  const fname = 'code-idle-' + (ending === '진행 중' ? 'record' : 'ending') + '.png';
+  const save = () => { const a = document.createElement('a'); a.href = url; a.download = fname; document.body.appendChild(a); a.click(); a.remove(); };
+  const choices = [{ label: '이미지 저장', keep: true, act: save }];
+  if (navigator.canShare) {
+    choices.push({ label: '공유하기', keep: true, act: () => cv.toBlob(b => {
+      const file = new File([b], fname, { type: 'image/png' });
+      if (navigator.canShare({ files: [file] })) navigator.share({ files: [file], text: '개발자 키우기 ' + ending + '! ' + location.href }).catch(() => {});
+      else save();
+    }) });
+  }
+  choices.push({ label: '닫기', alt: true });
+  openModal({ title: ending === '진행 중' ? '내 기록 카드' : '엔딩 카드', wide: true, desc: '<img class="card-img" src="' + url + '" alt="개발자 키우기 기록 카드">', choices });
+}
 function share() {
   const text = shareText();
   const fallback = () => openModal({ title: '내 기록', desc: '아래 내용을 복사해서 공유하세요.<br><textarea class="share-box" readonly>' + escHtml(text) + '</textarea>', choices: [{ label: '닫기' }] });
@@ -2217,6 +2324,7 @@ function doAction(act) {
   else if (a === 'sound') { state.settings.sound = arg; playClick(); }
   else if (a === 'theme') { const t = THEMES.find(x => x.id === arg); if (t && achCount() >= t.need) { state.settings.theme = arg; applyTheme(); } else toast('업적 ' + t.need + '개를 모으면 해금됩니다'); }
   else if (a === 'share') share();
+  else if (a === 'card') showCard(state.career.cto ? 'CTO 엔딩' : state.career.ipo ? '상장 엔딩' : '진행 중');
   else if (a === 'save') { save(); toast('저장 완료'); }
   else if (a === 'reset') {
     if (!resetArmed) { resetArmed = true; setTimeout(() => { resetArmed = false; lastSideHtml = ''; }, 3000); }

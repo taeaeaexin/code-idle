@@ -400,7 +400,7 @@ const SKILLS = [
 const DONATE = { toss: '', kakao: '' };
 const SHOW_DONATE = false;
 // 문의 받을 메일 주소 (비어 있으면 문의 칸이 안 보임)
-const CONTACT_EMAIL = '';
+const CONTACT_EMAIL = 'help@chagokchagok.kr';
 
 // 점심 메뉴: 이벤트마다 3개를 무작위로 보여줌
 const LUNCH = [

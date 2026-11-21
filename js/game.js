@@ -449,19 +449,17 @@ function buildRefactored(history) {
   return out;
 }
 
-// 품질 점수: 깔끔하게 유지할수록(복잡도 낮음), 충분히 작업하고(작업량), 많이 정리할수록(정리 규모) 높음
-function qualityScore(reduction) {
-  if (reduction === undefined) { const p = refactorPreview(); reduction = p.before > 0 ? clamp(1 - p.after / p.before, 0, 1) : 0; }
-  const work = Math.min(1, (S().linesTyped - state.lastRefLines) / 60);
-  const parts = {
-    clean: Math.round(40 * (1 - state.debt / 100)),
-    work: Math.round(30 * work),
-    reduce: Math.round(30 * reduction),
-    bugs: -5 * state.bugs.length,
-  };
-  return Object.assign(parts, { total: Math.max(0, parts.clean + parts.work + parts.reduce + parts.bugs) });
+// 코드 품질: 리팩토링하는 순간의 코드 복잡도로 등급을 정하고, 버그가 남아 있으면 한 단계 내려감
+const GRADE_DEBT = [70, 45, 25, 10];   // C, B, A, S가 되는 복잡도 상한(%)
+const REFACTOR_LINES = 30;            // 직접 리팩토링하려면 지난 리팩토링 뒤 써야 하는 줄 수
+function expectedGrade() {
+  let g = 0;
+  for (let k = 0; k < GRADE_DEBT.length; k++) if (state.debt <= GRADE_DEBT[k]) g = k + 1;
+  if (state.bugs.length) g = Math.max(0, g - 1);
+  if (hasCrew('han')) g = Math.min(4, g + 1);
+  return g;
 }
-function gradeOf(score) { return score >= 85 ? 4 : score >= 70 ? 3 : score >= 50 ? 2 : score >= 30 ? 1 : 0; }
+function refactorLinesLeft() { return Math.max(0, REFACTOR_LINES - (S().linesTyped - state.lastRefLines)); }
 
 function totalLines() { return state.lineOffset + state.lines.length + 1; }
 function refactorPreview() {
@@ -472,10 +470,7 @@ function refactorPreview() {
 
 function doRefactor(reason) {
   const { before, after } = refactorPreview();
-  const reduction = before > 0 ? clamp(1 - after / before, 0, 1) : 0;
-  const q = qualityScore(reduction);
-  let g = gradeOf(q.total);
-  if (hasCrew('han')) g = Math.min(4, g + 1);
+  const g = expectedGrade();
   const summary = after < before ? before + '줄을 ' + after + '줄로 정리' : '구역별 구조 정리';
   const fixedByRefactor = state.bugs.length;
   S().bugsFixed += fixedByRefactor;
@@ -505,8 +500,8 @@ function doRefactor(reason) {
 function startRefactor(reason, manual) {
   if (state.refactoring) return;
   if (manual) {
-    const p = refactorPreview();
-    if (p.after >= p.before && state.debt < 5 && state.bugs.length === 0) { toast('이미 충분히 깔끔합니다. 코드를 더 쌓고 정리해 보세요'); return; }
+    const left = refactorLinesLeft();
+    if (left > 0) { toast('코드를 ' + left + '줄 더 작성하면 리팩토링할 수 있어요'); return; }
   }
   const dur = refactorDuration();
   state.refactoring = { until: state.time + dur, dur, reason };
@@ -1950,6 +1945,10 @@ function renderTop() {
   const gc = $('gradeChip');
   gc.textContent = '품질 ' + (state.grade >= 0 ? GRADES[state.grade] : '-');
   gc.className = 'grade-chip g' + state.grade;
+  const rb = $('refactorBtn'), left = refactorLinesLeft();
+  const rbText = state.refactoring ? '리팩토링 중' : left > 0 ? '리팩토링 (' + left + '줄 더)' : '리팩토링 (예상 ' + GRADES[expectedGrade()] + ')';
+  if (rb.textContent !== rbText) rb.textContent = rbText;
+  rb.classList.toggle('off', !!state.refactoring || left > 0);
 
   $('fileLabel').textContent = '파일 완성: ' + f.name + ' (완성하면 다음 파일이 열리고 파일 보너스 +5%)';
   $('fileVal').textContent = state.fileLines + ' / ' + f.target + '줄';

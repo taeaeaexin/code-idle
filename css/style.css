@@ -296,10 +296,21 @@ button, input { font-family: inherit; }
  * 모바일 (하단 탭 방식)
  * ========================================================= */
 .mnav { display: none; }
-.ckeys { display: flex; gap: 6px; margin-left: auto; }
-.ckeys button { width: 44px; height: 36px; border-radius: 6px; border: 1px solid var(--border2); background: var(--panel2); color: var(--strong); font-family: Consolas, monospace; font-size: 18px; font-weight: 700; }
+.sw-row { display: flex; gap: 6px; }
+.sw { width: 30px; height: 30px; padding: 4px; border-radius: 6px; background: var(--panel2); border: 1px solid var(--border2); fill: none; stroke: var(--muted); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; box-sizing: border-box; }
+.sw.now { stroke: var(--strong); border-color: var(--gold); background: rgba(215, 186, 125, .15); animation: swpulse .8s ease-in-out infinite alternate; }
+.sw.done { stroke: var(--good); border-color: var(--good); }
+@keyframes swpulse { to { transform: scale(1.08); } }
+.sw-label { font-size: 12px; color: var(--gold); white-space: nowrap; }
 @media (max-width: 700px) {
   body { padding-bottom: 72px; }
+  body:not(.m-side) { height: 100dvh; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; padding-bottom: calc(60px + env(safe-area-inset-bottom)); }
+  body:not(.m-side) .top, body:not(.m-side) .goalbar { flex: none; }
+  body:not(.m-side) .main { flex: 1; min-height: 0; display: flex; }
+  body:not(.m-side) #editorPanel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  body:not(.m-side) #editorPanel > * { flex: none; }
+  body:not(.m-side) #editorPanel > .workspace { flex: 1; min-height: 60px; height: auto; }
+  body:not(.m-side) .main, body:not(.m-side) .top { touch-action: none; -webkit-user-select: none; user-select: none; }
   .top { padding: 8px 12px; gap: 6px; }
   .top h1 { font-size: 15px; width: 100%; }
   .stats { gap: 0; width: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -315,7 +326,6 @@ button, input { font-family: inherit; }
   .tab .stage-name, .tab .lines { display: none; }
   .filetabs { overflow-x: auto; }
   .status { gap: 8px; padding: 0 10px; }
-  .workspace { height: calc(100dvh - 455px); min-height: 200px; }
   .code { font-size: 12px; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
   .desk { right: 8px; bottom: 6px; }
   .desk svg { width: 110px; height: 66px; }
@@ -327,9 +337,8 @@ button, input { font-family: inherit; }
   .top h1 .title-chip { font-size: 11px; }
   .challenge { height: 48px; padding: 0 12px; gap: 8px; }
   .challenge .word { font-size: 16px; }
-  .challenge.on .meta, .challenge.on > span:first-child { display: none; }
-  .ckeys { gap: 5px; }
-  .ckeys button { width: 42px; height: 38px; }
+  .challenge.on .meta { margin-left: auto; font-size: 11px; }
+
   #tabs { display: none; }
   body.m-more #tabs { display: grid; grid-template-columns: repeat(5, 1fr); }
   body.m-more #tabs button:nth-child(-n+3) { display: none; }

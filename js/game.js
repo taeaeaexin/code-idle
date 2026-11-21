@@ -51,7 +51,7 @@ function freshCompany(career) {
 }
 function freshCareer() {
   return {
-    name: '', gender: '', level: 0, points: 0, route: null, ipo: false, cto: false, ach: {}, ng: 0, augSeen: {},
+    name: '', gender: '', level: 0, points: 0, route: null, ipo: false, cto: false, ach: {}, ng: 0, augSeen: {}, clearBase: 0,
     skills: { sql: 0, clean: 0, cicd: 0, nego: 0, lead: 0, typist: 0, network: 0 },
     stats: { keys: 0, linesTyped: 0, questsDone: 0, questsFailed: 0, bugsFixed: 0, refactors: 0, incidentsOk: 0, releases: 0, jobs: 0, playTime: 0, upgrades: 0, earned: 0, fridayOk: 0, nextGenDone: 0, bossDone: 0, challengeWords: 0, filesDone: 0, gradeS: 0, maxCombo: 0, founded: 0, bankrupts: 0, bestValue: 0 },
   };
@@ -231,7 +231,7 @@ function newGamePlus() {
   const settings = state.settings;
   state = defaultState();
   state.settings = settings;
-  Object.assign(state.career, { name: c.name, ach: c.ach, stats: c.stats, ng, points: 2 * ng });
+  Object.assign(state.career, { name: c.name, ach: c.ach, stats: c.stats, ng, points: 2 * ng, augSeen: c.augSeen || {}, clearBase: c.stats.playTime });
   startFile();
   renderAllCode();
   lastSideHtml = '';
@@ -1066,7 +1066,8 @@ function promote() {
   c.points += 2;
   if (e.title === 'CTO') {
     c.cto = true;
-    openModal({ title: 'CTO 취임! 기술 총괄이 되었습니다', desc: endingStats() + '<br>안정적인 길 끝에 회사의 기술을 책임지는 자리에 올랐습니다. 계속 플레이하며 더 큰 숫자에 도전하세요.', choices: [{ label: '엔딩 카드 만들기', act: () => showCard('CTO 엔딩') }, { label: 'CTO로 계속 플레이', alt: true }, ngChoice()] });
+    submitClearTime();
+    openModal({ title: 'CTO 취임! 기술 총괄이 되었습니다', desc: endingStats() + '<br>안정적인 길 끝에 회사의 기술을 책임지는 자리에 올랐습니다. 계속 플레이하며 더 큰 숫자에 도전하세요.', choices: [{ label: '엔딩 카드 만들기', act: () => showCard('CTO 엔딩') }, ...rankingChoice(), { label: 'CTO로 계속 플레이', alt: true }, ngChoice()] });
   } else {
     toast(e.title + ' 승진! 경력 포인트 +2, 수입 x' + careerMult().toFixed(1));
   }
@@ -1104,7 +1105,8 @@ function checkIpo() {
   const c = state.career;
   if (c.route !== 'ceo' || c.ipo || state.runBest < IPO_VALUE) return;
   c.ipo = true;
-  openModal({ title: '상장(IPO) 성공!', desc: endingStats() + '<br>회사가 상장했습니다! 이제 시장 리스크와 운영비 걱정 없이 수입 x10이 영구 적용됩니다.', choices: [{ label: '엔딩 카드 만들기', act: () => showCard('상장 엔딩') }, { label: '대표로 계속 플레이', alt: true }, ngChoice()] });
+  submitClearTime();
+  openModal({ title: '상장(IPO) 성공!', desc: endingStats() + '<br>회사가 상장했습니다! 이제 시장 리스크와 운영비 걱정 없이 수입 x10이 영구 적용됩니다.', choices: [{ label: '엔딩 카드 만들기', act: () => showCard('상장 엔딩') }, ...rankingChoice(), { label: '대표로 계속 플레이', alt: true }, ngChoice()] });
 }
 
 function endingStats() {
@@ -1426,8 +1428,14 @@ function fireEvent() {
 }
 
 /* ---------- 타이핑 챌린지 ---------- */
+const SWIPE_DIRS = 'lurd';
+function swipeWords() {
+  const out = [];
+  for (let i = 0; i < 30; i++) { let w = ''; for (let k = 0; k < 4; k++) w += SWIPE_DIRS[ri(0, 3)]; out.push(w); }
+  return out;
+}
 function startChallenge() {
-  const words = WORDS.slice().sort(() => Math.random() - 0.5);
+  const words = MOBILE_MQ.matches ? swipeWords() : WORDS.slice().sort(() => Math.random() - 0.5);
   state.challenge = { words, idx: 0, pos: 0, until: state.time + 15, combo: 0, done: 0, earned: 0 };
 }
 function challengeKey(ch) {
@@ -1444,7 +1452,7 @@ function challengeKey(ch) {
       c.idx++;
       c.pos = 0;
       S().challengeWords++;
-      showFloat(word + ' 콤보 ' + c.combo + ' +' + won(g), true);
+      showFloat((MOBILE_MQ.matches ? '성공!' : word) + ' 콤보 ' + c.combo + ' +' + won(g), true);
     }
   } else {
     c.pos = 0;
@@ -1541,7 +1549,9 @@ function refreshAuthor() {
 function showGuide() {
   openModal({
     title: '코딩을 시작해볼까요?',
-    desc: '<b>키보드 아무 키</b>나 누르거나 <b>에디터를 마우스로 클릭</b>하면 코드가 쳐지고 수익(서비스 가치)이 생깁니다.<br><br>모은 돈으로 오른쪽 <b>업그레이드</b>를 사서 수입을 늘리고, <b>의뢰</b> 탭에서 일감을 받아 평판을 쌓아보세요.<br>코드 줄에 마우스를 올리면 그 코드의 설명도 볼 수 있어요.',
+    desc: MOBILE_MQ.matches
+      ? '<b>화면을 톡톡</b> 두드리면 코드가 쳐지고 돈이 벌려요.<br>모은 돈으로 <b>업그레이드</b>를 사면 손을 떼도 돈이 들어와요.<br>궁금한 건 <b>더보기, 백과사전</b>에 다 있어요.'
+      : '<b>아무 키</b>나 누르면 코드가 쳐지고 돈이 벌려요.<br>모은 돈으로 <b>업그레이드</b>를 사면 손을 떼도 돈이 들어와요.<br>궁금한 건 <b>백과사전</b> 탭에 다 있어요.',
     choices: [{ label: '시작하기' }],
   });
 }
@@ -1840,7 +1850,7 @@ function sideSet() {
     const ok = achCount() >= t.need;
     h += '<button class="btn ' + (s.theme === t.id ? 'on' : ok ? 'gray' : 'off') + '" data-act="theme:' + t.id + '">' + t.name + (ok ? '' : ' (업적 ' + t.need + ')') + '</button>';
   }
-  h += '</div><div class="sec-title">결과 공유</div><div class="set-row"><button class="btn" data-act="card">기록 카드 만들기</button><button class="btn gray" data-act="share">기록 글로 복사</button></div>';
+  h += '</div><div class="sec-title">결과 공유</div><div class="set-row"><button class="btn" data-act="card">기록 카드 만들기</button>' + (window.TossBridge ? '<button class="btn" data-act="ranking">랭킹 보기</button>' : '') + '<button class="btn gray" data-act="share">기록 글로 복사</button></div>';
   h += '<div class="divider"></div><div class="sec-title">저장</div><div class="note">진행 상황은 이 브라우저에 5초마다 자동 저장됩니다. 다른 기기나 브라우저와는 따로 저장돼요.</div>';
   h += '<div class="set-row"><button class="btn gray" data-act="save">지금 저장</button><button class="btn ' + (resetArmed ? 'warn' : 'gray') + '" data-act="reset">' + (resetArmed ? '한 번 더 누르면 전체 초기화' : '전체 초기화') + '</button></div>';
   const dl = (url, name) => url ? '<a class="btn" href="' + url + '" target="_blank" rel="noopener">' + name + '</a>' : '<button class="btn off" disabled>' + name + ' (준비 중)</button>';
@@ -1915,7 +1925,7 @@ function viewArchive(idx) {
 
 function renderStatus() {
   const d = state.debt;
-  let h = '<span class="debt">코드 복잡도' + '<span class="mini-bar"><span class="mini-fill" style="width:' + d + '%;background:' + (d > 60 ? 'var(--bad)' : d > 30 ? 'var(--gold)' : 'var(--cm)') + '"></span></span> ' + Math.floor(d) + '% (수입 -' + Math.floor(d / 2) + '%, 줄당 +' + lineDebt().toFixed(2) + '%, 업그레이드할수록 줄어듦)</span>';
+  let h = '<span class="debt" title="코드를 칠수록 오르고, 높을수록 수입이 줄고 버그가 잘 생겨요. 줄당 +' + lineDebt().toFixed(2) + '%, 리팩토링하면 0%">복잡도' + '<span class="mini-bar"><span class="mini-fill" style="width:' + d + '%;background:' + (d > 60 ? 'var(--bad)' : d > 30 ? 'var(--gold)' : 'var(--cm)') + '"></span></span> ' + Math.floor(d) + '%' + (d >= 2 && !augFx().legacyGuard ? ' (수입 -' + Math.floor(d / 2) + '%)' : '') + '</span>';
   if (state.legacy) h += '<span class="alert">레거시화! 수입 x0.7</span>';
   if (state.bugs.length) h += '<span class="bug-count">버그 ' + state.bugs.length + '개 (수입 -' + pct(bugLossPct()) + ')</span><button class="btn warn" data-act="findbug">버그 찾기</button>';
   if (state.incident) h += '<span class="alert">' + state.incident.label + ' ' + fmtSec(state.incident.until - state.time) + '</span>';
@@ -1931,19 +1941,15 @@ function renderChallenge() {
   let h;
   if (!c) {
     el.classList.remove('on');
-    h = S().keys >= 30 ? '타이핑 챌린지: 약 ' + fmtSec(state.nextChallengeAt - state.time) + ' 뒤 시작 (나온 단어를 정확히 치면 보너스)' : '타이핑 챌린지: 타이핑을 30번 하면 열립니다';
+    const cname = MOBILE_MQ.matches ? '스와이프 챌린지' : '타이핑 챌린지';
+    h = S().keys >= 30 ? cname + ' ' + fmtSec(state.nextChallengeAt - state.time) + ' 뒤' : cname + ' (코딩 30번 하면 열림)';
   } else {
     el.classList.add('on');
     const w = c.words[c.idx % c.words.length];
     h = '<span>타이핑 챌린지</span><span class="word"><span class="typed">' + w.slice(0, c.pos) + '</span><span class="rest">' + w.slice(c.pos) + '</span></span><span class="meta">콤보 ' + c.combo + ', 남은 시간 ' + fmtSec(c.until - state.time) + '</span>';
     if (MOBILE_MQ.matches) {
-      const next = w[c.pos] || '';
-      const pool = 'etaoinsrhldcumfpgwybvk';
-      let seed = c.idx * 31 + c.pos * 7 + w.length;
-      const keys = [next];
-      while (keys.length < 4) { seed = (seed * 9301 + 49297) % 233280; const ch = pool[seed % pool.length]; if (!keys.includes(ch)) keys.push(ch); }
-      keys.sort((a, b) => ((a.charCodeAt(0) * 7 + seed) % 11) - ((b.charCodeAt(0) * 7 + seed) % 11));
-      h += '<span class="ckeys">' + keys.map(k => '<button data-ch="' + k + '">' + k + '</button>').join('') + '</span>';
+      const arrow = (d, cls) => '<svg class="sw ' + cls + '" viewBox="0 0 24 24" aria-hidden="true"><path d="' + { l: 'M15 5l-7 7 7 7', r: 'M9 5l7 7-7 7', u: 'M5 15l7-7 7 7', d: 'M5 9l7 7 7-7' }[d] + '"/></svg>';
+      h = '<span class="sw-label">밀어서 따라하기</span><span class="sw-row">' + w.split('').map((d, k) => arrow(d, k < c.pos ? 'done' : k === c.pos ? 'now' : '')).join('') + '</span><span class="meta">콤보 ' + c.combo + ', ' + fmtSec(c.until - state.time) + '</span>';
     }
   }
   if (el.innerHTML !== h) el.innerHTML = h;
@@ -2054,7 +2060,8 @@ function renderTop() {
   if (rb.textContent !== rbText) rb.textContent = rbText;
   rb.classList.toggle('off', !!state.refactoring || !canRefactorNow());
 
-  $('fileLabel').textContent = '파일 완성: ' + f.name + ' (완성하면 다음 파일이 열리고 파일 보너스 +5%)';
+  $('fileLabel').textContent = '파일 ' + f.name;
+  $('fileLabel').title = '목표 줄 수를 채우면 다음 파일이 열리고 수입 +5%';
   $('fileVal').textContent = state.fileLines + ' / ' + f.target + '줄';
   $('fileBar').style.width = clamp(state.fileLines / f.target * 100, 0, 100) + '%';
 
@@ -2063,7 +2070,8 @@ function renderTop() {
   if (next) {
     const prev = Math.max(STAGES[s].at, 1);
     const p = clamp(Math.log10(Math.max(state.runBest, 1) / prev) / Math.log10(next.at / prev), 0, 1);
-    $('nextLabel').textContent = '다음 아키텍처: ' + next.name + ' (도달하면 코드가 자동 리팩토링)';
+    $('nextLabel').textContent = '다음 단계 ' + next.name;
+    $('nextLabel').title = '서비스 가치가 목표에 닿으면 아키텍처가 바뀌고 코드가 자동으로 정리돼요';
     $('nextVal').textContent = won(state.runBest) + ' / ' + won(next.at);
     $('nextBar').style.width = (p * 100) + '%';
   } else {
@@ -2247,7 +2255,8 @@ async function makeCard(ending) {
   text(companyName() + (state.career.ng ? '  ' + (state.career.ng + 1) + '회차' : ''), 16, 180, 8, muted);
   // 오른쪽: 기록
   const st = S();
-  const hh = Math.floor(st.playTime / 3600), mm = Math.floor(st.playTime % 3600 / 60);
+  const rt = runPlayTime();
+  const hh = Math.floor(rt / 3600), mm = Math.floor(rt % 3600 / 60);
   text('PLAY LOG', 196, 28, 8, accent, true);
   px(196, 40, 190, 1, '#333333');
   const rows = [
@@ -2295,6 +2304,15 @@ async function showCard(ending) {
   openModal({ title: ending === '진행 중' ? '내 기록 카드' : '엔딩 카드', wide: true, desc: '<img class="card-img" src="' + url + '" alt="개발자 키우기 기록 카드">', choices });
 }
 // 공유 문구 한 줄 요약
+// 이번 회차 시작부터 지금까지 플레이 시간(초)
+function runPlayTime() { return Math.max(0, S().playTime - (state.career.clearBase || 0)); }
+// 엔딩 기록을 토스 리더보드에 올림 (분 단위, 낮을수록 좋음)
+function submitClearTime() {
+  const TB = window.TossBridge;
+  if (!TB) return;
+  TB.submitScore((runPlayTime() / 60).toFixed(1)).then(r => { if (r && r.statusCode === 'SUCCESS') toast('랭킹에 클리어 기록을 올렸어요'); });
+}
+function rankingChoice() { return window.TossBridge ? [{ label: '랭킹 보기', keep: true, act: () => window.TossBridge.openRanking() }] : []; }
 function shareSummary() { const st = S(); return titleOf() + ', 코드 ' + fmtInt(st.linesTyped) + '줄, 최고 콤보 ' + fmtInt(st.maxCombo); }
 function share() {
   const TB = window.TossBridge;
@@ -2319,14 +2337,26 @@ document.addEventListener('keydown', e => {
   hack();
 });
 
-$('challenge').addEventListener('pointerdown', e => {
-  const b = e.target.closest('[data-ch]');
-  if (!b || !state.challenge) return;
-  e.preventDefault();
-  challengeKey(b.dataset.ch);
+/* ---------- 모바일 입력: 메뉴와 버튼을 뺀 화면 아무 곳이나 탭하면 코딩, 밀면 스와이프 챌린지 ---------- */
+const TAP_SKIP = 'button, a, input, textarea, select, label, #mnav, #tabs, #side, .modal-bg, .goalbar, .filetabs, .tab, [data-act], [data-tab], [data-gloss], [data-view]';
+let swipeStart = null;
+document.addEventListener('pointerdown', e => {
+  if (!MOBILE_MQ.matches || mview !== 'code' || modalSpec) return;
+  if (e.target.closest(TAP_SKIP)) return;
+  swipeStart = { x: e.clientX, y: e.clientY };
+  const ln = e.target.closest('.ln.bug');
+  if (ln) { fixBug(+ln.dataset.no); return; }
   hack();
 });
+document.addEventListener('pointerup', e => {
+  if (!swipeStart) return;
+  const dx = e.clientX - swipeStart.x, dy = e.clientY - swipeStart.y;
+  swipeStart = null;
+  if (!state.challenge || Math.max(Math.abs(dx), Math.abs(dy)) < 30) return;
+  challengeKey(Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'l' : 'r') : (dy < 0 ? 'u' : 'd'));
+});
 $('code').addEventListener('click', e => {
+  if (MOBILE_MQ.matches) return;
   const ln = e.target.closest('.ln.bug');
   if (ln) fixBug(+ln.dataset.no);
   else hack();
@@ -2408,6 +2438,7 @@ function doAction(act) {
   else if (a === 'sound') { state.settings.sound = arg; playClick(); }
   else if (a === 'theme') { const t = THEMES.find(x => x.id === arg); if (t && achCount() >= t.need) { state.settings.theme = arg; applyTheme(); } else toast('업적 ' + t.need + '개를 모으면 해금됩니다'); }
   else if (a === 'share') share();
+  else if (a === 'ranking') { if (window.TossBridge) window.TossBridge.openRanking(); }
   else if (a === 'card') showCard(state.career.cto ? 'CTO 엔딩' : state.career.ipo ? '상장 엔딩' : '진행 중');
   else if (a === 'save') { save(); toast('저장 완료'); }
   else if (a === 'reset') {

@@ -2680,3 +2680,6 @@ if (!state.career.name) askName(true);
 else if (!state.company) askCompany('first');
 else if (!state.career.gender) askGender(false);
 requestAnimationFrame(loop);
+
+// 앱(PWA)으로 설치해서 오프라인에서도 실행되게. 토스 미니앱 안에서는 쓰지 않음
+if ('serviceWorker' in navigator && location.protocol === 'https:' && !window.TossBridge) navigator.serviceWorker.register('sw.js').catch(() => {});

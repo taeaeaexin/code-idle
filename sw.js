@@ -1,5 +1,5 @@
 // 오프라인 실행용 서비스 워커: 게임 파일을 저장해 두고, 인터넷이 되면 새 버전으로 갱신
-const CACHE = 'dev-idle-v2';
+const CACHE = 'dev-idle-v3';
 const CORE = ['./', 'index.html', 'css/style.css', 'js/data.js', 'js/game.js', 'manifest.webmanifest', 'favicon.ico', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', e => {

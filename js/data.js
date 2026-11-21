@@ -396,6 +396,7 @@ const SKILLS = [
 /* ---------- 상점 ---------- */
 // 후원 링크 (비어 있으면 '준비 중'으로 표시)
 const DONATE = { toss: '', kakao: '' };
+const SHOW_DONATE = false;
 
 // 점심 메뉴: 이벤트마다 3개를 무작위로 보여줌
 const LUNCH = [

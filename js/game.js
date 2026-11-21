@@ -1854,7 +1854,8 @@ function sideSet() {
   h += '<div class="divider"></div><div class="sec-title">저장</div><div class="note">진행 상황은 이 브라우저에 5초마다 자동 저장됩니다. 다른 기기나 브라우저와는 따로 저장돼요.</div>';
   h += '<div class="set-row"><button class="btn gray" data-act="save">지금 저장</button><button class="btn ' + (resetArmed ? 'warn' : 'gray') + '" data-act="reset">' + (resetArmed ? '한 번 더 누르면 전체 초기화' : '전체 초기화') + '</button></div>';
   const dl = (url, name) => url ? '<a class="btn" href="' + url + '" target="_blank" rel="noopener">' + name + '</a>' : '<button class="btn off" disabled>' + name + ' (준비 중)</button>';
-  h += '<div class="divider"></div><div class="sec-title">개발자 커피 사주기</div><div class="note">재밌게 즐기셨다면 커피 한 잔으로 응원해 주세요. 후원은 게임 내용에 영향을 주지 않습니다.</div><div class="set-row">' + dl(DONATE.toss, '토스') + dl(DONATE.kakao, '카카오페이') + '</div>';
+  // 후원 칸: 지금은 숨김 (SHOW_DONATE를 true로 바꾸면 다시 보임)
+  if (SHOW_DONATE) h += '<div class="divider"></div><div class="sec-title">개발자 커피 사주기</div><div class="note">재밌게 즐기셨다면 커피 한 잔으로 응원해 주세요. 후원은 게임 내용에 영향을 주지 않습니다.</div><div class="set-row">' + dl(DONATE.toss, '토스') + dl(DONATE.kakao, '카카오페이') + '</div>';
   return h;
 }
 

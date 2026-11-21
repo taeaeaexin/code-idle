@@ -39,7 +39,7 @@
 <td width="50%"><img src="docs/readme/shop.png" alt="상점 화면"></td>
 </tr>
 <tr>
-<td><b>AI 구독과 장급 섭외</b><br>GPT, Claude 같은 AI가 대신 타이핑하고, 백엔드 베테랑 과장, QA 리드, PM을 섭외해 팀을 꾸립니다.</td>
+<td><b>AI 구독과 장급 섭외</b><br>GTP, 클로디 같은 AI가 대신 타이핑하고, 백엔드 베테랑 과장, QA 리드, PM을 섭외해 팀을 꾸립니다.</td>
 <td><b>개발자 밈 가득</b><br>금요일 배포, "제 PC에선 되는데요?", 운영 DB에 DELETE, 야근, 점심 메뉴 고르기. 아이스 아메리카노로 버티세요.</td>
 </tr>
 </table>

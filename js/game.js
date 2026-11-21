@@ -1573,7 +1573,7 @@ function goalText() {
   if (isCeo() && !c.ipo && state.bankrupt > 0) return '자금난! 운영자금이 바닥났습니다. ' + fmtSec(BANKRUPT_SEC - state.bankrupt) + ' 안에 매출을 회복하세요';
   if (st.questsDone === 0) return '의뢰 탭에서 의뢰를 수락하고 첫 납품을 하세요';
   if (st.filesDone === 0) return '타이핑해서 첫 파일 ' + f.name + '을(를) 완성하세요 (' + state.fileLines + ' / ' + f.target + '줄)';
-  if (state.rep < 5 && c.level === 0) return '평판 5 달성: 신규 구축 의뢰와 Claude 구독 해금 (현재 ' + fmtInt(state.rep) + ')';
+  if (state.rep < 5 && c.level === 0) return '평판 5 달성: 신규 구축 의뢰와 클로디 구독 해금 (현재 ' + fmtInt(state.rep) + ')';
   if (st.releases === 0 && c.level === 0) return '서비스 가치 ' + won(RELEASE_MIN) + ' 달성 후 첫 릴리즈 (업그레이드 탭 아래)';
   if (c.level < 5 && !c.route) {
     const j = jobCond();
@@ -1854,6 +1854,7 @@ function sideSet() {
   h += '<div class="divider"></div><div class="sec-title">저장</div><div class="note">진행 상황은 이 브라우저에 5초마다 자동 저장됩니다. 다른 기기나 브라우저와는 따로 저장돼요.</div>';
   h += '<div class="set-row"><button class="btn gray" data-act="save">지금 저장</button><button class="btn ' + (resetArmed ? 'warn' : 'gray') + '" data-act="reset">' + (resetArmed ? '한 번 더 누르면 전체 초기화' : '전체 초기화') + '</button></div>';
   const dl = (url, name) => url ? '<a class="btn" href="' + url + '" target="_blank" rel="noopener">' + name + '</a>' : '<button class="btn off" disabled>' + name + ' (준비 중)</button>';
+  if (CONTACT_EMAIL) h += '<div class="divider"></div><div class="sec-title">문의하기</div><div class="note">버그, 불편한 점, 아이디어를 보내주세요. 메일 앱이 열리고 게임 정보가 자동으로 들어갑니다.</div><div class="set-row"><a class="btn" href="' + contactMailto() + '" target="_blank" rel="noopener">메일로 문의하기</a></div>';
   // 후원 칸: 지금은 숨김 (SHOW_DONATE를 true로 바꾸면 다시 보임)
   if (SHOW_DONATE) h += '<div class="divider"></div><div class="sec-title">개발자 커피 사주기</div><div class="note">재밌게 즐기셨다면 커피 한 잔으로 응원해 주세요. 후원은 게임 내용에 영향을 주지 않습니다.</div><div class="set-row">' + dl(DONATE.toss, '토스') + dl(DONATE.kakao, '카카오페이') + '</div>';
   return h;
@@ -2316,6 +2317,11 @@ function submitClearTime() {
   TB.submitScore((runPlayTime() / 60).toFixed(1)).then(r => { if (r && r.statusCode === 'SUCCESS') toast('랭킹에 클리어 기록을 올렸어요'); });
 }
 function rankingChoice() { return window.TossBridge ? [{ label: '랭킹 보기', keep: true, act: () => window.TossBridge.openRanking() }] : []; }
+// 문의 메일: 제목과 함께 문제를 찾는 데 필요한 게임 정보를 미리 채움
+function contactMailto() {
+  const info = ['', '', '----- 아래 정보는 문제 확인에 쓰여요 -----', '게임 버전: v' + state.version + '.0, 밸런스 ' + BALANCE_VER, '직급: ' + titleOf() + (state.career.ng ? ', ' + (state.career.ng + 1) + '회차' : ''), '환경: ' + (window.TossBridge ? '토스 미니앱' : '웹') + ', ' + navigator.userAgent];
+  return 'mailto:' + CONTACT_EMAIL + '?subject=' + encodeURIComponent('[개발자 키우기] 문의') + '&body=' + encodeURIComponent('문의 내용을 적어주세요.' + info.join('\n'));
+}
 function shareSummary() { const st = S(); return titleOf() + ', 코드 ' + fmtInt(st.linesTyped) + '줄, 최고 콤보 ' + fmtInt(st.maxCombo); }
 function share() {
   const TB = window.TossBridge;

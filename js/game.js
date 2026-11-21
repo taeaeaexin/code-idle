@@ -1553,6 +1553,7 @@ const ACHS = [
 const TABS = [['upg', '업그레이드'], ['quest', '의뢰'], ['team', '팀'], ['shop', '상점'], ['career', '커리어'], ['gloss', '백과사전'], ['ach', '업적'], ['set', '설정']];
 
 function renderTabs() {
+  renderMobileBadges();
   let html = '';
   for (const [id, name] of TABS) {
     let badge = '';
@@ -1771,6 +1772,7 @@ function renderSide() {
 
 function openGlossary(id) {
   tab = 'gloss';
+  if (MOBILE_MQ.matches && mview === 'code') setMobileView('more');
   lastSideHtml = '';
   renderSide();
   const inp = $('glossSearch');
@@ -1849,6 +1851,15 @@ function renderChallenge() {
     el.classList.add('on');
     const w = c.words[c.idx % c.words.length];
     h = '<span>타이핑 챌린지</span><span class="word"><span class="typed">' + w.slice(0, c.pos) + '</span><span class="rest">' + w.slice(c.pos) + '</span></span><span class="meta">콤보 ' + c.combo + ', 남은 시간 ' + fmtSec(c.until - state.time) + '</span>';
+    if (MOBILE_MQ.matches) {
+      const next = w[c.pos] || '';
+      const pool = 'etaoinsrhldcumfpgwybvk';
+      let seed = c.idx * 31 + c.pos * 7 + w.length;
+      const keys = [next];
+      while (keys.length < 4) { seed = (seed * 9301 + 49297) % 233280; const ch = pool[seed % pool.length]; if (!keys.includes(ch)) keys.push(ch); }
+      keys.sort((a, b) => ((a.charCodeAt(0) * 7 + seed) % 11) - ((b.charCodeAt(0) * 7 + seed) % 11));
+      h += '<span class="ckeys">' + keys.map(k => '<button data-ch="' + k + '">' + k + '</button>').join('') + '</span>';
+    }
   }
   if (el.innerHTML !== h) el.innerHTML = h;
 }
@@ -2100,6 +2111,13 @@ document.addEventListener('keydown', e => {
   hack();
 });
 
+$('challenge').addEventListener('pointerdown', e => {
+  const b = e.target.closest('[data-ch]');
+  if (!b || !state.challenge) return;
+  e.preventDefault();
+  challengeKey(b.dataset.ch);
+  hack();
+});
 $('code').addEventListener('click', e => {
   const ln = e.target.closest('.ln.bug');
   if (ln) fixBug(+ln.dataset.no);
@@ -2117,6 +2135,33 @@ $('explorer').addEventListener('click', e => {
   const el = e.target.closest('[data-view]');
   if (el) viewArchive(+el.dataset.view);
 });
+
+/* ---------- 모바일: 하단 탭 ---------- */
+const MOBILE_MQ = window.matchMedia ? matchMedia('(max-width: 700px)') : { matches: false, addEventListener() {} };
+const MORE_TABS = ['shop', 'career', 'gloss', 'ach', 'set'];
+let mview = 'code';
+function setMobileView(v) {
+  mview = v;
+  if (v === 'upg' || v === 'quest' || v === 'team') tab = v;
+  else if (v === 'more' && !MORE_TABS.includes(tab)) tab = 'shop';
+  document.body.classList.toggle('m-side', v !== 'code');
+  document.body.classList.toggle('m-more', v === 'more');
+  document.querySelectorAll('#mnav [data-m]').forEach(b => b.classList.toggle('on', b.dataset.m === v));
+  lastSideHtml = '';
+  renderSide();
+  $('side').scrollTop = 0;
+  window.scrollTo(0, 0);
+}
+$('mnav').addEventListener('click', e => {
+  const b = e.target.closest('[data-m]');
+  if (b) setMobileView(b.dataset.m);
+});
+function renderMobileBadges() {
+  const q = state.quests.offers.length && state.quests.active.length < questSlots() ? state.quests.offers.length : '';
+  if ($('mbQuest').textContent !== String(q)) $('mbQuest').textContent = q;
+  const more = (canJobChange() || canInnerPromote() || canFound() || canPromote()) ? '!' : '';
+  if ($('mbMore').textContent !== more) $('mbMore').textContent = more;
+}
 
 $('tabs').addEventListener('pointerdown', e => {
   const b = e.target.closest('[data-tab]');

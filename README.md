@@ -1,4 +1,4 @@
-<a href="https://taeaeaexin.github.io/code-idle/"><img src="docs/readme/banner.png" alt="개발자 키우기: 아무 키나 눌러 코드를 치고, 신입에서 CTO까지" width="100%"></a>
+<a href="https://taeaeaexin.github.io/code-idle/"><img src="docs/readme/banner.png" alt="개발자 키우기: 신입에서 CTO까지! 인생역전 개발자 키우기" width="100%"></a>
 
 <h3 align="center"><a href="https://taeaeaexin.github.io/code-idle/">▶ 지금 바로 플레이하기</a></h3>
 <p align="center">무료, 설치와 가입 없이 브라우저에서 바로. 진행 상황은 자동 저장됩니다.</p>
@@ -97,7 +97,7 @@
 게임 안 설정 탭에서 "내 기록 복사하기"를 누르면 직급, 작성한 코드 줄 수, 최고 서비스 가치가 담긴 문구가 복사됩니다. 아래 문구를 그대로 써도 좋아요.
 
 ```
-개발자 키우기: 아무 키나 눌러 코드를 치고 신입에서 CTO까지 가는 방치형 게임
+개발자 키우기: 신입에서 CTO까지! 인생역전 개발자 키우기
 https://taeaeaexin.github.io/code-idle/
 ```
 

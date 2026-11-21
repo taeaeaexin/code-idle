@@ -2277,9 +2277,14 @@ async function showCard(ending) {
   const cv = await makeCard(ending);
   const url = cv.toDataURL('image/png');
   const fname = 'code-idle-' + (ending === '진행 중' ? 'record' : 'ending') + '.png';
-  const save = () => { const a = document.createElement('a'); a.href = url; a.download = fname; document.body.appendChild(a); a.click(); a.remove(); };
+  const TB = window.TossBridge;
+  const save = TB
+    ? () => TB.saveBase64Data({ data: url.split(',')[1], fileName: fname, mimeType: 'image/png' }).then(() => toast('이미지를 저장했어요'), () => toast('저장하지 못했어요'))
+    : () => { const a = document.createElement('a'); a.href = url; a.download = fname; document.body.appendChild(a); a.click(); a.remove(); };
   const choices = [{ label: '이미지 저장', keep: true, act: save }];
-  if (navigator.canShare) {
+  if (TB) {
+    choices.push({ label: '친구에게 공유하기', keep: true, act: async () => { const link = await TB.link(); TB.share({ message: '개발자 키우기 ' + ending + '! ' + shareSummary() + (link ? '\n' + link : '') }).catch(() => {}); } });
+  } else if (navigator.canShare) {
     choices.push({ label: '공유하기', keep: true, act: () => cv.toBlob(b => {
       const file = new File([b], fname, { type: 'image/png' });
       if (navigator.canShare({ files: [file] })) navigator.share({ files: [file], text: '개발자 키우기 ' + ending + '! ' + location.href }).catch(() => {});
@@ -2289,7 +2294,11 @@ async function showCard(ending) {
   choices.push({ label: '닫기', alt: true });
   openModal({ title: ending === '진행 중' ? '내 기록 카드' : '엔딩 카드', wide: true, desc: '<img class="card-img" src="' + url + '" alt="개발자 키우기 기록 카드">', choices });
 }
+// 공유 문구 한 줄 요약
+function shareSummary() { const st = S(); return titleOf() + ', 코드 ' + fmtInt(st.linesTyped) + '줄, 최고 콤보 ' + fmtInt(st.maxCombo); }
 function share() {
+  const TB = window.TossBridge;
+  if (TB) { TB.link().then(link => TB.share({ message: shareText().replace(location.href, link || '') }).catch(() => {})); return; }
   const text = shareText();
   const fallback = () => openModal({ title: '내 기록', desc: '아래 내용을 복사해서 공유하세요.<br><textarea class="share-box" readonly>' + escHtml(text) + '</textarea>', choices: [{ label: '닫기' }] });
   try {
@@ -2351,6 +2360,10 @@ function setMobileView(v) {
   $('side').scrollTop = 0;
   window.scrollTo(0, 0);
 }
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[target="_blank"]');
+  if (a && window.TossBridge) { e.preventDefault(); window.TossBridge.openURL(a.href); }
+});
 $('mnav').addEventListener('click', e => {
   const b = e.target.closest('[data-m]');
   if (b) setMobileView(b.dataset.m);

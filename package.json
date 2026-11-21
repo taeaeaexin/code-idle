@@ -1,0 +1,18 @@
+{
+  "name": "dev-idle",
+  "version": "1.0.0",
+  "private": true,
+  "description": "개발자 키우기 - 토스 미니앱(앱인토스) 빌드용",
+  "scripts": {
+    "dev": "npx serve -l 5173 .",
+    "build": "node scripts/build.mjs && ait build",
+    "deploy": "ait deploy"
+  },
+  "dependencies": {
+    "@apps-in-toss/web-framework": "^3.10.0"
+  },
+  "devDependencies": {
+    "@apps-in-toss/devtools": "^3.10.0",
+    "esbuild": "^0.25.12"
+  }
+}

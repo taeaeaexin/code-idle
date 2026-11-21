@@ -4,7 +4,7 @@
 'use strict';
 
 const SAVE_KEY = 'codeIdle_v2';
-const BALANCE_VER = 4;
+const BALANCE_VER = 5;
 const RELEASE_MIN = 1e6;
 const OFFLINE_CAP = 12 * 3600;
 const LINE_CAP = 3000;
@@ -40,6 +40,7 @@ function freshCompany(career) {
   });
   return {
     company: '', crewNames, promoBase: 1, lastRefLines: 0,
+    aug: { owned: [], tierMax: 0, pending: 0, rerolls: 2 + (career ? career.stats.jobs : 0), offer: null, guarantee: false },
     releaseMult: 1, version: 1, rep: career ? career.skills.network * 10 : 0, subs, crew,
     quests: { offers: [], active: [], nextOfferAt: 0, seq: 0 },
     file: 0, fileLines: 0, filesDone: 0, archive: [],
@@ -50,7 +51,7 @@ function freshCompany(career) {
 }
 function freshCareer() {
   return {
-    name: '', gender: '', level: 0, points: 0, route: null, ipo: false, cto: false, ach: {}, ng: 0,
+    name: '', gender: '', level: 0, points: 0, route: null, ipo: false, cto: false, ach: {}, ng: 0, augSeen: {},
     skills: { sql: 0, clean: 0, cicd: 0, nego: 0, lead: 0, typist: 0, network: 0 },
     stats: { keys: 0, linesTyped: 0, questsDone: 0, questsFailed: 0, bugsFixed: 0, refactors: 0, incidentsOk: 0, releases: 0, jobs: 0, playTime: 0, upgrades: 0, earned: 0, fridayOk: 0, nextGenDone: 0, bossDone: 0, challengeWords: 0, filesDone: 0, gradeS: 0, maxCombo: 0, founded: 0, bankrupts: 0, bestValue: 0 },
   };
@@ -150,35 +151,72 @@ function buffLeft(label) {
   return b ? b.until - state.time : 0;
 }
 
+/* ---------- 기술 스택 효과 ---------- */
+let augCacheKey = '', augCache = null;
+function augTagCount() {
+  const n = {};
+  for (const id of state.aug.owned) { const a = AUGS.find(x => x.id === id); if (a) a.tags.forEach(t => { n[t] = (n[t] || 0) + 1; }); }
+  return n;
+}
+function activeSets() {
+  const n = augTagCount(), out = [];
+  for (const k in AUG_TAGS) for (const [need, desc, fx] of AUG_TAGS[k].sets) if ((n[k] || 0) >= need) out.push({ tag: k, need, desc, fx });
+  return out;
+}
+const AUG_MUL = ['typing', 'income', 'all', 'bug', 'debt', 'refTime', 'combo', 'questTime', 'questRep', 'itemPrice', 'coffeeCd', 'codeChars', 'nightTyping'];
+const AUG_ADD = ['deploy', 'incident', 'offline', 'autoType', 'bugBounty', 'bugPen'];
+function augFx() {
+  const key = state.aug.owned.join(',');
+  if (augCache && key === augCacheKey) return augCache;
+  const f = {};
+  AUG_MUL.forEach(k => { f[k] = 1; });
+  AUG_ADD.forEach(k => { f[k] = 0; });
+  f.autoFix = 0; f.coffeeBoost = 1.5;
+  const apply = fx => {
+    for (const k in fx) {
+      if (AUG_MUL.includes(k)) f[k] *= fx[k];
+      else if (AUG_ADD.includes(k)) f[k] += fx[k];
+      else if (k === 'autoFix') f.autoFix = f.autoFix ? Math.min(f.autoFix, fx[k]) : fx[k];
+      else if (k === 'coffeeBoost') f.coffeeBoost = Math.max(f.coffeeBoost, fx[k]);
+      else f[k] = fx[k];
+    }
+  };
+  state.aug.owned.forEach(id => { const a = AUGS.find(x => x.id === id); if (a) apply(a.fx); });
+  activeSets().forEach(s => apply(s.fx));
+  augCacheKey = key; augCache = f;
+  return f;
+}
+function isNightNow() { return dayPhase() === 'night' || state.buffs.some(b => b.label.startsWith('야근') && buffActive(b)); }
+
 function salaryRate() {
   let s = 0;
   AI_SUBS.forEach(x => { if (hasSub(x.id)) s += x.fee; });
   CREW.forEach(x => { if (hasCrew(x.id)) s += x.salary; });
   return s * Math.pow(0.7, SK().lead);
 }
-function bugPenalty() { return Math.min(0.85, 0.6 + 0.05 * state.lv.log); }
+function bugPenalty() { return Math.min(0.9, 0.75 + augFx().bugPen); }
 function bugLossPct() { return 1 - Math.pow(bugPenalty(), state.bugs.length); }
-function offlineEff() { return Math.min(1, 0.5 + 0.1 * state.lv.srv + (hasCrew('yoon') ? 0.2 : 0)); }
+function offlineEff() { return Math.min(1, 0.5 + 0.1 * state.lv.srv + (hasCrew('yoon') ? 0.2 : 0) + augFx().offline); }
 function reviewFactor(l) { return 1 / (1 + 0.25 * l); }
 // 코드 한 줄당 복잡도 증가량: 처음엔 2%, 업그레이드 레벨 합이 오를수록 4%씩 줄어듦 (최소 0.1%)
-function totalUpgradeLv() { let t = 0; for (const k in state.lv) t += state.lv[k]; return t; }
+function totalUpgradeLv() { let t = 5 * state.aug.owned.length; for (const k in state.lv) t += state.lv[k]; return t; }
 function lineDebt() { return Math.max(0.1, 2 * Math.pow(0.96, totalUpgradeLv())) * debtFactor(); }
 function debtFactor() {
-  return reviewFactor(state.lv.review) * Math.pow(0.75, SK().clean) * (hasCrew('park') ? 0.8 : 1) * (hasSub('claude') ? 0.9 : 1) * buffMult('calm');
+  return augFx().debt * Math.pow(0.75, SK().clean) * (hasCrew('park') ? 0.8 : 1) * (hasSub('claude') ? 0.9 : 1) * buffMult('calm');
 }
 function testFactor(l) { return 1 / (1 + 0.3 * l); }
-function bugChanceAt(testLv) { return 0.012 * (1 + state.debt / 25) * testFactor(testLv) * Math.pow(0.75, SK().cicd) * (hasCrew('jung') ? 0.7 : 1); }
+function bugChanceAt(testLv) { return 0.012 * (1 + state.debt / 25) * augFx().bug * Math.pow(0.75, SK().cicd) * (hasCrew('jung') ? 0.7 : 1); }
 function bugChance() { return bugChanceAt(state.lv.test); }
 function refactorDuration() {
-  return Math.max(1.5, 8 * (state.legacy ? 2 : 1) * Math.pow(0.85, state.lv.ci) * Math.pow(0.7, SK().cicd) * (hasCrew('han') ? 0.7 : 1) * (hasCrew('park') ? 0.8 : 1));
+  return Math.max(1.5, 8 * (state.legacy ? 2 : 1) * augFx().refTime * Math.pow(0.7, SK().cicd) * (hasCrew('han') ? 0.7 : 1) * (hasCrew('park') ? 0.8 : 1));
 }
-function incidentTime() { return 30 + 5 * state.lv.log + (hasCrew('jung') ? 10 : 0); }
+function incidentTime() { return 30 + augFx().incident + (hasCrew('jung') ? 10 : 0); }
 function logFixInterval(l) { return l >= 3 ? Math.max(5, 40 - 5 * (l - 3)) : 0; }
 function questSlots() { return 1 + (hasCrew('lee') ? 1 : 0); }
 function questRewardMult() { return (1 + 0.5 * SK().nego) * (hasCrew('lee') ? 1.25 : 1); }
-function questRepMult() { const g = liveGrade(); return (g === 4 ? 2 : g === 3 ? 1.5 : 1) * (hasCrew('choi') ? 1.5 : 1); }
-function questTimeMult() { return 1 + 0.1 * state.lv.doc; }
-function deployBonus() { return 0.05 * state.lv.ci; }
+function questRepMult() { const g = liveGrade(); return (g === 4 ? 2 : g === 3 ? 1.5 : 1) * (hasCrew('choi') ? 1.5 : 1) * augFx().questRep; }
+function questTimeMult() { return augFx().questTime; }
+function deployBonus() { return augFx().deploy; }
 // 배포할 때마다 성공률이 30~90%에서 랜덤으로 정해지고, 낮을수록 보상이 큼
 function rollDeploy() {
   const p = clamp(Math.round((0.3 + Math.random() * 0.6 + deployBonus()) * 20) / 20, 0.3, 0.95);
@@ -226,7 +264,7 @@ function trafficNeed() { return Math.max(1, state.stage - 1); }
 // 일시 효과를 뺀 기본 수입
 function baseRate() {
   const L = state.lv;
-  let r = codeIncome(L.code) * srvMult(L.srv);
+  let r = codeIncome(L.code) * srvMult(L.srv) * augFx().income * augFx().all;
   r *= ngMult();
   r *= state.releaseMult * repMult() * Math.pow(1.5, SK().sql) * careerMult() * achMult() * fileMult() * gradeMult() * state.equity;
   return r * Math.max(0.1, 1 - salaryRate());
@@ -234,8 +272,9 @@ function baseRate() {
 // 현재 초당 매출
 function rate() {
   let r = baseRate();
-  r *= 1 - state.debt / 200;
-  if (state.legacy) r *= 0.7;
+  const fx = augFx();
+  if (!fx.legacyGuard) r *= 1 - state.debt / 200;
+  if (state.legacy) r *= fx.legacyGuard ? 1.5 : 0.7;
   r *= 1 - bugLossPct();
   if (state.refactoring) r *= 0.5;
   r *= buffMult('income');
@@ -258,9 +297,10 @@ function netRate() { return rate() - burnRate(); }
 const COMBO_MAX = 300;
 function comboMult() { return 1 + Math.min(combo, COMBO_MAX) / COMBO_MAX; }
 // 키를 멈춘 뒤 콤보가 끊기기까지 걸리는 시간(ms)
-function comboWindow() { return 1300 * buffMult('combo'); }
+function comboWindow() { return 1300 * buffMult('combo') * augFx().combo; }
 function keyGainAt(keyLv) {
-  return (deskIncome(keyLv) + baseRate() * KEY_GAIN_RATIO) * Math.pow(1.5, SK().typist);
+  const fx = augFx();
+  return (deskIncome(keyLv) * fx.all + baseRate() * KEY_GAIN_RATIO) * Math.pow(1.5, SK().typist) * fx.typing * (isNightNow() ? fx.nightTyping : 1);
 }
 function keyGain() {
   if (state.refactoring) return 0;
@@ -376,7 +416,7 @@ function completeFile() {
  * ========================================================= */
 function buy(id) {
   const u = UPGRADES.find(x => x.id === id);
-  if (!u || state.runBest < u.unlock) return;
+  if (!u || u.hidden || state.runBest < u.unlock) return;
   if (hasBuff('freeze')) { toast('코드 프리징 기간에는 업그레이드를 살 수 없습니다'); return; }
   const L = curLang();
   const f = curFile();
@@ -399,6 +439,8 @@ function buy(id) {
       const name = u.tiers[after];
       enqueue([L.cm(u.name + ' 단계 상승: ' + name)]);
       toast(u.name + ' 단계 상승! ' + name + (u.id === 'code' ? ' (자동 수입 x' + TIER_MULT + ')' : u.id === 'key' ? ' (타이핑 x' + TIER_MULT + ')' : ''));
+      // 개발 실력이 이 회사에서 처음 오른 단계면 기술 스택 선택
+      if (u.id === 'code' && after > state.aug.tierMax) { state.aug.pending += after - state.aug.tierMax; state.aug.tierMax = after; }
     }
   }
   if (bought > 0) {
@@ -784,7 +826,7 @@ function spawnBug() {
   state.bugs.push(no);
   setLineDom(no);
   if (state.inv && state.inv.glass > 0) { useGlass(no); return true; }
-  if (state.lv.log >= 1) findBug();
+  if (augFx().bugMove) findBug();
   return true;
 }
 
@@ -798,7 +840,9 @@ function fixBug(no, silent) {
   state.bugs = state.bugs.filter(b => b !== no);
   setLineDom(no);
   S().bugsFixed++;
-  showFloat(silent ? '버그 자동 수정' : '버그 수정!', true);
+  const bb = augFx().bugBounty;
+  if (bb > 0) addValue(incomeRef() * bb);
+  showFloat((silent ? '버그 자동 수정' : '버그 수정!') + (bb > 0 ? ' +' + won(incomeRef() * bb) : ''), true);
 }
 
 function findBug() {
@@ -941,6 +985,7 @@ function recruit(id) {
 function aiKps() {
   let k = 0;
   AI_SUBS.forEach(s => { if (hasSub(s.id)) k += s.kps; });
+  k += augFx().autoType;
   return k;
 }
 
@@ -975,14 +1020,22 @@ function resetCompany() {
 function jobCond() { const c = state.career; return { ver: state.version >= 4, rep: state.rep >= 20, ok: c.level < 5 && !c.route }; }
 function canJobChange() { const j = jobCond(); return j.ver && j.rep && j.ok; }
 function jobGain() { return 1 + Math.floor(Math.log10(Math.max(1, state.releaseMult))) + Math.floor(state.rep / 25); }
-function jobChange() {
+function jobChange(carry) {
   if (!canJobChange()) return;
+  if (carry === undefined && state.aug.owned.length) {
+    openModal({ title: '포트폴리오 고르기', desc: '새 회사로 가져갈 기술 스택 1장을 고르세요. 나머지는 두고 갑니다.<br>새 회사에 들어가면 연봉 협상 보너스로 골드 이상 기술 스택을 바로 1번 뽑습니다.',
+      choices: state.aug.owned.map(id => { const a = augById(id); return { label: a.name + ' (' + AUG_TIERS[a.t].name + ', ' + a.desc + ')', act: () => jobChange(id) }; }).concat([{ label: '가져가지 않기', alt: true, act: () => jobChange(null) }]) });
+    return;
+  }
   const gain = jobGain();
   const c = state.career;
   c.points += gain;
   c.level++;
   c.stats.jobs++;
   resetCompany();
+  if (carry) state.aug.owned = [carry];
+  state.aug.pending = 1;
+  state.aug.guarantee = true;
   askCompany('job', () => openModal({ title: TITLES[c.level] + '(으)로 이직 성공!', desc: companyName() + '에 ' + TITLES[c.level] + '(으)로 입사했습니다. 경력 포인트 +' + gain + '. 커리어 탭에서 스킬을 배우세요.<br>v1.0부터 다시 시작하고, 직급 보너스로 수입 x' + careerMult().toFixed(1) + '가 적용됩니다.', choices: [{ label: '출근하기' }] }));
 }
 
@@ -1233,7 +1286,11 @@ function pixelArt(id, size) {
   });
   return '<svg class="pixel" viewBox="0 0 16 16" width="' + size + '" height="' + size + '" shape-rendering="crispEdges">' + r + '</svg>';
 }
-function itemPrice(it) { return Math.max(it.min, incomeRef() * it.sec); }
+function itemPrice(it) {
+  const fx = augFx();
+  if (it.id === 'coffee' && fx.coffeeFree) return 0;
+  return Math.max(it.min, incomeRef() * it.sec) * fx.itemPrice;
+}
 // 재사용 대기 시간 (사용한 순간부터 계산)
 function itemCdLeft(id) { return Math.max(0, (state.itemCd[id] || 0) - state.time); }
 function buyItem(id) {
@@ -1251,8 +1308,8 @@ function buyItem(id) {
   const cd = itemCdLeft(id);
   if (cd > 0) { toast(it.name + ' 재사용 대기 중 (' + fmtSec(cd) + ')'); return; }
   state.value -= p;
-  state.itemCd[id] = state.time + it.cd;
-  if (id === 'coffee') { addBuff('typing', 1.5, 30, '커피 타이핑 x1.5'); S().coffee = (S().coffee || 0) + 1; }
+  state.itemCd[id] = state.time + it.cd * (id === 'coffee' ? augFx().coffeeCd : 1);
+  if (id === 'coffee') { addBuff('typing', augFx().coffeeBoost, 30, '커피 타이핑 x1.5'); S().coffee = (S().coffee || 0) + 1; }
   if (id === 'energy') { addBuff('income', 1.3, 60, '에너지 드링크 x1.3'); addBuff('income', 0.7, 15, '피곤함 x0.7', true, 60); }
   if (id === 'pizza') { addRep(1); addBuff('calm', 0, 30, '복잡도 증가 없음'); }
   if (id === 'wrist') addBuff('combo', 2, 60, '손목 받침대');
@@ -1408,6 +1465,7 @@ function openModal(spec) {
   spec.openedAt = state.time;
   const box = $('modalBox');
   box.classList.toggle('wide', !!spec.wide);
+  box.classList.remove('aug-box', 'tier-s', 'tier-g', 'tier-p');
   let html = '<h3>' + spec.title + '</h3><div class="m-desc">' + spec.desc + '</div>';
   if (spec.input) html += '<form id="modalForm"><input id="modalInput" maxlength="12" placeholder="' + spec.input + '" autocomplete="off"></form>';
   html += '<div class="m-btns">';
@@ -1431,6 +1489,10 @@ function closeModal(i) {
   if (c && c.act) c.act(val);
 }
 $('modalBox').addEventListener('click', e => {
+  const ap = e.target.closest('[data-aug-pick]');
+  if (ap) { pickAug(+ap.dataset.augPick); return; }
+  const ar = e.target.closest('[data-aug-reroll]');
+  if (ar) { rerollAug(+ar.dataset.augReroll); return; }
   const b = e.target.closest('[data-choice]');
   if (b) closeModal(+b.dataset.choice);
 });
@@ -1519,6 +1581,9 @@ function goalText() {
  * 업적
  * ========================================================= */
 const ACHS = [
+  ['aug_first', '첫 기술 스택', '기술 스택 1장 고르기', () => Object.keys(state.career.augSeen || {}).length >= 1],
+  ['aug_all', '풀스택 수집가', '모든 기술 스택을 한 번씩 뽑기', () => Object.keys(state.career.augSeen || {}).length >= AUGS.length],
+  ['aug_set3', '시너지 장인', '한 태그를 3장 모으기', () => activeSets().some(s => s.need >= 3)],
   ['first_quest', '첫 납품', '의뢰 1건 완료', () => S().questsDone >= 1],
   ['quest10', '단골 고객', '의뢰 10건 완료', () => S().questsDone >= 10],
   ['quest50', '믿고 맡기는 개발자', '의뢰 50건 완료', () => S().questsDone >= 50],
@@ -1575,7 +1640,9 @@ function sideUpg() {
   const freeze = hasBuff('freeze');
   let h = '<div class="sec-title">업그레이드 <button class="btn gray" data-act="mode">' + (buyMax ? '최대 구매' : '1개씩 구매') + '</button></div>';
   if (freeze) h += '<div class="note" style="color:var(--bad)">코드 프리징 중에는 살 수 없습니다</div>';
+  h = augPanel() + h;
   for (const u of UPGRADES) {
+    if (u.hidden) continue;
     const locked = state.runBest < u.unlock;
     const c = cost(u);
     const cls = locked ? 'locked' : (state.value < c || freeze ? 'disabled' : '');
@@ -1749,6 +1816,10 @@ function sideAch() {
     const done = state.career.ach[id];
     h += '<div class="ach' + (done ? ' done' : '') + '"><span class="mark"></span><div><div class="a-name">' + name + '</div><div class="a-desc">' + desc + '</div></div></div>';
   }
+  const seen = state.career.augSeen || {};
+  h += '<div class="divider"></div><div class="sec-title">기술 스택 도감 <span class="sub">' + Object.keys(seen).length + ' / ' + AUGS.length + '</span></div><div class="aug-dex">';
+  for (const a of AUGS) h += seen[a.id] ? '<span class="aug-chip t-' + a.t + '" title="' + a.desc + '">' + a.name + '</span>' : '<span class="aug-chip unseen">???</span>';
+  h += '</div>';
   const st = S();
   h += '<div class="divider"></div><div class="note">타이핑 ' + fmtInt(st.keys) + '회, 최고 콤보 ' + st.maxCombo + ', 작성 코드 ' + fmtInt(st.linesTyped) + '줄, 완성 파일 ' + st.filesDone + '개, 납품 ' + st.questsDone + '건, 버그 수정 ' + st.bugsFixed + '개, 리팩토링 ' + st.refactors + '회</div>';
   return h;
@@ -2353,15 +2424,102 @@ window.addEventListener('beforeunload', save);
 /* =========================================================
  * 게임 루프
  * ========================================================= */
+/* ---------- 기술 스택 선택 ---------- */
+function augById(id) { return AUGS.find(x => x.id === id); }
+// 직급이 오를수록 골드, 프리즘 확률 상승. 이직 직후 첫 뽑기는 골드 이상 보장
+function rollAugTier() {
+  const lv = state.career.level;
+  const pP = 0.08 + 0.03 * lv, pG = 0.30 + 0.03 * lv;
+  if (state.aug.guarantee) return Math.random() < pP / (pP + pG) ? 'p' : 'g';
+  const r = Math.random();
+  return r < pP ? 'p' : r < pP + pG ? 'g' : 's';
+}
+function augPool(tier, exclude) {
+  const free = a => !state.aug.owned.includes(a.id) && !exclude.includes(a.id);
+  let pool = AUGS.filter(a => a.t === tier && free(a));
+  if (!pool.length) pool = AUGS.filter(free);
+  return pool;
+}
+function makeAugOffer() {
+  const tier = rollAugTier();
+  const ids = [];
+  for (let i = 0; i < 3; i++) { const pool = augPool(tier, ids); if (pool.length) ids.push(pick(pool).id); }
+  state.aug.offer = { tier, ids };
+}
+function augCardHtml(id, i) {
+  const a = augById(id), tier = AUG_TIERS[a.t], cnt = augTagCount();
+  // 태그: 고르면 몇 장째가 되는지 / 다음 시너지까지 필요한 장수
+  const tags = a.tags.map(t => { const n = (cnt[t] || 0) + 1, nx = AUG_TAGS[t].sets.find(x => x[0] >= n); return '<span class="aug-tag' + (nx && nx[0] === n ? ' hit' : '') + '">' + AUG_TAGS[t].name + ' ' + n + (nx ? '/' + nx[0] : '') + '</span>'; }).join('');
+  const canRe = state.aug.rerolls > 0;
+  return '<div class="aug-card t-' + a.t + '" style="--tc:' + tier.color + '"><div class="aug-tier">' + tier.name + '</div><div class="aug-icon">' + pixelArt(AUG_TAGS[a.tags[0]].icon, 40) + '</div>' +
+    '<div class="aug-name">' + a.name + '</div><div class="aug-desc">' + a.desc + '</div><div class="aug-tags">' + tags + '</div>' +
+    '<div class="aug-btns"><button class="aug-pick" data-aug-pick="' + i + '">선택</button><button class="aug-re" data-aug-reroll="' + i + '"' + (canRe ? '' : ' disabled') + '>다시 뽑기</button></div></div>';
+}
+function openAugment() {
+  if (!state.aug.offer) makeAugOffer();
+  const o = state.aug.offer;
+  const desc = '<div class="aug-sub">' + (state.aug.guarantee ? '연봉 협상 보너스: 골드 이상 보장! ' : '') + '다시 뽑기 남은 횟수 ' + state.aug.rerolls + '회. 같은 태그를 2장, 3장 모으면 시너지가 열립니다.</div><div class="aug-cards">' + o.ids.map(augCardHtml).join('') + '</div>';
+  openModal({ title: '기술 스택 선택: ' + AUG_TIERS[o.tier].name, desc, choices: [], wide: true, aug: true });
+  $('modalBox').classList.add('aug-box', 'tier-' + o.tier);
+}
+function pickAug(i) {
+  const o = state.aug.offer;
+  if (!o || !o.ids[i]) return;
+  const a = augById(o.ids[i]);
+  const before = activeSets().length;
+  state.aug.owned.push(a.id);
+  state.career.augSeen[a.id] = true;
+  state.aug.offer = null;
+  state.aug.pending = Math.max(0, state.aug.pending - 1);
+  state.aug.guarantee = false;
+  modalSpec = null;
+  $('modal').classList.add('hidden');
+  $('modalBox').classList.remove('aug-box', 'tier-s', 'tier-g', 'tier-p');
+  enqueue([curLang().cm('기술 스택 추가: ' + a.name + ' (' + a.desc + ')')]);
+  const sets = activeSets();
+  if (sets.length > before) { const s = sets[sets.length - 1]; toast('시너지 발동! ' + AUG_TAGS[s.tag].name + ' ' + s.need + '장: ' + s.desc); }
+  else toast('기술 스택 추가: ' + a.name);
+  lastSideHtml = '';
+}
+function rerollAug(i) {
+  const o = state.aug.offer;
+  if (!o || state.aug.rerolls <= 0) return;
+  state.aug.rerolls--;
+  const pool = augPool(o.tier, o.ids);
+  if (pool.length) o.ids[i] = pick(pool).id;
+  openAugment();
+}
+function augPanel() {
+  const own = state.aug.owned;
+  const next = (state.aug.tierMax + 1) * 10;
+  let h = '<div class="sec-title">기술 스택' + q('augment') + '<span class="sub">다시 뽑기 ' + state.aug.rerolls + '회, 다음 선택: 개발 실력 Lv.' + next + '</span></div>';
+  if (!own.length) h += '<div class="note">개발 실력이 새 단계(10레벨마다)에 오를 때마다 기술 스택 3장 중 1장을 고릅니다. 이직하면 1장만 가져갈 수 있어요.</div>';
+  else {
+    h += '<div class="aug-own">' + own.map(id => { const a = augById(id); return '<span class="aug-chip t-' + a.t + '" title="' + a.desc + '">' + a.name + '</span>'; }).join('') + '</div>';
+    const cnt = augTagCount();
+    h += '<div class="aug-sets">';
+    for (const k in AUG_TAGS) {
+      const n = cnt[k] || 0;
+      if (!n) continue;
+      const on = AUG_TAGS[k].sets.filter(s => n >= s[0]);
+      const nx = AUG_TAGS[k].sets.find(s => n < s[0]);
+      h += '<div class="aug-set' + (on.length ? ' on' : '') + '">' + pixelArt(AUG_TAGS[k].icon, 18) + '<b>' + AUG_TAGS[k].name + ' ' + n + '</b><span>' + (on.length ? on[on.length - 1][1] : '') + (nx ? (on.length ? ', ' : '') + nx[0] + '장: ' + nx[1] : '') + '</span></div>';
+    }
+    h += '</div>';
+  }
+  return h + '<div class="divider"></div>';
+}
+
 function perSecond() {
   sanitize();
+  if (state.aug.pending > 0 && !modalSpec && !state.refactoring) openAugment();
   if (state.lines.length > 5 && state.bugs.length < MAX_BUGS && !state.refactoring && Math.random() < bugChance()) {
     if (spawnBug()) showFloat('버그 발생!');
   }
   while (state.bugQueue > 0 && spawnBug()) state.bugQueue--;
 
   const T = state.timers;
-  if (state.lv.log >= 3 && state.bugs.length) { T.logFix += 1; if (T.logFix >= logFixInterval(state.lv.log)) { T.logFix = 0; fixBug(state.bugs[0], true); } }
+  if (augFx().autoFix && state.bugs.length) { T.logFix += 1; if (T.logFix >= augFx().autoFix) { T.logFix = 0; fixBug(state.bugs[0], true); } }
   if (hasSub('gemini') && state.bugs.length) { T.gemFix += 1; if (T.gemFix >= 20) { T.gemFix = 0; fixBug(state.bugs[0], true); } }
   if (hasCrew('park') && liveGrade() <= 1 && !state.refactoring) startRefactor(crewName(CREW[0]) + ' 과장 리팩토링', false);
 
@@ -2430,7 +2588,7 @@ function loop(now) {
     checkStage();
     if (state.refactoring && state.time >= state.refactoring.until) doRefactor(state.refactoring.reason);
 
-    const speed = AUTO_TYPE_SPEED * (1 + 2 * state.lv.ci) * (hasSub('copilot') ? 2 : 1);
+    const speed = AUTO_TYPE_SPEED * augFx().codeChars * (hasSub('copilot') ? 2 : 1);
     autoAcc += dt * speed;
     const n = Math.floor(autoAcc);
     autoAcc -= n;

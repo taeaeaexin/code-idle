@@ -261,6 +261,37 @@ button, input { font-family: inherit; }
   #side { height: auto; max-height: 640px; }
 }
 
+.aug-box.wide { width: 760px; }
+.aug-box.tier-g { border-color: #e6b94a; box-shadow: 0 0 24px rgba(230, 185, 74, .25); }
+.aug-box.tier-p { border-color: #c792ea; box-shadow: 0 0 28px rgba(199, 146, 234, .35); }
+.aug-sub { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+.aug-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.aug-card { background: var(--panel2); border: 2px solid var(--tc); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; animation: augIn .35s ease-out both; }
+.aug-card:nth-child(2) { animation-delay: .08s; } .aug-card:nth-child(3) { animation-delay: .16s; }
+@keyframes augIn { from { transform: translateY(12px) scale(.96); opacity: 0; } }
+.aug-card.t-p { background: linear-gradient(160deg, rgba(199, 146, 234, .16), rgba(79, 195, 247, .10) 50%, rgba(255, 213, 79, .12)); }
+.aug-tier { font-size: 11px; font-weight: 700; color: var(--tc); letter-spacing: 1px; }
+.aug-icon { width: 56px; height: 56px; border-radius: 8px; background: #f2f2f2; display: flex; align-items: center; justify-content: center; }
+.aug-name { font-size: 15px; font-weight: 700; color: var(--strong); }
+.aug-desc { font-size: 12px; color: var(--text); line-height: 1.5; min-height: 54px; }
+.aug-tags { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
+.aug-tag { font-size: 10px; padding: 1px 6px; border-radius: 8px; background: var(--panel3); color: var(--good); border: 1px solid var(--border2); }
+.aug-btns { width: 100%; display: flex; flex-direction: column; gap: 6px; margin-top: auto; }
+.aug-tag.hit { background: rgba(78, 201, 176, .18); border-color: var(--good); font-weight: 700; }
+.aug-pick { width: 100%; padding: 9px; border: 0; border-radius: 5px; background: var(--accent2); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; margin-top: 4px; }
+.aug-re { width: 100%; padding: 6px; border: 1px solid var(--border2); border-radius: 5px; background: none; color: var(--muted); font-size: 12px; cursor: pointer; }
+.aug-re:disabled { opacity: .4; cursor: default; }
+.aug-own, .aug-dex { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+.aug-chip { font-size: 11px; padding: 2px 8px; border-radius: 10px; border: 1px solid #c0c7cf; color: var(--text); background: var(--panel2); }
+.aug-chip.t-g { border-color: #e6b94a; color: #e6b94a; }
+.aug-chip.t-p { border-color: #c792ea; color: #c792ea; }
+.aug-chip.unseen { color: var(--muted); border-style: dashed; border-color: var(--border2); }
+.aug-sets { display: flex; flex-direction: column; gap: 4px; }
+.aug-set { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+.aug-set b { color: var(--text); white-space: nowrap; }
+.aug-set.on b { color: var(--good); }
+.aug-set .pixel { background: #f2f2f2; border-radius: 3px; flex: 0 0 auto; }
+
 /* =========================================================
  * 모바일 (하단 탭 방식)
  * ========================================================= */
@@ -307,6 +338,13 @@ button, input { font-family: inherit; }
   .upg, .row { padding: 11px 12px; }
   .route-box { grid-template-columns: 1fr !important; }
   .modal { padding: 18px; }
+  .aug-cards { grid-template-columns: 1fr; gap: 8px; }
+  .aug-card { padding: 10px; gap: 4px; }
+  .aug-icon { width: 44px; height: 44px; }
+  .aug-icon .pixel { width: 32px; height: 32px; }
+  .aug-desc { min-height: 0; }
+  .aug-btns { flex-direction: row; margin-top: 4px; }
+  .aug-pick, .aug-re { flex: 1; margin-top: 0; }
   .toast { bottom: 84px; }
   .mnav { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 46; background: var(--panel); border-top: 1px solid var(--border); padding-bottom: env(safe-area-inset-bottom); }
   .mnav button { position: relative; flex: 1; height: 60px; border: 0; background: none; color: var(--muted); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11px; }

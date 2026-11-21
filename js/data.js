@@ -293,19 +293,19 @@ const STRAYS = ['/', ';', '.', ',', '\\', '`'];
 
 /* ---------- 업그레이드 ---------- */
 const UPGRADES = [
-  { id: 'code',   name: '개발 실력',   base: 25,  growth: 1.3,  unlock: 0,     step: 10,
+  { id: 'code',   name: '개발 실력',   base: 25,  growth: 1.32, unlock: 0,     step: 10,
     tiers: ['헬로월드 따라치기', '구글링', '스택오버플로우 복붙', '공식 문서 정독', '클린 코드', '디자인 패턴', '오픈소스 기여', '기술 블로그 운영', '아키텍처 설계', '컨퍼런스 발표', '10x 개발자', '살아있는 전설'] },
-  { id: 'key',    name: '데스크 셋업', base: 40,  growth: 1.33, unlock: 0,     step: 10,
+  { id: 'key',    name: '데스크 셋업', base: 40,  growth: 1.35, unlock: 0,     step: 10,
     tiers: ['회사 멤브레인 키보드', '기계식 키보드', '게이밍 마우스', '듀얼 모니터', '모니터 암', '모션 데스크', '게이밍 의자', '커스텀 무접점 키보드', '트리플 모니터', '방음 개인 부스', '꿈의 데스크 셋업', '우주정거장 데스크'] },
-  { id: 'test',   name: '테스트 체계', base: 500, growth: 2.6,  unlock: 200,   step: 3, gloss: 'unit-test',
+  { hidden: true, id: 'test',   name: '테스트 체계', base: 500, growth: 2.6,  unlock: 200,   step: 3, gloss: 'unit-test',
     tiers: ['눈으로 확인', '수동 테스트', '단위 테스트', '통합 테스트', '테스트 자동화', 'TDD'] },
-  { id: 'review', name: '리뷰 문화',   base: 3e3, growth: 3,    unlock: 1e3,   step: 3, gloss: 'code-review',
+  { hidden: true, id: 'review', name: '리뷰 문화',   base: 3e3, growth: 3,    unlock: 1e3,   step: 3, gloss: 'code-review',
     tiers: ['혼자 확인', '사수 리뷰', 'PR 리뷰', '페어 프로그래밍', 'AI 리뷰 봇'] },
-  { id: 'doc',    name: '설계 문서',   base: 1e4, growth: 3.5,  unlock: 5e3,   step: 3, gloss: 'design-doc',
+  { hidden: true, id: 'doc',    name: '설계 문서',   base: 1e4, growth: 3.5,  unlock: 5e3,   step: 3, gloss: 'design-doc',
     tiers: ['메모장', '엑셀 정의서', '화면 설계서', 'ERD', '아키텍처 문서'] },
-  { id: 'log',    name: '모니터링',    base: 3e4, growth: 4,    unlock: 1.5e4, step: 2, gloss: 'logging',
+  { hidden: true, id: 'log',    name: '모니터링',    base: 3e4, growth: 4,    unlock: 1.5e4, step: 2, gloss: 'logging',
     tiers: ['System.out 디버깅', '로그 파일', '로그 검색 시스템', '모니터링 대시보드', '실시간 장애 알림'] },
-  { id: 'ci',     name: '배포 방식',   base: 1e5, growth: 5,    unlock: 5e4,   step: 2, gloss: 'cicd',
+  { hidden: true, id: 'ci',     name: '배포 방식',   base: 1e5, growth: 5,    unlock: 5e4,   step: 2, gloss: 'cicd',
     tiers: ['FTP 수동 업로드', '배포 스크립트', 'Jenkins', 'GitHub Actions', '무중단 자동 배포'] },
   { id: 'srv',    name: '인프라',      base: 5e4, growth: 25,   unlock: 2e4,   step: 1, gloss: 'scale-out',
     tiers: ['사무실 PC 서버', '전용 서버', 'IDC 랙', '클라우드', '오토스케일링', '멀티 리전'] },
@@ -948,6 +948,27 @@ const ITEM_ART = {
       "................",
     ],
   },
+  robot: {
+    pal: {"k":"#37474f","s":"#b0bec5","S":"#78909c","e":"#4fc3f7","r":"#e53935"},
+    rows: [
+      ".......r........",
+      ".......k........",
+      "....kkkkkkkk....",
+      "...ksssssssSk...",
+      "...kseesseeSk...",
+      "...kseesseeSk...",
+      "...ksssssssSk...",
+      "...kssSSSSsSk...",
+      "....kkkkkkkk....",
+      "..kkSSSSSSSSkk..",
+      "..ksSssssssSsk..",
+      "..ksSsseessSsk..",
+      "..ksSssssssSsk..",
+      "..kkSSSSSSSSkk..",
+      "....kk....kk....",
+      "................",
+    ],
+  },
 };
 // 지속 효과 라벨별 아이콘과 설명
 const BUFF_INFO = {
@@ -1007,6 +1028,48 @@ const DESK_MINI = {
   dosirak:  { pal: { k: '#37474f', w: '#fafafa', r: '#e53935', y: '#ffd54f' }, rows: ['kkkkkk', 'kwwkrk', 'kwwkyk', 'kkkkkk'] },
 };
 
+
+/* ---------- 기술 스택: 개발 실력 새 단계에 오를 때마다 3장 중 1장 선택 (이직하면 초기화) ---------- */
+// fx: typing/income/all/bug/debt/refTime/combo/questTime/questRep/itemPrice/coffeeCd/codeChars는 곱하기,
+//     deploy/incident/offline/autoType/bugBounty/bugPen은 더하기, autoFix는 가장 짧은 값, 나머지는 켜짐 여부
+const AUG_TIERS = { s: { name: '실버', color: '#c0c7cf' }, g: { name: '골드', color: '#e6b94a' }, p: { name: '프리즘', color: '#c792ea' } };
+const AUG_TAGS = {
+  test:  { name: '테스트', icon: 'glass',  sets: [[2, '버그 발생 -30%', { bug: 0.7 }], [3, '버그를 고칠 때마다 5초치 수입', { bugBounty: 5 }]] },
+  team:  { name: '협업',   icon: 'doc',    sets: [[2, '복잡도 증가 -20%', { debt: 0.8 }], [3, '복잡도 증가 -25%, 리팩토링 시간 -30%, 의뢰 평판 x1.3', { debt: 0.75, refTime: 0.7, questRep: 1.3 }]] },
+  coffee:{ name: '커피',   icon: 'coffee', sets: [[2, '커피 재사용 대기 절반', { coffeeCd: 0.5 }], [3, '커피 무료', { coffeeFree: true }]] },
+  night: { name: '야근',   icon: 'moon',   sets: [[2, '밤이나 야근 중 타이핑 x1.5', { nightTyping: 1.5 }], [3, '타이핑 수익 x1.5', { typing: 1.5 }]] },
+  infra: { name: '인프라', icon: 'rocket', sets: [[2, '전체 수입 x1.2', { all: 1.2 }], [3, '전체 수입 x1.3, 오프라인 수익 +30%', { all: 1.3, offline: 0.3 }]] },
+  ai:    { name: 'AI',     icon: 'robot',  sets: [[2, '초당 2회 자동 타이핑', { autoType: 2 }], [3, '초당 3회 더 자동 타이핑, 25초마다 버그 자동 수정', { autoType: 3, autoFix: 25 }]] },
+};
+const AUGS = [
+  { id: 'unit',      t: 's', tags: ['test'],          name: '단위 테스트',      desc: '버그 발생 -25%', fx: { bug: 0.75 } },
+  { id: 'review',    t: 's', tags: ['team'],          name: '코드 리뷰',        desc: '코드 복잡도 증가 -20%', fx: { debt: 0.8 } },
+  { id: 'hotkey',    t: 's', tags: ['night'],         name: '단축키 마스터',    desc: '타이핑 수익 +25%', fx: { typing: 1.25 } },
+  { id: 'subscribe', t: 's', tags: ['coffee'],        name: '커피 정기구독',    desc: '상점 아이템 가격 -40%', fx: { itemPrice: 0.6 } },
+  { id: 'spec',      t: 's', tags: ['team'],          name: '요구사항 명세서',  desc: '의뢰 마감 시간 +30%', fx: { questTime: 1.3 } },
+  { id: 'logfile',   t: 's', tags: ['test', 'infra'], name: '로그 파일',        desc: '버그가 생기면 그 줄로 자동 이동, 버그 1개당 수입 손실 감소', fx: { bugMove: true, bugPen: 0.08 } },
+  { id: 'cache',     t: 's', tags: ['infra'],         name: '캐시 적용',        desc: '자동 수입 +25%', fx: { income: 1.25 } },
+  { id: 'snippet',   t: 's', tags: ['ai'],            name: '코드 스니펫',      desc: '타이핑 수익 +15%, 업그레이드할 때 코드가 2배 빨리 입력', fx: { typing: 1.15, codeChars: 2 } },
+  { id: 'stretch',   t: 's', tags: ['coffee'],        name: '스트레칭',         desc: '콤보가 끊기는 시간 +40%', fx: { combo: 1.4 } },
+  { id: 'lint',      t: 's', tags: ['test', 'team'],  name: '린트 도구',        desc: '버그 발생 -15%, 복잡도 증가 -10%', fx: { bug: 0.85, debt: 0.9 } },
+  { id: 'cicd',      t: 'g', tags: ['infra', 'test'], name: 'CI/CD 파이프라인', desc: '리팩토링 시간 -50%, 배포 성공률 +15%', fx: { refTime: 0.5, deploy: 0.15 } },
+  { id: 'pair',      t: 'g', tags: ['team'],          name: '페어 프로그래밍',  desc: '콤보가 끊기는 시간 2배', fx: { combo: 2 } },
+  { id: 'monitor',   t: 'g', tags: ['infra', 'test'], name: '모니터링 대시보드', desc: '20초마다 버그 1개 자동 수정, 장애 대응 시간 +15초', fx: { autoFix: 20, incident: 15 } },
+  { id: 'coldbrew',  t: 'g', tags: ['coffee'],        name: '콜드브루 대용량',  desc: '커피 효과가 x1.5에서 x2로', fx: { coffeeBoost: 2 } },
+  { id: 'overtime',  t: 'g', tags: ['night'],         name: '야근 수당',        desc: '밤(19시~6시)이나 야근 중 타이핑 수익 x2', fx: { nightTyping: 2 } },
+  { id: 'copilot',   t: 'g', tags: ['ai'],            name: 'AI 자동완성',      desc: '초당 2회 자동 타이핑', fx: { autoType: 2 } },
+  { id: 'cdn',       t: 'g', tags: ['infra'],         name: 'CDN',              desc: '전체 수입 +30%, 오프라인 수익 +20%', fx: { all: 1.3, offline: 0.2 } },
+  { id: 'tdd',       t: 'g', tags: ['test'],          name: 'TDD',              desc: '버그 발생 -40%, 버그를 고칠 때마다 3초치 수입', fx: { bug: 0.6, bugBounty: 3 } },
+  { id: 'standup',   t: 'g', tags: ['team'],          name: '데일리 스탠드업',  desc: '의뢰 평판 보상 x1.5, 마감 시간 +20%', fx: { questRep: 1.5, questTime: 1.2 } },
+  { id: 'tenx',      t: 'p', tags: ['night'],         name: '10x 개발자',       desc: '타이핑 수익 x2', fx: { typing: 2 } },
+  { id: 'autoscale', t: 'p', tags: ['infra'],         name: '오토스케일링',     desc: '전체 수입 x2', fx: { all: 2 } },
+  { id: 'aipair',    t: 'p', tags: ['ai'],            name: 'AI 페어 코딩',     desc: '초당 5회 자동 타이핑, 자동 수입 +30%', fx: { autoType: 5, income: 1.3 } },
+  { id: 'legacy',    t: 'p', tags: ['team'],          name: '레거시 수호자',    desc: '복잡도 때문에 수입이 줄지 않고, 레거시가 되면 오히려 수입 x1.5', fx: { legacyGuard: true } },
+  { id: 'zerobug',   t: 'p', tags: ['test'],          name: '무결점 코드',      desc: '버그가 생기지 않음', fx: { bug: 0 } },
+  { id: 'espresso',  t: 'p', tags: ['coffee'],        name: '에스프레소 머신',  desc: '커피 무료, 커피 재사용 대기 -70%', fx: { coffeeFree: true, coffeeCd: 0.3 } },
+  { id: 'fullstack', t: 'p', tags: ['ai', 'infra', 'night'], name: '풀스택 개발자', desc: '전체 수입 +25%, 태그 3개를 한 번에 채움', fx: { all: 1.25 } },
+];
+
 const WORDS = ['select', 'commit', 'return', 'public', 'static', 'null', 'void', 'class', 'import', 'insert', 'update', 'delete', 'rollback', 'spring', 'mybatis', 'oracle', 'deploy', 'refactor', 'debug', 'merge', 'override', 'private', 'final', 'interface', 'foreach', 'async', 'await', 'const'];
 
 const THEMES = [
@@ -1020,8 +1083,9 @@ const SOUNDS = [['off', '끄기'], ['blue', '청축'], ['red', '적축'], ['sile
 /* ---------- 용어 사전 ---------- */
 // m: 코드 한 줄에 이 글자가 들어 있으면 관련 용어로 보여줌
 // game이 있는 항목은 게임 속 기능: 백과사전 맨 위에 '게임에서'와 '실무에서'를 함께 보여줌
-const GLOSS_GAME_ORDER = ['refactoring', 'grade', 'complexity', 'bug', 'legacy', 'combo', 'release', 'incident', 'deploy', 'freeze', 'unit-test', 'code-review', 'design-doc', 'logging', 'cicd', 'scale-out'];
+const GLOSS_GAME_ORDER = ['augment', 'refactoring', 'grade', 'complexity', 'bug', 'legacy', 'combo', 'release', 'incident', 'deploy', 'freeze', 'unit-test', 'code-review', 'design-doc', 'logging', 'cicd', 'scale-out'];
 const GLOSSARY = [
+  { id: 'augment', cat: '게임', term: '기술 스택', m: [], desc: '', game: '개발 실력이 이 회사에서 처음으로 새 단계(10레벨마다)에 오르면 기술 스택 카드 3장 중 1장을 고릅니다. 등급은 실버, 골드, 프리즘이 있고 직급이 높을수록 좋은 등급이 잘 나옵니다. 마음에 안 드는 카드는 다시 뽑을 수 있습니다(회사마다 2회, 이직할 때마다 1회씩 늘어남). 같은 태그를 2장, 3장 모으면 시너지가 열립니다. 이직하면 1장만 포트폴리오로 가져가고, 새 회사에서 골드 이상 기술 스택을 바로 1번 뽑습니다.' },
   // 기초
   { id: 'comment', cat: '기초', term: '주석', m: ['//', '-- ', '<!--', '/*'], desc: '코드 실행에는 영향을 주지 않고 사람이 읽으라고 남기는 설명. 언어마다 // , -- , <!-- --> 처럼 표기법이 다르다.', ex: '// 사용자 목록 조회' },
   { id: 'println', cat: '기초', term: '출력 (System.out.println)', m: ['System.out', 'MessageBox.Show', 'alert('], desc: '화면이나 콘솔에 글자를 보여준다. 프로그래밍을 배울 때 가장 먼저 써보는 코드.', ex: 'System.out.println("hello, world");' },
@@ -1051,8 +1115,8 @@ const GLOSSARY = [
   { id: 'mapper', cat: 'Java', term: '매퍼, DAO', m: ['Mapper', 'Dao', 'dao.'], desc: 'DB에 SQL을 보내고 결과를 받아오는 담당. Controller, Service, Mapper(DAO)로 나누는 것을 계층 분리라고 한다.', ex: 'userMapper.selectUser(id)' },
   { id: 'vo', cat: 'Java', term: 'VO, DTO', m: ['Vo', 'Dto'], desc: '데이터를 담아서 계층 사이에 주고받는 그릇 역할의 클래스.', ex: 'public class UserVo { private String name; }' },
   { id: 'lombok', cat: 'Java', term: 'Lombok', m: ['@Getter', '@RequiredArgsConstructor', 'lombok'], desc: 'getter, 생성자 같은 반복 코드를 어노테이션 하나로 자동 생성해주는 라이브러리.', ex: '@Getter' },
-  { id: 'unit-test', cat: 'Java', term: '단위 테스트', m: ['@Test', 'assert', 'Assert', '[테스트]'], desc: '코드가 의도대로 동작하는지 확인하는 코드. 미리 만들어두면 나중에 고쳐도 기존 기능이 깨졌는지 바로 알 수 있어 버그가 줄어든다.', game: '업그레이드 \'테스트 체계\'. 레벨이 오를수록 버그가 덜 생깁니다.', ex: 'assertNotNull(userService.get(1L));' },
-  { id: 'logging', cat: 'Java', term: '로깅 (log)', m: ['log.', 'Logger', 'console.log', '[로그]'], desc: '프로그램이 실행되며 무슨 일을 했는지 기록을 남기는 것. 장애가 났을 때 원인을 빨리 찾게 해준다.', game: '업그레이드 \'모니터링\'. 장애 대응 시간이 늘고, 버그가 생기면 그 줄로 자동 이동하며, Lv.3부터는 버그를 알아서 고칩니다.', ex: 'log.info("조회 시작");' },
+  { id: 'unit-test', cat: 'Java', term: '단위 테스트', m: ['@Test', 'assert', 'Assert', '[테스트]'], desc: '코드가 의도대로 동작하는지 확인하는 코드. 미리 만들어두면 나중에 고쳐도 기존 기능이 깨졌는지 바로 알 수 있어 버그가 줄어든다.', game: '기술 스택 단위 테스트, 린트 도구, TDD, 무결점 코드와 [테스트] 시너지가 버그를 줄여줍니다.', ex: 'assertNotNull(userService.get(1L));' },
+  { id: 'logging', cat: 'Java', term: '로깅 (log)', m: ['log.', 'Logger', 'console.log', '[로그]'], desc: '프로그램이 실행되며 무슨 일을 했는지 기록을 남기는 것. 장애가 났을 때 원인을 빨리 찾게 해준다.', game: '기술 스택 로그 파일은 버그가 생기면 그 줄로 자동 이동하고, 모니터링 대시보드는 20초마다 버그를 알아서 고치며 장애 대응 시간도 늘려줍니다.', ex: 'log.info("조회 시작");' },
   // DB, SQL
   { id: 'select', cat: 'SQL', term: 'SELECT', m: ['SELECT'], desc: 'DB에서 데이터를 조회하는 명령. FROM으로 테이블을, WHERE로 조건을 정한다.', ex: 'SELECT NAME FROM TB_USER WHERE ID = 1;' },
   { id: 'dml', cat: 'SQL', term: 'INSERT, UPDATE, DELETE', m: ['INSERT', 'UPDATE ', 'DELETE'], desc: '데이터를 추가(INSERT), 수정(UPDATE), 삭제(DELETE)하는 명령. 운영 DB에서는 WHERE 조건을 빠뜨리지 않게 특히 조심해야 한다.', ex: 'UPDATE TB_USER SET NAME = \'김\' WHERE ID = 1;' },
@@ -1087,9 +1151,9 @@ const GLOSSARY = [
   { id: 'incident', cat: '실무', term: '장애', m: [], desc: '운영 중인 서비스가 멈추거나 오작동하는 상황. 빨리 원인을 찾아 복구하는 게 최우선이다.', game: '장애가 나면 제한 시간 안에 생긴 버그를 모두 고쳐야 합니다. 성공하면 평판이 오르고 실패하면 깎입니다. 모니터링 레벨이 오를수록 대응 시간이 늘어납니다.', ex: '' },
   { id: 'release', cat: '실무', term: '릴리즈, 버전', m: [], desc: '개발한 프로그램을 사용자에게 내보내는 것. v1.0, v2.0처럼 버전을 붙여 관리한다.', game: '서비스 가치가 100만원을 넘으면 릴리즈할 수 있습니다. 버전이 오르고 그동안의 최고 가치에 따라 영구 수입 배수를 받는 대신, 서비스 가치와 업그레이드가 초기화됩니다.', ex: '' },
   { id: 'deploy', cat: '실무', term: '배포', m: [], desc: '완성된 코드를 실제 서버에 올려 사용자가 쓸 수 있게 하는 작업. 금요일 오후 배포는 주말 장애로 이어지기 쉬워 개발자들이 꺼린다.', game: '금요일 배포 요청 같은 이벤트로 나옵니다. 성공률이 낮을수록 성공했을 때 보상이 큽니다. 배포 방식 업그레이드가 성공률을 올립니다.', ex: '' },
-  { id: 'code-review', cat: '실무', term: '코드 리뷰', m: ['[코드리뷰]'], desc: '내가 짠 코드를 동료가 읽고 문제점이나 개선점을 짚어주는 과정. 코드가 엉키는 걸 막아준다.', game: '업그레이드 \'리뷰 문화\'. 레벨이 오를수록 코드 복잡도가 천천히 오릅니다.', ex: '' },
-  { id: 'design-doc', cat: '실무', term: '설계 문서', m: ['@param', '@return', '<summary>', '설계:'], desc: '무엇을 어떻게 만들지 미리 정리한 문서. 설계가 탄탄하면 개발이 빨라져 마감을 지키기 쉽다.', game: '업그레이드 \'설계 문서\'. 레벨마다 의뢰 마감 시간이 10% 늘어납니다.', ex: '' },
-  { id: 'cicd', cat: '실무', term: 'CI/CD', m: ['[CI]'], desc: '코드를 올리면 빌드, 테스트, 배포까지 자동으로 해주는 체계. 사람 손을 덜 타서 실수가 줄고 빨라진다.', game: '업그레이드 \'배포 방식\'. 업그레이드할 때 코드가 더 많이 입력되고, 배포 성공률이 오르며, 리팩토링 시간이 줄어듭니다.', ex: '' },
+  { id: 'code-review', cat: '실무', term: '코드 리뷰', m: ['[코드리뷰]'], desc: '내가 짠 코드를 동료가 읽고 문제점이나 개선점을 짚어주는 과정. 코드가 엉키는 걸 막아준다.', game: '기술 스택 코드 리뷰, 린트 도구와 [협업] 시너지가 코드 복잡도가 오르는 속도를 줄여줍니다.', ex: '' },
+  { id: 'design-doc', cat: '실무', term: '설계 문서', m: ['@param', '@return', '<summary>', '설계:'], desc: '무엇을 어떻게 만들지 미리 정리한 문서. 설계가 탄탄하면 개발이 빨라져 마감을 지키기 쉽다.', game: '기술 스택 요구사항 명세서와 데일리 스탠드업이 의뢰 마감 시간을 늘려줍니다.', ex: '' },
+  { id: 'cicd', cat: '실무', term: 'CI/CD', m: ['[CI]'], desc: '코드를 올리면 빌드, 테스트, 배포까지 자동으로 해주는 체계. 사람 손을 덜 타서 실수가 줄고 빨라진다.', game: '기술 스택 CI/CD 파이프라인이 리팩토링 시간을 절반으로 줄이고 배포 성공률을 올려줍니다.', ex: '' },
   { id: 'scale-out', cat: '실무', term: '서버 증설 (스케일 아웃)', m: ['scale(', 'ServerCount', 'API_SERVERS', 'SERVER_WORKERS', '서버 '], desc: '서버 대수를 늘려 더 많은 사용자를 감당하는 것. 사용자가 몰려도 서비스가 버틴다.', game: '업그레이드 \'인프라\'. 비싸지만 레벨마다 전체 수입 x2. 트래픽 폭주 이벤트를 버티게 해주고 오프라인 수익도 늘려줍니다.', ex: '' },
   { id: 'msa', cat: '실무', term: 'MSA', m: ['DiscoveryClient', 'Gateway'], desc: '큰 서비스를 작은 서비스 여러 개로 쪼개 따로 배포하고 운영하는 구조.', ex: '' },
   { id: 'si-sm', cat: '실무', term: 'SI, SM', m: [], desc: 'SI는 고객사 시스템을 새로 구축하는 일, SM은 구축된 시스템을 유지보수하는 일.', ex: '' },

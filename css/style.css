@@ -363,3 +363,18 @@ button, input { font-family: inherit; }
   .mbadge { position: absolute; top: 6px; left: 50%; margin-left: 8px; background: var(--bad); color: #1e1e1e; font-size: 10px; font-weight: 700; border-radius: 8px; padding: 0 5px; line-height: 15px; }
   .mbadge:empty { display: none; }
 }
+
+/* =========================================================
+ * 토스 미니앱 안: 상태 표시줄만큼 내리고, 오른쪽 위 닫기 버튼(... X) 자리를 비움
+ * ========================================================= */
+html.in-toss .top { padding-top: calc(max(var(--sat, 0px), env(safe-area-inset-top, 0px)) + 6px); }
+html.in-toss .top h1 { min-height: 44px; padding-right: 120px; box-sizing: border-box; }
+html.in-toss .mnav { padding-bottom: max(var(--sab, 0px), env(safe-area-inset-bottom, 0px)); }
+@media (max-width: 700px) {
+  html.in-toss body:not(.m-side) { padding-bottom: calc(60px + max(var(--sab, 0px), env(safe-area-inset-bottom, 0px))); }
+}
+@media (max-width: 700px) {
+  html.in-toss .top h1 { white-space: nowrap; overflow: hidden; gap: 6px; }
+  html.in-toss .top h1 .title-chip { white-space: nowrap; }
+  html.in-toss #companyChip { display: none; }
+}
